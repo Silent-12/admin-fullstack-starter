@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    // 模块系统配置
+    "module": "nodenext", // 使用 Node.js Next 模块系统，支持 CommonJS 和 ES 模块互操作
+    "moduleResolution": "nodenext", // 使用 Node.js Next 模块解析策略
+    "resolvePackageJsonExports": true, // 解析 package.json 中的 exports 字段
+    // 模块互操作性配置
+    "esModuleInterop": true, // 允许从没有默认导出的模块进行默认导入，实现 CommonJS 和 ES 模块互操作
+    "isolatedModules": true, // 确保每个文件可独立转译，提升构建工具兼容性
+    "allowSyntheticDefaultImports": true, // 允许从没有默认导出的模块进行默认导入
+    // 输出配置
+    "declaration": false, // 生成对应的 .d.ts 类型声明文件
+    "removeComments": true, // 编译时移除注释
+    "sourceMap": false, // 不生成 .map 源映射文件
+    "outDir": "./dist", // 编译输出目录
+    // TypeScript 特性配置
+    "emitDecoratorMetadata": true, // 为装饰器生成元数据，NestJS 必需
+    "experimentalDecorators": true, // 启用实验性装饰器，NestJS 必需
+    // 目标环境配置
+    "target": "ES2023", // 编译目标为 ECMAScript 2023
+    // 增量编译配置
+    "incremental": true, // 启用增量编译，提升重新编译速度
+    // 严格类型检查配置
+    "strict": true, // 启用所有严格类型检查选项
+    "skipLibCheck": true, // 跳过声明文件 (.d.ts) 的类型检查
+    "forceConsistentCasingInFileNames": true, // 强制文件名大小写一致
+    "noFallthroughCasesInSwitch": true, // 禁止 switch 语句的 case 穿透
+    "noUncheckedIndexedAccess": true, // 访问数组元素时添加 undefined 到类型中
+    "exactOptionalPropertyTypes": true, // 将可选属性视为仅包含 undefined 的类型
+  },
+  "include": [
+    "src/**/*",
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+  ],
+}

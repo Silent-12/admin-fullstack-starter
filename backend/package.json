@@ -1,0 +1,72 @@
+{
+  "name": "backend-template-nest",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,apps,libs}/**/*.ts\" --fix"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.4",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/mapped-types": "*",
+    "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/swagger": "^11.4.3",
+    "@nestjs/throttler": "^6.5.0",
+    "@nestjs/typeorm": "^11.0.1",
+    "@types/ioredis": "^4.28.10",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "express-basic-auth": "^1.2.1",
+    "dayjs": "^1.11.20",
+    "helmet": "^8.1.0",
+    "ioredis": "^5.10.1",
+    "mysql2": "^3.22.3",
+    "nestjs-knife4j-plus": "^1.0.9",
+    "nest-winston": "^1.10.2",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "typeorm": "^1.0.0",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.18.0",
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@types/express": "^5.0.0",
+    "@types/node": "^24.0.0",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.2",
+    "globals": "^17.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
+    "prettier": "^3.4.2",
+    "source-map-support": "^0.5.21",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  }
+}

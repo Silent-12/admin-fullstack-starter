@@ -1,0 +1,27 @@
+#!/bin/sh
+# 仓库级 pre-commit 钩子
+# @description 按改动归属分别调用 frontend / backend 各自的 lint-staged，
+# 保证两个子项目的检查工具链互不干扰。子项目依赖未安装时给出提示并跳过该项，
+# 避免刚克隆仓库尚未安装依赖时无法提交。
+#
+# 注意：本文件由 husky 在仓库根目录以 source 方式执行，因此目录切换必须放在子 shell 内。
+
+staged="$(git diff --cached --name-only --diff-filter=ACMR)"
+
+if printf '%s\n' "$staged" | grep -q '^frontend/'; then
+  if [ -d frontend/node_modules ]; then
+    echo "[pre-commit] frontend: lint-staged"
+    (cd frontend && pnpm run lint:lint-staged) || exit 1
+  else
+    echo "[pre-commit] 已跳过 frontend 检查：frontend/node_modules 不存在，请先执行 pnpm run install:frontend"
+  fi
+fi
+
+if printf '%s\n' "$staged" | grep -q '^backend/'; then
+  if [ -d backend/node_modules ]; then
+    echo "[pre-commit] backend: lint-staged"
+    (cd backend && ./node_modules/.bin/lint-staged) || exit 1
+  else
+    echo "[pre-commit] 已跳过 backend 检查：backend/node_modules 不存在，请先执行 pnpm run install:backend"
+  fi
+fi

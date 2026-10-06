@@ -1,0 +1,132 @@
+{
+  "httpMsg": {
+    "unauthorized": "未授权访问，请重新登录",
+    "forbidden": "禁止访问该资源",
+    "notFound": "请求的资源不存在",
+    "methodNotAllowed": "请求方法不允许",
+    "requestTimeout": "请求超时，请稍后重试",
+    "internalServerError": "服务器内部错误，请稍后重试",
+    "badGateway": "网关错误，请稍后重试",
+    "serviceUnavailable": "服务暂时不可用，请稍后重试",
+    "gatewayTimeout": "网关超时，请稍后重试",
+    "requestCancelled": "请求已取消",
+    "networkError": "网络连接异常，请检查网络连接",
+    "requestFailed": "请求失败",
+    "requestConfigError": "请求配置错误"
+  },
+  "topBar": {
+    "search": {
+      "title": "搜索"
+    },
+    "user": {
+      "userCenter": "个人中心",
+      "logout": "退出登录"
+    }
+  },
+  "common": {
+    "tips": "提示",
+    "cancel": "取消",
+    "confirm": "确定",
+    "logOutTips": "您是否要退出登录?"
+  },
+  "search": {
+    "placeholder": "搜索页面",
+    "historyTitle": "搜索历史",
+    "switchKeydown": "切换",
+    "selectKeydown": "选择",
+    "exitKeydown": "关闭"
+  },
+  "setting": {
+    "theme": {
+      "title": "主题风格",
+      "list": ["浅色", "深色", "系统"]
+    },
+    "menu": {
+      "title": "菜单风格"
+    },
+    "color": {
+      "title": "系统主题色"
+    },
+    "basics": {
+      "title": "基础配置",
+      "list": {
+        "multiTab": "开启多标签栏",
+        "accordion": "侧边栏自动收起",
+        "collapseSidebar": "显示折叠侧边栏按钮",
+        "fastEnter": "显示快速入口",
+        "language": "显示多语言选择",
+        "notification": "显示通知入口"
+      }
+    },
+    "actions": {
+      "resetConfig": "重置配置",
+      "resetFailed": "重置失败，请刷新页面后重试"
+    }
+  },
+  "notice": {
+    "title": "通知",
+    "btnRead": "标为已读",
+    "bar": ["通知", "消息", "代办"],
+    "text": ["暂无"],
+    "viewAll": "查看全部"
+  },
+  "worktab": {
+    "btn": {
+      "refresh": "刷新",
+      "fixed": "固定当前标签",
+      "unfixed": "取消固定",
+      "closeLeft": "关闭左侧",
+      "closeRight": "关闭右侧",
+      "closeOther": "关闭其他",
+      "closeAll": "关闭全部"
+    }
+  },
+  "exceptionPage": {
+    "403": "抱歉，您无权访问该页面",
+    "404": "抱歉，您访问的页面不存在",
+    "500": "抱歉，服务器出错了",
+    "gohome": "返回首页"
+  },
+  "menus": {
+    "system": {
+      "title": "系统管理",
+      "user": "用户管理",
+      "role": "角色管理",
+      "menu": "菜单管理"
+    }
+  },
+  "table": {
+    "form": {
+      "reset": "重置",
+      "submit": "提交"
+    },
+    "searchBar": {
+      "reset": "重置",
+      "search": "查询",
+      "expand": "展开",
+      "collapse": "收起"
+    },
+    "selection": "选择",
+    "sizeOptions": {
+      "small": "紧凑",
+      "default": "默认",
+      "large": "宽松"
+    },
+    "column": {
+      "selection": "勾选",
+      "expand": "展开",
+      "index": "序号"
+    },
+    "header": {
+      "search": "搜索",
+      "refresh": "刷新",
+      "size": "表格大小",
+      "fullscreen": "全屏",
+      "columns": "列设置",
+      "settings": "其他设置"
+    },
+    "zebra": "斑马纹",
+    "border": "边框",
+    "headerBackground": "表头背景"
+  }
+}

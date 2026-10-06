@@ -1,0 +1,10 @@
+// 重置默认样式
+@use './reset.scss';
+
+// 主题变量与应用全局样式已随 @ao/admin-layout/styles.css 提供（见 main.ts 引入顺序）
+
+// Element Plus 样式优化
+@use 'element-plus/theme-chalk/src/index.scss' as *;
+@use './el-ui.scss';
+
+// 暗黑主题、路由切换动画、主题过渡动画已随 @ao/admin-layout/styles.css 提供

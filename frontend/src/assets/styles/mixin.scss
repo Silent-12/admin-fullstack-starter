@@ -1,0 +1,47 @@
+// mixin.scss - SCSS 混合宏（文本省略、毛玻璃等可复用样式函数）
+
+/**
+ * 溢出省略号
+ * @description 根据行数控制文本溢出显示省略号，支持单行和多行省略
+ * @param {Number} $rowCount - 行数，默认 1
+ * @return {*} 生成 overflow / text-overflow / white-space 或 -webkit-line-clamp 相关样式
+ * @example
+ *    单行省略
+ *   .text {
+ *     @include ellipsis;
+ *   }
+ *    多行省略（3行）
+ *   .text {
+ *     @include ellipsis(3);
+ *   }
+ */
+
+@mixin ellipsis($rowCount: 1) {
+  @if $rowCount <=1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  } @else {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: $rowCount;
+    -webkit-box-orient: vertical;
+  }
+}
+
+/**
+ * 背景滤镜（毛玻璃效果）
+ * @description 为元素添加 backdrop-filter: blur() 实现毛玻璃效果，同时生成 -webkit- 前缀版本
+ * @return {*} 生成带浏览器前缀的 backdrop-filter: blur(30px) 样式
+ * @example
+ *    毛玻璃导航栏
+ *   .navbar {
+ *     @include backdropBlur;
+ *   }
+ */
+@mixin backdropBlur() {
+  -webkit-backdrop-filter: blur(30px);
+  backdrop-filter: blur(30px);
+}

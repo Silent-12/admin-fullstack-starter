@@ -1,0 +1,9 @@
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+.cursorrules
+
+# Auto-generated files
+src/types/generated/components.d.ts

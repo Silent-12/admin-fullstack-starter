@@ -1,0 +1,132 @@
+{
+  "httpMsg": {
+    "unauthorized": "Unauthorized access, please login again",
+    "forbidden": "Access to this resource is forbidden",
+    "notFound": "The requested resource does not exist",
+    "methodNotAllowed": "Request method not allowed",
+    "requestTimeout": "Request timeout, please try again later",
+    "internalServerError": "Internal server error, please try again later",
+    "badGateway": "Bad gateway error, please try again later",
+    "serviceUnavailable": "Service temporarily unavailable, please try again later",
+    "gatewayTimeout": "Gateway timeout, please try again later",
+    "requestCancelled": "Request cancelled",
+    "networkError": "Network connection error, please check your connection",
+    "requestFailed": "Request failed",
+    "requestConfigError": "Request configuration error"
+  },
+  "topBar": {
+    "search": {
+      "title": "Search"
+    },
+    "user": {
+      "userCenter": "User center",
+      "logout": "Log out"
+    }
+  },
+  "common": {
+    "tips": "Prompt",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "logOutTips": "Do you want to log out?"
+  },
+  "search": {
+    "placeholder": "Search page",
+    "historyTitle": "Search history",
+    "switchKeydown": "Navigate",
+    "selectKeydown": "Select",
+    "exitKeydown": "Close"
+  },
+  "setting": {
+    "theme": {
+      "title": "Theme Style",
+      "list": ["Light", "Dark", "System"]
+    },
+    "menu": {
+      "title": "Menu Style"
+    },
+    "color": {
+      "title": "Theme Color"
+    },
+    "basics": {
+      "title": "Basic Config",
+      "list": {
+        "multiTab": "Show work tab",
+        "accordion": "Sidebar accordion",
+        "collapseSidebar": "Show sidebar button",
+        "fastEnter": "Show fast enter",
+        "language": "Show multilingual selection",
+        "notification": "Show notification entry"
+      }
+    },
+    "actions": {
+      "resetConfig": "Reset Config",
+      "resetFailed": "Reset failed, please refresh the page and try again"
+    }
+  },
+  "notice": {
+    "title": "Notice",
+    "btnRead": "Mark as read",
+    "bar": ["Notice", "Message", "Todo"],
+    "text": ["No"],
+    "viewAll": "View all"
+  },
+  "worktab": {
+    "btn": {
+      "refresh": "Refresh",
+      "fixed": "Pin current tab",
+      "unfixed": "Unpin current tab",
+      "closeLeft": "Close left",
+      "closeRight": "Close right",
+      "closeOther": "Close other",
+      "closeAll": "Close all"
+    }
+  },
+  "exceptionPage": {
+    "403": "Sorry, you do not have permission to access this page",
+    "404": "Sorry, the page you are trying to access does not exist",
+    "500": "Sorry, there was an error on the server",
+    "gohome": "Go Home"
+  },
+  "menus": {
+    "system": {
+      "title": "System Settings",
+      "user": "User Manage",
+      "role": "Role Manage",
+      "menu": "Menu Manage"
+    }
+  },
+  "table": {
+    "form": {
+      "reset": "Reset",
+      "submit": "Submit"
+    },
+    "searchBar": {
+      "reset": "Reset",
+      "search": "Search",
+      "expand": "Expand",
+      "collapse": "Collapse"
+    },
+    "selection": "Select",
+    "sizeOptions": {
+      "small": "Compact",
+      "default": "Default",
+      "large": "Loose"
+    },
+    "column": {
+      "selection": "Select",
+      "expand": "Expand",
+      "index": "Index"
+    },
+    "header": {
+      "search": "Search",
+      "refresh": "Refresh",
+      "size": "Table Size",
+      "fullscreen": "Fullscreen",
+      "columns": "Column Settings",
+      "settings": "Settings"
+    },
+    "zebra": "Zebra",
+    "border": "Border",
+    "headerBackground": "Header BG"
+  }
+}

@@ -1,0 +1,30 @@
+import request from '@/utils/http'
+import type { LoginParams, LoginResponse, UserInfo } from '@/types/api/auth'
+
+/**
+ * 登录
+ * @param params 登录参数
+ * @returns 登录响应
+ */
+export function fetchLogin(params: LoginParams) {
+  return request.post<LoginResponse>({
+    url: '/api/auth/login',
+    params
+    // showSuccessMessage: true // 显示成功消息
+    // showErrorMessage: false // 不显示错误消息
+  })
+}
+
+/**
+ * 获取用户信息
+ * @returns 用户信息
+ */
+export function fetchGetUserInfo() {
+  return request.get<UserInfo>({
+    url: '/api/user/info'
+    // 自定义请求头
+    // headers: {
+    //   'X-Custom-Header': 'your-custom-value'
+    // }
+  })
+}

@@ -1,0 +1,10 @@
+#!/bin/sh
+# 仓库级 commit-msg 钩子
+# @description 使用根目录 commitlint 配置统一校验提交信息；根依赖未安装时给出提示并放行。
+
+if [ ! -f node_modules/.bin/commitlint ]; then
+  echo "[commit-msg] 已跳过提交信息校验：根依赖未安装，请先执行 pnpm install"
+  exit 0
+fi
+
+pnpm exec commitlint --edit "$1"

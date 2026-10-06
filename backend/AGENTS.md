@@ -8,7 +8,7 @@
 
 # 通用规则
 
-- 当前模板技术栈为 NestJS、MySQL、Redis、TypeORM 与 TypeScript；调试命令必须兼容 Windows。
+- 本子项目（`admin-fullstack-starter/backend`）技术栈为 NestJS、MySQL、Redis、TypeORM 与 TypeScript；调试命令必须兼容 Windows。
 - 新增或修改公共 API、Controller、Service、Entity 或复杂逻辑时，保留有效既有注释并使用 `/** */` JSDoc。JSDoc 应包含 `@description`；仅在存在参数时写 `@param`，仅在返回值需要说明时写 `@returns`。简单私有函数、构造函数、接口实现或可从上下文直接理解的代码可省略重复注释。
 - 函数保持单一职责；在入口处对非法输入、异常状态和不满足条件提前返回或抛错，避免深层嵌套。
 - 新增跨模块常量前，先检索 `src/common/constants`。公共常量使用普通对象字面量和 JSDoc，禁止散落同义常量。
@@ -19,7 +19,7 @@
 - 对外接口非必要不得暴露或使用数据库自增 `id` 作为返回字段、路径参数或查询条件；优先使用业务编号、UUID 或其他稳定业务标识，避免对象可枚举和数据库规模信息泄露。后台内部接口在确有必要时可使用主键，但不得因此绕过权限校验。
 - 可跨模块复用的纯 TypeScript 类型统一放在 `.d.ts` 文件：公共类型放 `src/common/types`，模块类型放 `src/types`。模块内部或局部类型可放在使用文件中；DTO、Entity 等运行时 class 必须保留在 `.ts` 文件。
 - 删除内部实现可直接清理；删除对外接口、DTO 或响应字段属于破坏性变更，必须保留兼容版本或先确认调用方。
-- 全局 API 前缀由 `.env` 的 `API_PREFIX` 提供，当前模板默认 `backend`；业务 Controller 必须显式使用 `v1/...`。破坏性接口变更新增 `v2/...`，不得覆盖 `v1`；非业务协议端点可按协议例外处理。
+- 全局 API 前缀由 `.env` 的 `API_PREFIX` 提供，本子项目默认 `backend`；业务 Controller 必须显式使用 `v1/...`。破坏性接口变更新增 `v2/...`，不得覆盖 `v1`；非业务协议端点可按协议例外处理。
 - 业务 Controller 必须使用 `@ApiTags` 和 `@ApiOperation`；方法 JSDoc 标题与 `@ApiOperation` 的业务动作保持一致。协议适配、内部回调等非业务端点按实际用途处理。
 - 后台或管理端接口必须使用 `admin` 路径前缀，例如 `v1/admin/users`；对外用户端接口使用 `user` 目录分层。模块按使用方拆分为 `src/modules/<module>/admin` 与 `src/modules/<module>/user`，Controller、DTO、Service 等分别归入对应目录；跨端复用的领域能力放入明确的 `shared` 目录。未明确属于后台或用户端的基础模板模块可保留在模块根目录。
 - 涉及表结构、字段、索引、约束或初始化数据时，在 `src/database/migrations` 新增按顺序命名的独立 SQL 迁移文件（推荐 `V{序号}__{描述}.sql`），并同步更新新库初始化脚本（如项目存在独立初始化脚本）。迁移文件是数据库变更的唯一事实来源；已执行的迁移不得修改或删除，修正必须新增后续迁移。迁移的执行顺序、幂等性和回滚方式必须在变更说明中明确，不得仅依赖生产环境 `synchronize`。

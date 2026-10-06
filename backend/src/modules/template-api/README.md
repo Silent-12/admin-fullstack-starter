@@ -10,7 +10,6 @@
 template-api/
 ├── README.md                          # 本文档（复制后可保留或删除）
 ├── dto/
-│   ├── api-response.dto.ts            # 统一响应 DTO（通用，无需修改）
 │   ├── pagination-meta.dto.ts         # 分页元信息 DTO（通用，无需修改）
 │   ├── create-template-item.dto.ts    # 创建请求体 DTO
 │   ├── update-template-item.dto.ts    # 更新请求体 DTO
@@ -30,7 +29,7 @@ template-api/
 
 | 文件 | 作用 |
 |------|------|
-| `dto/api-response.dto.ts` | 统一响应包装类，所有接口返回 `{ code, message, data, timestamp }` 结构 |
+| `src/common/dto/api-response.dto.ts` | 统一响应包装类，所有接口返回 `{ code, message, data, timestamp }` 结构 |
 | `dto/pagination-meta.dto.ts` | 分页元信息类，包含 `page`、`pageSize`、`total`、`totalPages` |
 
 ---
@@ -45,7 +44,7 @@ template-api/
 | **必改** | 类名 `TemplateItem` → 新实体名（如 `User`） |
 | **必改** | `@Entity('template_items')` → 新表名（如 `users`） |
 | **必改** | 字段定义（`@Column`）根据业务需求增删 |
-| **必改** | `@Index` 索引定义根据查询需求调整 |
+| **必改** | 实体当前未声明 `@Index`；如新模块的查询需要索引，请在实体上显式添加并通过新的迁移文件建索引。 |
 
 #### 2. `dto/create-*.dto.ts`
 

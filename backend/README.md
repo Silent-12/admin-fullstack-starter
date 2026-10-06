@@ -14,8 +14,7 @@
 - **📖 Knife4j** - 基于 OpenAPI 的 API 文档界面
 - **📝 Winston** - 日志记录
 - **✨ ESLint + Prettier** - 代码规范和格式化
-- **🐶 Husky + lint-staged** - Git 钩子和代码提交检查
-- **✅ Commitlint** - 提交信息规范
+- **✅ Commitlint** - 提交信息规范（由仓库根 `.husky/` 与根 `commitlint.config.cjs` 统一提供）
 
 ## 目录结构 📁
 
@@ -57,7 +56,7 @@ backend/
 ├── .env.example                  # 环境变量示例
 ├── .prettierrc                   # Prettier 配置
 ├── eslint.config.mjs             # ESLint 配置
-├── commitlint.config.js          # Commitlint 配置
+├── .prettierignore               # Prettier 忽略清单
 ├── nest-cli.json                 # NestJS CLI 配置
 ├── package.json                  # 项目依赖和脚本
 └── tsconfig.json                 # TypeScript 配置
@@ -87,17 +86,17 @@ backend/
 
 ```json
 {
-  "printWidth": 160, // 单行最大字符数
+  "printWidth": 140, // 单行最大字符数
   "quoteProps": "consistent", // 对象属性引号保持一致
   "semi": false, // 不使用分号
-  "singleQuote": true // 使用单引号
+  "singleQuote": true, // 使用单引号
+  "endOfLine": "auto" // 换行符交由编辑器决定，避免 Windows CRLF 被误判
 }
 ```
 
 ### Git Hooks 🎣
 
-- **pre-commit**：自动执行 `lint-staged`，对暂存文件进行格式化（Prettier）和修复（ESLint）
-- **commit-msg**：使用 `commitlint` 验证提交信息格式
+提交钩子统一由**仓库根**提供：`core.hooksPath` 指向根 `.husky/`，`pre-commit` 按改动归属调用本目录的 `lint-staged`，`commit-msg` 使用根 `commitlint.config.cjs` 校验提交信息。本目录不再持有钩子文件与 commitlint 配置，详见根 [README](../README.md) 的「相对两个源模板的调整」。
 
 ### 提交信息规范 📝
 
@@ -155,8 +154,8 @@ MYSQL_ENABLED=true
 DB_HOST=localhost
 DB_PORT=3306
 DB_USERNAME=root
-DB_PASSWORD=123456
-DB_DATABASE=demo
+DB_PASSWORD=root
+DB_DATABASE=nestjs_demo
 
 # 开发配置
 DB_SYNCHRONIZE=false    # 自动同步表结构（生产环境禁止开启）
@@ -200,7 +199,6 @@ REDIS_DB=0
 ```
 src/modules/template-api/
 ├── dto/
-│   ├── api-response.dto.ts         # 统一响应包装
 │   ├── pagination-meta.dto.ts      # 分页元信息
 │   ├── create-template-item.dto.ts # 创建请求体
 │   ├── update-template-item.dto.ts # 更新请求体
@@ -211,6 +209,8 @@ src/modules/template-api/
 ├── template-api.service.ts         # 业务逻辑层
 └── template-api.module.ts          # 模块定义
 ```
+
+> 统一响应包装 `ApiResponseDto` 为全局公共 DTO，位于 `src/common/dto/api-response.dto.ts`，**不在本模块的 `dto/` 目录内**。
 
 ### API 接口 🔌
 
@@ -233,7 +233,7 @@ Content-Type: application/json
   "code": 200,
   "message": "创建成功",
   "data": null,
-  "timestamp": 1716379200000
+  "timestamp": "2026-05-22T10:00:00.000Z"
 }
 ```
 
@@ -255,8 +255,8 @@ GET /backend/v1/template-api?page=1&pageSize=10&name=示例
         "id": 1,
         "name": "示例模板",
         "description": "这是一个示例模板条目",
-        "createdAt": "2026-05-22T10:00:00.000Z",
-        "updatedAt": "2026-05-22T10:00:00.000Z"
+        "createdAt": 1779444000,
+        "updatedAt": 1779444000
       }
     ],
     "pagination": {
@@ -266,7 +266,7 @@ GET /backend/v1/template-api?page=1&pageSize=10&name=示例
       "totalPages": 1
     }
   },
-  "timestamp": 1716379200000
+  "timestamp": "2026-05-22T10:00:00.000Z"
 }
 ```
 
@@ -286,10 +286,10 @@ GET /backend/v1/template-api/1
     "id": 1,
     "name": "示例模板",
     "description": "这是一个示例模板条目",
-    "createdAt": "2026-05-22T10:00:00.000Z",
-    "updatedAt": "2026-05-22T10:00:00.000Z"
+    "createdAt": 1779444000,
+    "updatedAt": 1779444000
   },
-  "timestamp": 1716379200000
+  "timestamp": "2026-05-22T10:00:00.000Z"
 }
 ```
 
@@ -312,7 +312,7 @@ Content-Type: application/json
   "code": 200,
   "message": "更新成功",
   "data": null,
-  "timestamp": 1716379500000
+  "timestamp": "2026-05-22T10:00:00.000Z"
 }
 ```
 
@@ -329,7 +329,7 @@ DELETE /backend/v1/template-api/1
   "code": 200,
   "message": "删除成功",
   "data": null,
-  "timestamp": 1716379800000
+  "timestamp": "2026-05-22T10:00:00.000Z"
 }
 ```
 
@@ -342,7 +342,7 @@ DELETE /backend/v1/template-api/1
   code: number // HTTP 状态码
   message: string // 响应消息
   data: T | null // 响应数据（泛型）
-  timestamp: number // 时间戳
+  timestamp: string // 时间戳
 }
 ```
 

@@ -2,6 +2,8 @@
 
 一个基于 NestJS 的企业级后端模板项目，集成了 MySQL、Redis、TypeORM，提供规范的代码结构和开发最佳实践。
 
+> **开发规则**：本目录的开发规则见 [`AGENTS.md`](AGENTS.md)，后端专项规则与技能位于 `.agents/`。本 README 仅作使用说明，**不构成规则来源**；两者不一致时以 `AGENTS.md` 为准。
+
 ## 项目简介 📦
 
 本项目是一个 NestJS 后端开发模板，旨在提供一套开箱即用的企业级开发框架。项目集成了常用的中间件和工具库，包括：
@@ -18,7 +20,11 @@
 ## 目录结构 📁
 
 ```
-backend-template-nest/
+backend/
+├── AGENTS.md                     # 本目录规则入口（开发规则以此为准）
+├── .agents/                      # 后端专项规则与技能
+│   ├── rules/                    # 专项规则（ponytail.md）
+│   └── skills/                   # 专项技能（database-design）
 ├── src/                          # 源代码目录
 │   ├── common/                   # 公共模块
 │   │   ├── database/             # 数据库健康检查服务
@@ -186,6 +192,8 @@ REDIS_DB=0
 ## 示例 API - Template API 📚
 
 项目提供了一个完整的示例模块 `template-api`，演示了标准的 RESTful API 开发模式。
+
+> **路径前缀说明**：`template-api` 属基础模板示例模块，按 [AGENTS.md](AGENTS.md) 的归属豁免规则保留在 `src/modules/` 根目录，因此路径为 `/backend/v1/template-api`，而非 `/backend/v1/admin/...`。新增业务模块仍须遵循「后台接口用 `admin` 前缀、用户端用 `user` 分层」的约定。
 
 ### 模块结构 🏗️
 
@@ -364,7 +372,7 @@ cp .env.example .env
 
 应用启动时会对已启用的 MySQL 与 Redis 执行 `ping`。开发和测试环境的 `/backend/v1/health` 会返回最近一次 MySQL 与 Redis 连通性状态；生产环境仅返回服务存活状态。
 
-新建数据库直接执行 `src/database/migrations/access_logs.sql`。
+新建数据库直接执行 `src/database/migrations/V1__access_logs.sql`。后续迁移文件按 `V{序号}__{描述}.sql` 顺序命名，规则详见 [AGENTS.md](AGENTS.md)。
 
 ### 3. 启动开发服务器 ▶️
 
@@ -381,24 +389,24 @@ npm run start:prod
 
 ## 开发脚本 🛠️
 
-| 命令                  | 说明                   |
-| --------------------- | ---------------------- |
-| `npm run start`       | 启动应用               |
-| `npm run start:dev`   | 开发模式启动（热重载） |
-| `npm run start:debug` | 调试模式启动           |
-| `npm run start:prod`  | 生产模式启动           |
-| `npm run build`       | 构建生产版本           |
-| `npm run format`       | 使用 Prettier 格式化 `src/**/*.ts`     |
-| `npm run format:check` | 校验格式，不修改文件（适用于 CI）      |
-| `npm run lint`         | ESLint 检查并自动修复                  |
-| `npm run lint:check`   | ESLint 检查，不修改文件（适用于 CI）   |
+| 命令                   | 说明                                 |
+| ---------------------- | ------------------------------------ |
+| `npm run start`        | 启动应用                             |
+| `npm run start:dev`    | 开发模式启动（热重载）               |
+| `npm run start:debug`  | 调试模式启动                         |
+| `npm run start:prod`   | 生产模式启动                         |
+| `npm run build`        | 构建生产版本                         |
+| `npm run format`       | 使用 Prettier 格式化 `src/**/*.ts`   |
+| `npm run format:check` | 校验格式，不修改文件（适用于 CI）    |
+| `npm run lint`         | ESLint 检查并自动修复                |
+| `npm run lint:check`   | ESLint 检查，不修改文件（适用于 CI） |
 
 ## 技术栈 💻
 
 - **运行时**：Node.js
 - **框架**：NestJS 11.x
 - **语言**：TypeScript 5.x
-- **数据库**：MySQL + TypeORM 11.x
+- **数据库**：MySQL + TypeORM 1.x（经 `@nestjs/typeorm` 11.x 接入）
 - **缓存**：Redis + ioredis 5.x
 - **日志**：Winston + nest-winston
 - **验证**：class-validator + class-transformer

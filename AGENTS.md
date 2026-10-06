@@ -9,24 +9,27 @@
 
 ## 规则加载与优先级
 
-1. 本文件优先于子项目 `AGENTS.md`，用于处理**跨端、根级配置与仓库整体**的约定。
-2. 任务只涉及单端时，按改动路径读取对应子项目规则，并遵循其内部优先级：
-   - 改动 `frontend/` → 读取 [frontend/AGENTS.md](frontend/AGENTS.md)，再按其中的「按需加载索引」加载 `frontend/.agents/rules/` 与 `frontend/.agents/skills/` 中的匹配项。
-   - 改动 `backend/` → 读取 [backend/AGENTS.md](backend/AGENTS.md)，再按任务加载 `backend/.agents/rules/` 与 `backend/.agents/skills/`。
-   - 两端共用的技能（提交信息生成、改动说明生成、代码审查、编码行为准则、TypeDoc 注释规范）统一位于根 `.agents/skills/`，两端以 `../.agents/skills/` 引用，**不得在子项目内重复实现同名技能**。
-3. 两端规则冲突时，以**改动所在子项目的规则**为准；根级配置（脚本、钩子、提交规范）以本文件与根目录实现为准。
-4. 用户明确要求优先于上述项目规则。
+1. **作用域**：本文件是**仓库级**规则入口，只承载**跨端、根级配置与仓库整体**的约定，**不替代**子项目规则。处理任一子项目的代码前，必须先加载该子项目的 `AGENTS.md`，再按其中的索引加载专项规则与技能。
+2. **强制加载路径**：任务只涉及单端时，按改动路径读取对应子项目规则，并遵循其内部优先级：
+   - 改动 `frontend/**` → 读取 [frontend/AGENTS.md](frontend/AGENTS.md)，再按其中的「按需加载索引」加载 `frontend/.agents/rules/`、`frontend/.agents/skills/`、`frontend/.agents/references/` 中的匹配项。
+   - 改动 `backend/**` → 读取 [backend/AGENTS.md](backend/AGENTS.md)。**两端规则体系不对称**：`backend/AGENTS.md` 自身即规则主体（通用规则直接内联），`backend/.agents/` 下仅保留 `rules/ponytail.md` 与 `skills/database-design/`，按需加载；**不要假定后端存在与前端同名的专项规则文件**。
+3. **跨端共用技能**：提交信息生成、改动说明生成、代码审查、编码行为准则、TypeDoc 注释规范统一位于**仓库根 `.agents/skills/`**（当前 5 个：`commit-msg`、`git-commit-changelog`、`code-review`、`karpathy-guidelines`、`typedoc-style`），两端以 `../.agents/skills/` 引用，**不得在子项目内重复实现同名技能**。
+4. **文档定位**：子项目 `README.md` 仅作使用说明（安装、启动、接口示例），**不是规则来源**；规则一律以该目录下的 `AGENTS.md` 为准。仓库级说明见根 [README.md](README.md)。
+5. 两端规则冲突时，以**改动所在子项目的规则**为准；根级配置（脚本、钩子、提交规范）以本文件与根目录实现为准。
+6. 用户明确要求优先于上述项目规则。
 
 ## 目录职责边界
 
 | 路径 | 职责 | 改动注意 |
 | --- | --- | --- |
-| `frontend/` | 前端应用：页面、路由、API、状态、样式 | 遵循前端规则；请求统一走 `src/utils/http` 的默认 `request` 实例 |
-| `backend/` | 后端服务：Controller、Service、Entity、迁移 | 遵循后端规则；写操作响应统一 `data: null`；数据库变更走 `src/database/migrations` |
+| `frontend/` | 前端应用：页面、路由、API、状态、样式 | 遵循 [frontend/AGENTS.md](frontend/AGENTS.md)；请求统一走 `src/utils/http` 的默认 `request` 实例 |
+| `backend/` | 后端服务：Controller、Service、Entity、迁移 | 遵循 [backend/AGENTS.md](backend/AGENTS.md)；写操作响应统一 `data: null`；数据库变更走 `src/database/migrations` |
 | `package.json`（根） | 编排脚本 | 新增脚本需同时更新根 `README.md` 的命令表 |
 | `.agents/skills/`（根） | 跨端共用技能：提交信息、改动说明、代码审查、编码准则、TypeDoc 规范 | **唯一真源**，禁止在 `frontend/`、`backend/` 内重复放置同名技能 |
 | `.husky/`、`commitlint.config.cjs` | 仓库级提交规范 | **唯一生效的钩子入口**，不要改为依赖子项目 `.husky/` |
-| `AGENTS.md`、`README.md`（根） | 仓库级文档 | 结构调整后同步更新 |
+| `AGENTS.md`（根） | 仓库级规则入口 | 仅承载跨端与根级约定，**不替代**子项目规则 |
+| `frontend/AGENTS.md`、`backend/AGENTS.md` | 子项目规则入口 | 改动对应子项目前**必须先读**；两端体系不对称，见「规则加载与优先级」第 2 条 |
+| `README.md`（根、子项目） | 使用说明，**非规则来源** | 规则一律以同级 `AGENTS.md` 为准；结构调整后同步更新 |
 
 ## 根级工程约定
 

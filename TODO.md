@@ -169,7 +169,7 @@ backend/src/modules/
 
 迁移文件按 `backend/AGENTS.md` 要求放入 `backend/src/database/migrations/`，命名 `V{序号}__{描述}.sql`，且已执行迁移不得修改。
 
-> 现有参考：`backend/src/database/migrations/access_logs.sql`。
+> 现有参考：`backend/src/database/migrations/V1__access_logs.sql`。
 
 ### 1.5 缺口：前端写操作尚无接口
 

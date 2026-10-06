@@ -8,4 +8,4 @@
 
 - `src/types/` 下新增的多单词类型文件优先使用小驼峰命名，例如 `systemManage.d.ts`、`versionControl.d.ts`；若历史文件仍使用中划线命名，应先尊重当前仓库现状，在重命名时同步调整全部引用后再统一收敛。
 
-类型注释示例见 [typedoc-style](../skills/typedoc-style/SKILL.md)。
+类型注释示例见 [typedoc-style](../../../.agents/skills/typedoc-style/SKILL.md)。

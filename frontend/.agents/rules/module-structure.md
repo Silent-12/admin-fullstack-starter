@@ -1,10 +1,10 @@
 # 目录、路由与组件
 
-[返回主索引](../../AGENTS.md)。本文中的源码路径均相对仓库根目录。
+[返回主索引](../../AGENTS.md)。本文中的源码路径均相对 `frontend/` 目录。
 
 - 组件目录分层规则（布局与 Ao 表格/表单组件已抽离至 `@ao/admin-layout` / `@ao/admin-components` 包，模板内不得重建同名组件）：
-  - 通用基础组件放在 `src/components/` 下，按类别（`base/`、`banners/`、`forms/`、`layouts/`、`media/`、`others/`、`tables/` 等）分子目录；
-  - 无子组件或私有资源的通用组件直接使用大驼峰文件名（如 `src/components/layouts/AoFastEnter.vue`）；包含子组件或私有资源的组件保留大驼峰目录和 `index.vue` 入口，组件私有样式同名 `style.scss`，主题样式同名 `theme.scss`。
+  - 通用基础组件放在 `src/components/` 下，按类别（`base/`、`banners/`、`layouts/`、`media/`、`text-effect/`、`theme/` 等）分子目录；
+  - 无子组件或私有资源的通用组件直接使用大驼峰文件名（如 `src/components/base/AoBackToTop.vue`）；包含子组件或私有资源的组件保留大驼峰目录和 `index.vue` 入口，组件私有样式同名 `style.scss`，主题样式同名 `theme.scss`。
   - 仅服务单一业务的组件放在对应页面的 `src/views/<业务模块>/components/` 下，并由业务页面显式引入，不作为通用组件注册。
   - 业务页面放在 `src/views/` 下，按业务模块分子目录（如 `system/user/`、`system/role/`、`system/menu/`）；页面内的弹窗、抽屉等子模块放在对应模块的 `components/` 子目录中。
 
@@ -15,7 +15,7 @@
 
 - 自定义指令统一放在 `src/directives/` 根目录（`auth`、`highlight`），通过 `src/directives/index.ts` 统一注册。
 
-- 复用逻辑优先抽成 Composable，放置在 `src/hooks/core/` 下，命名以 `use` 开头（如 `useTable`、`useAuth`、`useTheme`）；不要在组件内重复实现已存在的 hook 能力。
+- 复用逻辑优先抽成 Composable。公共 Composable（如 `useTable`、`useAuth`、`useTheme`）由 `@ao/admin-layout` 与 `@ao/admin-components` 提供，禁止在本目录重复实现；本地 `src/hooks/` 目录当前为空，仅在确有宿主专属逻辑时新增，命名以 `use` 开头。
 
 ## 业务表格与搜索
 

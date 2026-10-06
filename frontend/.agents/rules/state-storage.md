@@ -1,8 +1,8 @@
 # 状态管理与持久化
 
-[返回主索引](../../AGENTS.md)。本文中的源码路径均相对仓库根目录。
+[返回主索引](../../AGENTS.md)。本文中的源码路径均相对 `frontend/` 目录。
 
-- 状态管理使用 Pinia，模块定义在 `src/store/modules/` 下，每个 store 一个文件，命名与业务域对应（如 `user.ts`、`menu.ts`、`setting.ts`、`worktab.ts`）；持久化通过 `pinia-plugin-persistedstate`，key 命名需语义清晰。
+- 状态管理使用 Pinia，模块定义在 `src/store/modules/` 下，每个 store 一个文件，命名与业务域对应（当前为 `user.ts`、`menu.ts`）；`setting` 与 `worktab` 由 `@ao/admin-layout` 提供，不在本目录重复实现；持久化通过 `pinia-plugin-persistedstate`，key 命名需语义清晰。
   - Pinia Setup Store 的持久化示例：
     ```ts
     import { defineStore } from 'pinia'

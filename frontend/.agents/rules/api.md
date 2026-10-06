@@ -1,6 +1,6 @@
 # 接口请求与响应
 
-[返回主索引](../../AGENTS.md)。本文中的源码路径均相对仓库根目录。
+[返回主索引](../../AGENTS.md)。本文中的源码路径均相对 `frontend/` 目录。
 
 - 所有 HTTP 请求必须通过 `src/utils/http/index.ts` 封装的默认 `request` 实例发起，统一经过请求 / 响应拦截器；禁止在业务代码中直接 `import axios from 'axios'` 自建实例。API 方法定义统一放置在 `src/api/` 下，按业务模块分文件，方法名以 `fetch` / `get` / `update` / `create` / `delete` 等动词开头。
 

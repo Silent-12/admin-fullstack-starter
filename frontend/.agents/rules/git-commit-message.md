@@ -37,7 +37,7 @@ docs(readme): 更新 Docker 部署文档
 | ci       | CI/CD 配置修改                     |
 | chore    | 杂项修改                           |
 | revert   | 回滚提交                           |
-| security | 安全相关修复                       |
+| wip      | 进行中的工作                       |
 
 ---
 
@@ -198,21 +198,7 @@ hotfix/jwt-expire
 
 # 推荐工具（可选）
 
-## Commitlint
-
-用于校验 commit 是否符合规范：
-
-```bash
-pnpm add -D @commitlint/cli @commitlint/config-conventional
-```
-
-## Husky
-
-用于提交前自动校验：
-
-```bash
-pnpm add -D husky
-```
+提交钩子与提交信息校验均由仓库根统一提供：`core.hooksPath` 指向根 `.husky/`，`commit-msg` 调用根 `commitlint.config.cjs`。**不要在本子项目内安装或初始化 husky**——子目录执行 husky 会覆盖 `core.hooksPath`，导致根钩子静默失效（见根 [AGENTS.md](../../../AGENTS.md)）。
 
 ---
 
@@ -231,7 +217,3 @@ pnpm add -D husky
 - 方便生成 Changelog
 - 提高团队协作效率
 - 降低维护成本
-
-```
-
-```

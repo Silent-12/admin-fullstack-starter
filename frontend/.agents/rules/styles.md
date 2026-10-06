@@ -1,6 +1,6 @@
 # SCSS 与深色模式
 
-[返回主索引](../../AGENTS.md)。本文中的源码路径均相对仓库根目录。
+[返回主索引](../../AGENTS.md)。本文中的源码路径均相对 `frontend/` 目录。
 
 - 宿主样式统一使用 SCSS，入口为 `src/assets/styles/index.scss`，保留 `mixin.scss`、`reset.scss`、`el-ui.scss`、`el-light.scss`。主题变量、暗色底座、布局和过渡动画由 `@ao/admin-layout/styles.css` 提供，在 `main.ts` 中先于宿主样式引入；不得在宿主保留迁出样式的副本。禁止引入 Tailwind 等原子化 CSS 框架，禁止使用内联 `style=""` 写大段样式（动态样式除外）。
 
@@ -72,7 +72,7 @@
 
      1. `src/views/xxx/index.vue` 第 45 行 — `color: #333` → 建议替换为 `var(--ao-gray-900)`
      2. `src/views/xxx/index.vue` 第 52 行 — `background: #f5f5f5` → 建议替换为 `var(--ao-gray-200)`
-     3. `src/views/xxx/style.scss` 第 10 行 — `border: 1px solid #ddd` → 建议替换为 `.border-full-d` 或 `var(--default-border)`
+     3. `src/views/xxx/style.scss` 第 10 行 — `border: 1px solid #ddd` → 建议替换为 `border: 1px solid var(--default-border);`
      ```
 
 4. **不需要等待用户确认**：检测到问题后直接给出警告和替换建议，继续执行后续任务。

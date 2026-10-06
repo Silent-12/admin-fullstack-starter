@@ -2,7 +2,7 @@
 
 [返回主索引](../../AGENTS.md) · [样式规则](../rules/styles.md)
 
-本文件用于查找变量用途。数值为迁移时的参考快照，使用前以**布局包仓库**的 `src/styles/` 下 `theme.scss`、`dark.scss`、`app.scss` 及宿主 `src/assets/styles/el-ui.scss` 为准（布局包安装产物只发布 `dist`，宿主侧以 `@ao/admin-layout/styles.css` 即其 `dist/index.css` 为实际生效结果，不保留其源码副本）。变量变更时同步维护本表。
+本文件用于查找变量用途。数值为迁移时的参考快照，以下变量以安装后的 `node_modules/@ao/admin-layout/dist/index.css` 与 `node_modules/@ao/admin-components/dist/index.css` 为准（包仅发布 `dist`）。变量变更时同步维护本表。
 
 ### 样式整理语义变量
 
@@ -17,15 +17,13 @@
 
 ### 语义色变量（布局包仓库 `src/styles/theme.scss`）
 
-| 变量名           | 亮色值 (`:root`)         | 暗色值 (`.dark`) | 典型用途 |
-| ---------------- | ------------------------ | ---------------- | -------- |
-| `--ao-primary`   | `oklch(0.7 0.23 260)`    | 继承亮色         | 主色调   |
-| `--ao-secondary` | `oklch(0.72 0.19 231.6)` | 继承亮色         | 次要色   |
-| `--ao-error`     | `oklch(0.73 0.15 25.3)`  | 继承亮色         | 错误色   |
-| `--ao-info`      | `oklch(0.58 0.03 254.1)` | 继承亮色         | 信息色   |
-| `--ao-success`   | `oklch(0.78 0.17 166.1)` | 继承亮色         | 成功色   |
-| `--ao-warning`   | `oklch(0.78 0.14 75.5)`  | 继承亮色         | 警告色   |
-| `--ao-danger`    | `oklch(0.68 0.22 25.3)`  | 继承亮色         | 危险色   |
+| 变量 | 取值 | 说明 |
+| --- | --- | --- |
+| `--ao-primary` | `var(--el-color-primary)` | 主色，别名到 Element Plus |
+| `--ao-success` | `var(--el-color-success)` | 成功色 |
+| `--ao-warning` | `var(--el-color-warning)` | 警告色 |
+| `--ao-danger` | `var(--el-color-danger)` | 危险色 |
+| `--ao-info` | `var(--el-color-info)` | 信息色 |
 
 ### 灰度色阶变量（亮暗反转）
 
@@ -80,12 +78,17 @@
 | 变量名                         | 说明                                          |
 | ------------------------------ | --------------------------------------------- |
 | `--main-color`                 | 指向 `var(--el-color-primary)`，主题色别名    |
-| `--theme-color`                | 指向 `var(--main-color)`                      |
 | `--el-component-custom-height` | 组件统一高度（固定 `36px`）                   |
 | `--el-component-size`          | Element Plus 组件尺寸（跟随上面）             |
 | `--custom-radius`              | 全局圆角基数（固定 `0.75rem`）                |
 | `--el-border-radius-base`      | Element 基础圆角（由 `--custom-radius` 计算） |
 | `--el-border-radius-small`     | Element 小圆角（由 `--custom-radius` 计算）   |
+
+### Element Plus 桥接变量（由 `@ao/admin-layout` 提供）
+
+| 变量名         | 说明                   |
+| --------------- | ----------------------- |
+| `--theme-color` | 指向 `var(--main-color)` |
 
 ### Element Plus 暗色覆盖（布局包仓库 `src/styles/dark.scss`，仅 `html.dark` 下生效）
 
@@ -108,15 +111,3 @@
 | `--w-e-textarea-slight-bg-color`  | `#090909`                      |
 | `--w-e-modal-button-bg-color`     | `#090909`                      |
 | `--w-e-modal-button-border-color` | `var(--default-border-dashed)` |
-
-### 预定义工具类（可直接复用，无需自定义颜色）
-
-| 工具类               | 效果                                                  |
-| -------------------- | ----------------------------------------------------- |
-| `.border-full-d`     | `border: 1px solid var(--default-border)`             |
-| `.border-b-d`        | `border-bottom: 1px solid var(--default-border)`      |
-| `.border-t-d`        | `border-top: 1px solid var(--default-border)`         |
-| `.border-l-d`        | `border-left: 1px solid var(--default-border)`        |
-| `.border-r-d`        | `border-right: 1px solid var(--default-border)`       |
-| `.rounded-custom-xs` | `border-radius: calc(var(--custom-radius) / 2)`       |
-| `.rounded-custom-sm` | `border-radius: calc(var(--custom-radius) / 2 + 2px)` |

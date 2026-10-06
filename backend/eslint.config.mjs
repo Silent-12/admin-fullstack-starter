@@ -1,6 +1,15 @@
+// ESLint 扁平配置（backend）
+//
+// 职责边界：ESLint 只负责「代码质量」，格式化统一交给 Prettier。
+// 通过 eslint-config-prettier 关闭所有与 Prettier 冲突的规则（置于数组末尾），
+// 不再引入 eslint-plugin-prettier —— 避免「把 Prettier 当作 ESLint 规则执行」带来的
+// 重复计算与两套报错口径。
+//
+// 参考：https://typescript-eslint.io/getting-started/typed-linting/
+
 // @ts-check
 import eslint from '@eslint/js';
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import prettierConfig from 'eslint-config-prettier/flat';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -10,14 +19,14 @@ export default tseslint.config(
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
-  eslintPluginPrettierRecommended,
   {
     languageOptions: {
       globals: {
         ...globals.node,
         ...globals.jest,
       },
-      sourceType: 'commonjs',
+      // package.json 已声明 "type": "module"，与 tsconfig 的 nodenext 保持一致
+      sourceType: 'module',
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
@@ -76,9 +85,8 @@ export default tseslint.config(
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-unsafe-argument': 'warn',
       '@typescript-eslint/no-require-imports': 'off',
-
-      // prettier 协同
-      'prettier/prettier': 'off',
     },
   },
+  // 关闭与 Prettier 冲突的格式化规则；必须置于最后以取得最高优先级
+  prettierConfig,
 );

@@ -36,6 +36,8 @@ admin-fullstack-starter/
 ├── .husky/                   # 仓库级 Git 钩子（唯一生效入口）
 │   ├── pre-commit            # 按改动归属分别执行子项目 lint-staged
 │   └── commit-msg            # 统一提交信息校验
+├── .vscode/                  # 编辑器推荐扩展与统一格式化设置（仓库级）
+├── .editorconfig             # 跨编辑器排版基线（缩进、换行、编码）
 ├── commitlint.config.cjs     # 仓库级提交信息规范
 ├── package.json              # 根级编排脚本
 ├── .gitignore                # 仓库级忽略规则
@@ -139,10 +141,66 @@ pnpm run dev:backend
 | `pnpm run build` | 依次构建前后端 |
 | `pnpm run build:frontend` | 仅构建前端（先 `vue-tsc` 类型检查，再输出 `frontend/dist`） |
 | `pnpm run build:backend` | 仅构建后端（输出 `backend/dist`） |
-| `pnpm run lint` | 依次对前后端执行 ESLint |
+| `pnpm run lint` | 依次对前后端执行 ESLint（含自动修复） |
+| `pnpm run lint:check` | 依次对前后端执行 ESLint 检查，不修改文件（适用于 CI） |
 | `pnpm run lint:frontend` / `lint:backend` | 单独执行某一端的 ESLint |
-| `pnpm run format:backend` | 使用 Prettier 格式化后端 `src/**/*.ts` |
+| `pnpm run format` | 依次用 Prettier 格式化前后端 |
+| `pnpm run format:check` | 依次校验前后端格式，不修改文件（适用于 CI） |
+| `pnpm run format:frontend` / `format:backend` | 单独格式化某一端 |
 | `pnpm run start:backend` | 以生产模式启动后端（需先构建） |
+
+---
+
+## 🧹 代码规范工具链（ESLint + Prettier）
+
+两端各自持有独立的 ESLint 9（扁平配置）与 Prettier 配置，互不干扰；仓库根只负责统一入口与 Git 钩子。
+
+### 职责划分
+
+| 工具 | 负责范围 | 配置文件 |
+| --- | --- | --- |
+| ESLint | 代码质量与潜在缺陷（未使用变量、类型安全、Vue 模板约束等） | `frontend/eslint.config.mjs`、`backend/eslint.config.mjs` |
+| Prettier | 纯排版（缩进、引号、分号、行宽、换行符） | `frontend/.prettierrc`、`backend/.prettierrc` |
+| eslint-config-prettier | 关闭与 Prettier 冲突的格式化规则，避免两套工具互相覆盖 | 由两端 ESLint 配置**末尾**引入 |
+| Stylelint | 仅前端样式（SCSS / CSS / Vue） | `frontend/.stylelintrc.cjs` |
+| EditorConfig | 跨编辑器排版基线（缩进、换行、编码） | 根 `.editorconfig` |
+
+**冲突处理策略**：ESLint 与 Prettier 的重叠部分**只保留一个真源**——格式化规则全部交给 Prettier，ESLint 侧由 `eslint-config-prettier` 兜底关闭。因此两端均**不引入 `eslint-plugin-prettier`**（即不在 ESLint 内执行 Prettier），避免重复计算与两套报错口径。
+
+唯一例外是前端 `no-unexpected-multiline`：它虽然与 Prettier 重叠，但拦截的是无分号风格下的 ASI 陷阱，属于**代码正确性**而非排版，且被 `eslint-config-prettier` 的 special rules 一并关闭。因此该规则在 `prettierConfig` **之后**显式重新开启，请勿当作冗余配置删除。
+
+两端 Prettier 风格**有意保持差异**（前端 `printWidth: 100`、后端 `140`），沿用各自模板原有习惯，不做跨端统一。两端均显式声明 `endOfLine: "auto"`，以免 Windows 工作区的 CRLF 被 Prettier 默认的 `lf` 判定为格式错误。
+
+### 协作方式
+
+1. **构建工具**：`pnpm run build` 保持原有链路不变（前端 `vue-tsc --noEmit && vite build`、后端 `nest build`）。Lint 与格式化不介入构建，构建失败与规范失败互不掩盖。
+2. **编辑器**：根 `.vscode/settings.json` 已开启「保存即格式化 + 保存时应用 ESLint 可修复项」，`eslint.workingDirectories` 设为 `auto`，使前后端各自命中自己的配置；首次打开仓库时按 `.vscode/extensions.json` 安装推荐扩展即可。
+3. **Git 提交**：`.husky/pre-commit` 按改动归属分别调用子项目 `lint-staged`（执行 `eslint --fix` 与 `prettier --write`，前端 Vue/样式文件额外执行 `stylelint --fix`）；`.husky/commit-msg` 调用根 `commitlint` 校验提交信息格式。
+
+### 验证步骤
+
+```powershell
+# 1. 安装依赖（含 Git 钩子初始化）
+pnpm install
+pnpm run install:all
+
+# 2. 只读校验：不修改任何文件，适用于 CI
+pnpm run lint:check     # ESLint（前后端）
+pnpm run format:check   # Prettier（前后端）
+
+# 3. 自动修复：会改写文件，运行后请检查 git diff
+pnpm run lint
+pnpm run format
+
+# 4. 单端校验
+pnpm run lint:check:frontend
+pnpm run format:check:backend
+
+# 5. 验证提交钩子（提交信息须符合 type(scope): subject）
+git commit -m "chore(eslint): verify hooks"
+```
+
+`lint:check` 与 `format:check` 以**退出码**表达结果：`0` 表示通过，非 `0` 表示存在待修复问题，可直接用于 CI 门禁。
 
 ---
 

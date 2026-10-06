@@ -388,8 +388,10 @@ npm run start:prod
 | `npm run start:debug` | 调试模式启动           |
 | `npm run start:prod`  | 生产模式启动           |
 | `npm run build`       | 构建生产版本           |
-| `npm run format`      | 格式化代码             |
-| `npm run lint`        | 检查并修复代码         |
+| `npm run format`       | 使用 Prettier 格式化 `src/**/*.ts`     |
+| `npm run format:check` | 校验格式，不修改文件（适用于 CI）      |
+| `npm run lint`         | ESLint 检查并自动修复                  |
+| `npm run lint:check`   | ESLint 检查，不修改文件（适用于 CI）   |
 
 ## 技术栈 💻
 

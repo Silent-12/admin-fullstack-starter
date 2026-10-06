@@ -1,0 +1,31 @@
+# EditorConfig —— 跨编辑器的排版基线
+#
+# 作用：统一「编辑器默认行为」（缩进、换行、编码、行尾空格），与具体语言无关。
+# 边界：真正的代码格式化仍由各子项目的 Prettier 配置决定，本文件不覆盖其规则。
+#
+# 说明：仓库以 LF 存储（Windows 上由 git core.autocrlf 自动转换），
+# 源码统一 UTF-8 无 BOM，与 backend/AGENTS.md 的编码约定一致。
+#
+# 参考：https://editorconfig.org
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Markdown 中的行尾双空格是换行语法，不能裁剪
+[*.md]
+trim_trailing_whitespace = false
+
+# Windows 批处理必须使用 CRLF，否则可能无法执行
+[*.{bat,cmd}]
+end_of_line = crlf
+
+# SQL 迁移文件由数据库规范维护，此处仅统一基础排版
+[*.sql]
+indent_size = 2

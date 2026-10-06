@@ -33,6 +33,7 @@
 - **包管理器分工固定**：`frontend/` 使用 pnpm（`pnpm-lock.yaml`），`backend/` 使用 npm（`package-lock.json`），根目录使用 pnpm。不要跨端混用，也不要新增根 `pnpm-workspace.yaml`。
 - **子项目不得再声明 `prepare: husky`**：`core.hooksPath` 是仓库级配置，子目录执行 `husky` 会覆盖根钩子指向，导致根 `.husky/` 静默失效。
 - **根脚本委托方式**：调用前端用 `pnpm --dir frontend run <script>`，调用后端用 `npm --prefix backend run <script>`。两者都会把工作目录切到对应子项目，这对前端 `vite.config.ts`（依赖 `process.cwd()` 加载 `.env`）与后端实体扫描（依赖 `process.cwd()/dist`）是必需的。
+- **后端安装依赖不得使用 `npm --prefix backend install`**：该写法在仓库根执行时，npm 会把根 `package.json` 当作上层包，向 `backend/package.json` 注入 `"admin-fullstack-starter": "file:.."` 依赖、生成指向仓库根的自链接软链，并污染 `backend/package-lock.json`。安装统一使用 `cd backend && npm install`（即根 `install:backend` 脚本的写法）。
 - **提交信息**：遵循根 `commitlint.config.cjs`，格式 `type(scope): subject`；`pre-commit` 按改动归属分别执行子项目 `lint-staged`。
 
 ## 合并状态说明

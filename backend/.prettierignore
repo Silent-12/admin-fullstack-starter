@@ -1,0 +1,12 @@
+# 依赖与构建产物
+node_modules/
+dist/
+coverage/
+
+# 锁文件与日志
+package-lock.json
+pnpm-lock.yaml
+*.log
+
+# 数据库迁移 SQL：由数据库规范维护，不交给 Prettier 排版
+src/database/migrations/*.sql

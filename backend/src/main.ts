@@ -125,7 +125,11 @@ function configureKnife4j(app: NestExpressApplication, configService: ConfigServ
     }
   }
   // OpenAPI 文档仍由 Nest Swagger 生成，Knife4j 仅替换交互界面。
-  const documentConfig = new DocumentBuilder().setTitle('Backend Template API').setDescription('Backend Template API documentation').setVersion('1.0').build()
+  const documentConfig = new DocumentBuilder()
+    .setTitle('Backend Template API')
+    .setDescription('Backend Template API documentation')
+    .setVersion('1.0')
+    .build()
   const document = SwaggerModule.createDocument(app, documentConfig)
   SwaggerModule.setup('api', app, document, { useGlobalPrefix: true, ui: false, jsonDocumentUrl: 'api-json' })
   void knife4jSetup(app, [{ name: 'Backend Template', url: '/api-json' }], apiPrefix || undefined)

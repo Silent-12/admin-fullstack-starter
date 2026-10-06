@@ -198,10 +198,11 @@ Vite 先加载 [`.env`](.env)，再按运行模式加载 [`.env.development`](.e
 | `pnpm dev`                             | 启动开发服务                             |
 | `pnpm run build`                       | 先执行 TypeScript 检查，再构建到 `dist/` |
 | `pnpm run serve`                       | 本地预览已生成的构建产物                 |
-| `pnpm run lint`                        | 执行 ESLint 检查                         |
-| `pnpm run fix`                         | 执行 ESLint 自动修复                     |
+| `pnpm run lint`                        | 执行 ESLint 检查并自动修复               |
+| `pnpm run lint:check`                  | 执行 ESLint 检查，不修改文件（适用于 CI） |
+| `pnpm run format`                      | 用 Prettier 格式化脚本、JSON、Vue 与样式  |
+| `pnpm run format:check`                | 校验格式是否符合 Prettier，不修改文件    |
 | `pnpm run lint:stylelint`              | 检查并自动修复样式                       |
-| `pnpm run lint:prettier`               | 格式化脚本、JSON、Vue 和样式等文件       |
 | `pnpm exec prettier --check README.md` | 单独检查 README 格式                     |
 
 带自动修复或格式化的命令会修改文件，运行后应检查 Git diff。项目目前没有独立的 `test` 脚本；按改动范围执行检查，并回归相关页面。完整要求见 [开发流程与验证](.agents/rules/workflow.md)。

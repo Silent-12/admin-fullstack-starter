@@ -1,0 +1,44 @@
+{
+  // ==================== 统一格式化行为 ====================
+  // 保存即格式化：Prettier 负责排版，ESLint 负责代码质量，二者互不越界。
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // 仅格式化存在 Prettier 配置的文件，避免用默认风格误改未纳管文件
+  "prettier.requireConfig": true,
+  // 保存时自动应用 ESLint 的可修复项（explicit = 仅在显式保存时触发）
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.stylelint": "explicit"
+  },
+
+  // ==================== 各语言默认格式化器 ====================
+  "[vue]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[css]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[scss]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[html]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[yaml]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "files.trimTrailingWhitespace": false
+  },
+
+  // ==================== ESLint 工作目录 ====================
+  // 仓库为类 Monorepo：frontend 与 backend 各自持有 eslint.config.mjs 与依赖，
+  // auto 模式按就近 package.json 解析配置，避免根目录误判。
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+  "eslint.validate": ["javascript", "typescript", "vue"],
+
+  // ==================== Stylelint ====================
+  // 仅 frontend 具备 Stylelint 配置，backend 不会命中
+  "stylelint.validate": ["css", "scss", "vue"],
+
+  // ==================== 基础编辑器行为 ====================
+  "editor.tabSize": 2,
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true
+}

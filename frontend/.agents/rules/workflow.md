@@ -17,9 +17,9 @@
 
 ## 完成检查
 
-- 涉及源码改动的任务完成后，都需要执行 `package.json` 中与改动范围对应的检查；默认至少执行 `pnpm run lint`。涉及样式改动时一并执行 `pnpm run lint:stylelint`，存在格式化差异时执行 `pnpm run lint:prettier`；涉及构建链路、路由装配、类型声明或样式变量调整时，应补充执行 `pnpm run build`。
+- 涉及源码改动的任务完成后，都需要执行 `package.json` 中与改动范围对应的检查；默认至少执行 `pnpm run lint`（会自动修复）。涉及样式改动时一并执行 `pnpm run lint:stylelint`，存在格式化差异时执行 `pnpm run format`；涉及构建链路、路由装配、类型声明或样式变量调整时，应补充执行 `pnpm run build`。
 
-- 样式整理完成后必须执行 `pnpm run lint`、`pnpm run lint:stylelint`、`pnpm run lint:prettier` 和 `pnpm run build`；涉及选择器归并时还应执行 `git diff --check` 并检查最终 diff 只包含预期的样式结构、格式和 CSS 变量调整。
+- 样式整理完成后必须执行 `pnpm run lint`、`pnpm run lint:stylelint`、`pnpm run format` 和 `pnpm run build`；涉及选择器归并时还应执行 `git diff --check` 并检查最终 diff 只包含预期的样式结构、格式和 CSS 变量调整。
 
-- `lint:stylelint` 和 `lint:prettier` 会自动写入文件，执行后复查 diff，避免混入无关修改。
-- 仅修改文档时，检查内容完整性、相对链接、UTF-8 无 BOM 编码与 Markdown 格式，并执行 `git diff --check`；无需运行源码构建。现有 `lint:prettier` 脚本不覆盖 Markdown，可用 `pnpm exec prettier --check <本次修改的文档路径>` 定向检查。
+- `lint`、`lint:stylelint` 和 `format` 会自动写入文件，执行后复查 diff，避免混入无关修改。
+- 仅修改文档时，检查内容完整性、相对链接、UTF-8 无 BOM 编码与 Markdown 格式，并执行 `git diff --check`；无需运行源码构建。现有 `format` 脚本不覆盖 Markdown，可用 `pnpm exec prettier --check <本次修改的文档路径>` 定向检查。

@@ -1,3 +1,12 @@
+# 依赖与构建产物
 /node_modules/*
 /dist/*
 /preview/*
+/stats.html
+
+# 锁文件与自动生成文件
+/pnpm-lock.yaml
+/.auto-import.json
+
+# 静态资源目录（favicon、模板 HTML 等无需格式化）
+/public/*

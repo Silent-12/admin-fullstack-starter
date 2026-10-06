@@ -12,7 +12,7 @@
 
     "install:all": "pnpm run install:frontend && pnpm run install:backend",
     "install:frontend": "pnpm --dir frontend install",
-    "install:backend": "npm --prefix backend install",
+    "install:backend": "cd backend && npm install",
 
     "dev": "concurrently -n frontend,backend -c cyan,magenta \"pnpm run dev:frontend\" \"pnpm run dev:backend\"",
     "dev:frontend": "pnpm --dir frontend run dev",
@@ -25,8 +25,17 @@
     "lint": "pnpm run lint:frontend && pnpm run lint:backend",
     "lint:frontend": "pnpm --dir frontend run lint",
     "lint:backend": "npm --prefix backend run lint",
+    "lint:check": "pnpm run lint:check:frontend && pnpm run lint:check:backend",
+    "lint:check:frontend": "pnpm --dir frontend run lint:check",
+    "lint:check:backend": "npm --prefix backend run lint:check",
 
+    "format": "pnpm run format:frontend && pnpm run format:backend",
+    "format:frontend": "pnpm --dir frontend run format",
     "format:backend": "npm --prefix backend run format",
+    "format:check": "pnpm run format:check:frontend && pnpm run format:check:backend",
+    "format:check:frontend": "pnpm --dir frontend run format:check",
+    "format:check:backend": "npm --prefix backend run format:check",
+
     "start:backend": "npm --prefix backend run start:prod"
   },
   "devDependencies": {

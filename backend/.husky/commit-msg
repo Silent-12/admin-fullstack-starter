@@ -1,4 +1,0 @@
-#!/bin/sh
-# 注意：合并进 admin-fullstack-starter 后，提交钩子统一由仓库根目录 .husky/ 提供，本文件不再生效。
-# 保留此文件仅用于记录 backend-template-nest 模板的原始钩子配置。
-./node_modules/.bin/commitlint --edit $1

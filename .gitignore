@@ -19,6 +19,9 @@ yarn-error.log*
 *.local
 .env.local
 .env.*.local
+# 后端本地环境变量：内含数据库与 Redis 密码，禁止提交
+backend/.env
+!backend/.env.example
 
 # ==================== 缓存 ====================
 .eslintcache

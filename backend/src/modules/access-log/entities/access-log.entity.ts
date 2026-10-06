@@ -5,11 +5,12 @@ import dayjs from 'dayjs'
  * 访问日志实体
  * @description 记录所有 HTTP 请求的访问信息，用于生产环境请求审计与性能分析
  */
-@Entity('access_logs', { comment: '访问日志表' })
+@Entity('access_logs', { comment: 'HTTP 请求访问日志表' })
 @Index('idx_created_at', ['createdAt'])
 @Index('idx_status_code', ['statusCode'])
 @Index('idx_trace_id', ['traceId'])
 @Index('idx_source_created_at', ['source', 'createdAt'])
+@Index('idx_ip_created_at', ['ip', 'createdAt'])
 export class AccessLog {
   /**
    * 主键 ID

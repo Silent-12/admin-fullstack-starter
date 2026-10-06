@@ -312,7 +312,7 @@ Content-Type: application/json
   "code": 200,
   "message": "更新成功",
   "data": null,
-  "timestamp": "2026-05-22T10:00:00.000Z"
+  "timestamp": "2026-05-22T10:05:00.000Z"
 }
 ```
 
@@ -329,7 +329,7 @@ DELETE /backend/v1/template-api/1
   "code": 200,
   "message": "删除成功",
   "data": null,
-  "timestamp": "2026-05-22T10:00:00.000Z"
+  "timestamp": "2026-05-22T10:10:00.000Z"
 }
 ```
 

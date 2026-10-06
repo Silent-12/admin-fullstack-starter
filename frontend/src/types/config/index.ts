@@ -93,12 +93,8 @@ export interface EnvConfig {
   VITE_API_URL: string
   // 路由来源
   VITE_ROUTE_SOURCE: 'static' | 'dynamic'
-  // 是否开启 Mock
-  VITE_USE_MOCK?: string
-  // 是否开启压缩
-  VITE_USE_GZIP?: string
-  // 是否开启 CDN
-  VITE_USE_CDN?: string
+  // 跨域请求是否携带 Cookie
+  VITE_WITH_CREDENTIALS: string
 }
 
 // 应用配置

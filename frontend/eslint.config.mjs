@@ -63,14 +63,6 @@ export default [
   },
   // 忽略文件
   {
-    ignores: [
-      'node_modules',
-      '**/dist',
-      'public',
-      '.vscode/**',
-      'src/assets/**',
-      'src/utils/console.ts',
-      '**/*.local/**'
-    ]
+    ignores: ['node_modules', '**/dist', 'public', '.vscode/**', 'src/assets/**', '**/*.local/**']
   }
 ]

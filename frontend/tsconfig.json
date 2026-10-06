@@ -16,10 +16,8 @@
       "@/*": ["src/*"],
       "@views/*": ["src/views/*"],
       "@imgs/*": ["src/assets/images/*"],
-      "@icons/*": ["src/assets/icons/*"],
       "@utils/*": ["src/utils/*"],
       "@stores/*": ["src/store/*"],
-      "@plugins/*": ["src/plugins/*"],
       "@styles/*": ["src/assets/styles/*"]
     }
   },

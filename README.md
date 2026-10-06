@@ -32,6 +32,7 @@ admin-fullstack-starter/
 │   ├── .env.example          # 环境变量示例（需自行复制为 .env）
 │   ├── AGENTS.md             # 后端项目规则入口
 │   └── .agents/              # 后端专项规则与技能
+├── .agents/                  # 跨端共用技能（提交信息、改动说明、代码审查）
 ├── .husky/                   # 仓库级 Git 钩子（唯一生效入口）
 │   ├── pre-commit            # 按改动归属分别执行子项目 lint-staged
 │   └── commit-msg            # 统一提交信息校验
@@ -181,6 +182,7 @@ pnpm run dev:backend
 
 - 前端规则入口：[frontend/AGENTS.md](frontend/AGENTS.md)，专项规则位于 `frontend/.agents/rules/`
 - 后端规则入口：[backend/AGENTS.md](backend/AGENTS.md)，专项规则位于 `backend/.agents/`
+- 跨端共用技能：位于根 `.agents/skills/`（`commit-msg`、`git-commit-changelog`、`code-review`、`karpathy-guidelines`、`typedoc-style`），由两端规则入口以 `../.agents/skills/` 引用，子项目内不再重复维护
 
 **提交信息规范**：`feat` / `fix` / `docs` / `style` / `refactor` / `perf` / `test` / `build` / `ci` / `revert` / `chore` / `wip`，格式为 `type(scope): subject`。
 

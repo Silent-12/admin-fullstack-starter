@@ -105,7 +105,7 @@ import '@ao/admin-layout/styles.css'
 
 ```text
 admin-template-vue/
-├── .agents/                 # 项目规则、技能与参考资料
+├── .agents/                 # 前端专项规则、技能与参考资料（跨端共用技能见仓库根 .agents/）
 ├── public/                  # 无需构建处理的静态资源
 ├── src/
 │   ├── api/                 # 真实业务接口方法

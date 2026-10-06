@@ -71,7 +71,7 @@ git ls-files --others --exclude-standard   # untracked 新文件清单，diff �
 
 规范以项目自身文档为准，审查前先收集：
 
-- 项目根目录的 `CLAUDE.md`、`AGENTS.md.md`、`README` 等主文档。
+- 项目根目录的 `CLAUDE.md`、`AGENTS.md`、`README` 等主文档。
 - 项目内的 rules/skills 目录（如 `.agents/rules/`、`.claude/rules/`）。
 - 代码风格工具配置（lint/formatter），仅用于判断哪些项工具已强制覆盖，这些项不必人工审查。
 
@@ -138,7 +138,7 @@ git ls-files --others --exclude-standard   # untracked 新文件清单，diff �
 
 循环内重复请求外部资源（如每条数据一次查询）、明显的大数据量处理、重复计算。`array.map` 这类常规操作不构成性能问题。
 
-涉及查询谓词、事务锁定或第三方调用编排时，重点核对以下三类问题（规范来源：`.agents/rules/query-performance.md`）：
+涉及查询谓词、事务锁定或第三方调用编排时，重点核对以下三类问题（如项目规则中存在查询性能相关约束，须一并对照）：
 
 - **索引失效**：`WHERE` 条件的列侧是否被函数或表达式包裹（`TRIM(col)`、`DATE_FORMAT(col, ...)`、`LOWER(col)`）；精度敏感类型是否存在隐式转换。列侧被包裹即索引不可用。
 - **索引前导列缺失**：查询命中的联合索引，其前导列（最左列）是否出现在 `WHERE` 中。读取对应 Entity 的 `@Index` 声明逐条比对，缺前导列即整条索引失效。

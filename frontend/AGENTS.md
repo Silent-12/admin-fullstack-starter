@@ -8,7 +8,7 @@
 
 - 项目内规则优先级：本文件 > 专项 rules > skills 与参考资料；系统、开发者指令和用户明确要求按各自优先级执行。
 - 开始任务先读 [开发流程与验证](.agents/rules/workflow.md)；分析、编写、修改或审查相关内容前，按下表显式读取**所有匹配项**。跨主题任务累加加载，影响范围扩大时补读；当前会话已读且未变更的文件可复用。
-- 不依赖工具自动扫描 `.agents`，未命中的专项规则和技能无需全量加载。详细约束集中在 `rules/`，任务流程放在 `skills/`，速查资料放在 `references/`。
+- 不依赖工具自动扫描 `.agents`，未命中的专项规则和技能无需全量加载。详细约束集中在 `rules/`，任务流程放在 `skills/`，速查资料放在 `references/`。跨端共用的技能位于仓库根 `.agents/skills/`，在本表中以 `../.agents/skills/` 相对路径引用。
 - 若规则与实际目录或实现不符，以仓库现状为准，先同步更新对应规则及索引再继续；新增规则需补充触发条件与链接，避免多处维护同一详细规范。
 
 # 核心约定
@@ -25,14 +25,14 @@
 | 级别 / 任务触发条件 | 必须读取 |
 | --- | --- |
 | 通用：所有任务 | [开发流程与验证](.agents/rules/workflow.md) |
-| 专项：编写、修改、重构或审查代码 | [编码与注释](.agents/rules/coding.md)、[Ponytail](.agents/rules/ponytail.md)、[Karpathy Guidelines](.agents/skills/karpathy-guidelines/SKILL.md) |
-| 专项：新增或修改类型声明、类型注释 | [类型定义](.agents/rules/typescript.md)、[TypeDoc 技能](.agents/skills/typedoc-style/SKILL.md) |
+| 专项：编写、修改、重构或审查代码 | [编码与注释](.agents/rules/coding.md)、[Ponytail](.agents/rules/ponytail.md)、[Karpathy Guidelines](../.agents/skills/karpathy-guidelines/SKILL.md) |
+| 专项：新增或修改类型声明、类型注释 | [类型定义](.agents/rules/typescript.md)、[TypeDoc 技能](../.agents/skills/typedoc-style/SKILL.md) |
 | 专项：HTTP 请求、API 或响应结构 | [接口请求与响应](.agents/rules/api.md) |
 | 专项：目录、组件、页面、表单、表格、搜索、路由、指令或 Hook | [目录、路由与组件](.agents/rules/module-structure.md) |
 | 专项：Store、持久化或本地存储 | [状态管理与持久化](.agents/rules/state-storage.md) |
 | 专项：新增或修改任何 Vue / SCSS 文件，或整理样式 | [SCSS 与深色模式](.agents/rules/styles.md) |
 | 技能：移除功能及关联资源 | [Feature Removal](.agents/skills/feature-removal/SKILL.md) |
-| 技能：审查当前未提交改动 | [Code Review](.agents/skills/code-review/SKILL.md)，并加载改动涉及的专项规则 |
-| 技能：提交或生成提交信息 | [Git 提交规范](.agents/rules/git-commit-message.md)、[Commit Msg](.agents/skills/commit-msg/SKILL.md) |
-| 技能：根据指定提交生成改动或测试说明 | [Git Commit Changelog](.agents/skills/git-commit-changelog/SKILL.md) |
+| 技能：审查当前未提交改动 | [Code Review](../.agents/skills/code-review/SKILL.md)，并加载改动涉及的专项规则 |
+| 技能：提交或生成提交信息 | [Git 提交规范](.agents/rules/git-commit-message.md)、[Commit Msg](../.agents/skills/commit-msg/SKILL.md) |
+| 技能：根据指定提交生成改动或测试说明 | [Git Commit Changelog](../.agents/skills/git-commit-changelog/SKILL.md) |
 | 参考：查询颜色、阴影、暗色变量及工具类 | [CSS 变量速查](.agents/references/css-variables.md) |

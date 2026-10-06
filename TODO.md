@@ -12,11 +12,11 @@
 
 | 编号 | 事项 | 影响面 | 阻塞关系 |
 | --- | --- | --- | --- |
-| **P0-1** | 后端缺少认证、用户、角色、菜单模块 | 前端 5 处页面与路由守卫无法脱离 Mock | 阻塞 P1-1（前端接线） |
+| **P0-1** | 后端缺少认证、用户、角色、菜单模块 | 前端 6 处页面与路由守卫无法脱离 Mock | 阻塞 P1-1（前端接线） |
 | **P0-2** | 响应包裹字段 `msg` / `message` 不一致 | 成功提示失效；后端业务错误消息无法展示 | 与 P0-1 同期解决 |
 | **P0-3** | 分页请求参数与响应结构不一致 | 用户/角色列表接口无法直接对接 | 与 P0-1 同期解决 |
 | **P1-1** | 路径前缀、版本号、认证头不一致 | 请求无法路由到后端 | 阻塞联调 |
-| **P1-2** | 前端 5 处调用点仍指向 `@/mock` | 页面数据为本地模拟数据 | 依赖 P0-1 |
+| **P1-2** | 前端 6 处调用点仍指向 `@/mock` | 页面数据为本地模拟数据 | 依赖 P0-1 |
 | **P1-3** | 实体字段与序列化策略冲突 | 后端无法按现有规则直接返回前端所需字段 | 依赖 P0-1 |
 | **P2-1** | 前端写操作（新增/编辑/删除）无接口 | 页面操作仅改本地状态，刷新即丢失 | 依赖 P0-1 |
 
@@ -51,7 +51,7 @@
 | 请求体 | `{ userName: string, password: string }` |
 | 响应 `data` | `{ token: string, refreshToken: string }` |
 
-> 注：HTTP 封装会把 POST 的 `params` 自动降级为 `data` 并以 JSON body 发送（`frontend/src/utils/http/index.ts:177`），因此后端按请求体接收即可。
+> 注：HTTP 封装会把 POST 的 `params` 自动降级为 `data` 并以 JSON body 发送（`frontend/src/utils/http/index.ts:182`），因此后端按请求体接收即可。
 
 #### 1.2.2 当前用户信息
 
@@ -62,7 +62,7 @@
 | 方法与路径 | `GET /api/user/info` |
 | 响应 `data` | `{ auth: string[], roles: string[], userId: number, userName: string, email: string, avatar?: string }` |
 
-`auth` 是**权限标识列表**，供 `v-auth` 指令逐项校验（`frontend/src/directives/auth.ts:45`：`useUserStore().info.auth?.includes(binding.value)`）。该字段直接决定按钮级权限是否生效，不可省略或返回空数组，否则所有带 `v-auth` 的按钮都会被移出 DOM。
+`auth` 是**权限标识列表**，供 `v-auth` 指令逐项校验（`frontend/src/directives/auth.ts:43`：`useUserStore().info.auth?.includes(binding.value)`）。该字段直接决定按钮级权限是否生效，不可省略或返回空数组，否则所有带 `v-auth` 的按钮都会被移出 DOM。
 
 #### 1.2.3 用户列表
 
@@ -370,6 +370,21 @@ if (accessToken) request.headers.set('Authorization', accessToken)
 10. **密码策略**：哈希算法（bcrypt / argon2）、初始密码与重置密码流程、是否强制首次登录改密。
 11. **权限粒度**：除菜单与按钮权限外，是否需要数据权限（行级/部门级）？
 12. **是否需要操作日志**：现有 `access-log` 只记录 HTTP 请求，是否还需要业务操作日志（谁改了什么）？
+
+---
+
+## 6. 已登记未修复项（2026-10-07 清理中确认，按"模板待用能力"保留）
+
+以下各项经审计确认当前无引用，但按「模板项目中未使用 ≠ 冗余」的判断标准保留，登记备查：
+
+| 项 | 现状 | 影响 |
+| --- | --- | --- |
+| `frontend/src/main.ts:31-47` 的 `import.meta.glob('@/assets/svg/**/*.svg')` | 所匹配的 `src/assets/svg/` 下无任何 `.svg`（真实 SVG 在 `src/assets/images/svg/`），`localSvgModules` 恒为空，传给 `AdminComponents` 的回调为空转 | 本地 SVG 解析能力实际不可用，需补充素材或调整匹配目录 |
+| `frontend/package.json` 的 `xgplayer`、`vue-img-cutter`、`highlight.js` | 分别服务于 `AoVideoPlayer.vue`、`AoCutterImg.vue`、`v-highlight` 指令——三者均为待业务页面使用的模板能力 | 无（属预期预留） |
+| `backend/src/common/redis/redis.service.ts` 的 `set`/`setIfAbsent`/`get`/`del` | 当前仅有 `getClient()` 与 `getStatus()` 被调用 | 无（属预期预留） |
+| `backend/package.json` 的 `@types/ioredis@^4` | ioredis 实际为 v5（自带类型），该桩包为 v4 API 类型 | 暂无实际影响（`tsc` 通过）；建议后续移除 |
+| `backend/package.json` 未声明 `dotenv`，但 `src/app.module.ts:6` 直接 `import { config } from 'dotenv'` | 依赖 `@nestjs/config` 的传递依赖被提升后可用 | npm 扁平安装下正常；若改用 pnpm 严格链接会解析失败，建议显式声明 |
+| `backend/src/modules/template-api/dto/create-template-item.dto.ts:21-25` 只允许 `active`/`inactive`，而实体注释与默认值含 `archived` | `archived` 状态无法通过接口写入，校验规则与实体注释互相矛盾 | 参考模板的示例数据不一致，建议二者取其一 |
 
 ---
 

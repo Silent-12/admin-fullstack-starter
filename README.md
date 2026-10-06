@@ -123,7 +123,7 @@ pnpm run dev:backend
 | 后端健康检查 | http://localhost:3000/backend/v1/health |
 | Knife4j 接口文档 | http://localhost:3000/backend/doc.html （仅开发/测试环境） |
 
-前端演示登录：默认账号 `Super / 123456`，登录逻辑来自 `frontend/src/mock/auth.ts`。
+前端演示登录：登录页表单预填 `Super / 123456`（另有 `Admin`、`User` 两个演示账号，密码同为 `123456`）。Mock 只校验账号密码非空——**任意非空组合均可登录**，返回的用户名固定为 `admin`。逻辑见 `frontend/src/mock/auth.ts`。
 
 ---
 
@@ -148,6 +148,10 @@ pnpm run dev:backend
 | `pnpm run format:check` | 依次校验前后端格式，不修改文件（适用于 CI） |
 | `pnpm run format:frontend` / `format:backend` | 单独格式化某一端 |
 | `pnpm run start:backend` | 以生产模式启动后端（需先构建） |
+| `pnpm run install:frontend` | 仅安装前端依赖（等价于在 `frontend/` 执行 `pnpm install`） |
+| `pnpm run install:backend` | 仅安装后端依赖（`cd backend && npm install`） |
+| `pnpm run lint:check:frontend` / `lint:check:backend` | 只读校验单端的 ESLint |
+| `pnpm run format:check:frontend` / `format:check:backend` | 只读校验单端的格式 |
 
 ---
 
@@ -223,11 +227,11 @@ git commit -m "chore(eslint): verify hooks"
 
 | 调整项 | 说明 |
 | --- | --- |
-| 新增根 `package.json` | 提供统一的安装、开发、构建、检查脚本，通过 `pnpm --dir frontend` 与 `npm --prefix backend` 委托到各子项目 |
+| 新增根 `package.json` | 提供统一的安装、开发、构建、检查脚本。运行类脚本用 `pnpm --dir frontend run` 与 `npm --prefix backend run` 委托；**安装类脚本是例外**——`install:backend` 必须写成 `cd backend && npm install`，原因见 `AGENTS.md` 的根级工程约定 |
 | 新增根 `.husky/` | Git 钩子提升到仓库级。子项目各自的 `.husky/` 无法在合并仓库中生效，因为 `core.hooksPath` 是仓库级配置 |
 | 移除子项目 `prepare` 脚本 | 删除 `frontend`/`backend` 的 `"prepare": "husky"`。否则在子目录安装依赖时会重写 `core.hooksPath` 指向子目录，导致根钩子静默失效 |
 | 合并 commitlint 规则 | 根 `commitlint.config.cjs` 取两个模板类型枚举的并集（含 `wip`），并保留 `type-case`、`subject-empty`、`subject-full-stop` 约束 |
-| 子项目 `.husky/` 保留为记录 | 保留原钩子文件并加注说明，仅用于追溯模板原始配置，不再生效 |
+| 移除子项目 `.husky/` 与 commitlint 配置 | 钩子已提升到仓库级，子项目副本不再生效；同时移除子项目已失去调用方的 `husky`、`@commitlint/*` 依赖。原始配置见两个源模板仓库的 git 历史 |
 | 未纳入版本管理的目录 | 复制时排除了 `node_modules`、`dist`、`.git` 与 husky 生成的 `.husky/_/` |
 
 两个源模板仓库保持原样，未做任何修改。
@@ -240,7 +244,7 @@ git commit -m "chore(eslint): verify hooks"
 
 - 前端规则入口：[frontend/AGENTS.md](frontend/AGENTS.md)，专项规则位于 `frontend/.agents/rules/`
 - 后端规则入口：[backend/AGENTS.md](backend/AGENTS.md)，专项规则位于 `backend/.agents/`
-- 跨端共用技能：位于根 `.agents/skills/`（`commit-msg`、`git-commit-changelog`、`code-review`、`karpathy-guidelines`、`typedoc-style`），由两端规则入口以 `../.agents/skills/` 引用，子项目内不再重复维护
+- 跨端共用技能：位于根 `.agents/skills/`（`commit-msg`、`git-commit-changelog`、`code-review`、`karpathy-guidelines`、`typedoc-style`）。`frontend/AGENTS.md` 以 `../.agents/skills/` 相对路径引用；`backend/AGENTS.md` 以文字说明指向同一目录。子项目内不再重复维护
 
 **提交信息规范**：`feat` / `fix` / `docs` / `style` / `refactor` / `perf` / `test` / `build` / `ci` / `revert` / `chore` / `wip`，格式为 `type(scope): subject`。
 

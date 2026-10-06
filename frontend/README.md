@@ -2,7 +2,7 @@
 
 本目录是 `admin-fullstack-starter` 的前端子项目，基于 Vue 3、TypeScript 和 Element Plus，`package.json` 中的项目名为 `ao-design-pro`。后端服务位于同仓库的 `../backend/`；仓库级安装、启动与构建命令见根 [README](../README.md)。
 
-项目提供登录、工作台、用户/角色/菜单管理示例、表格表单示例，以及菜单、标签页和主题等后台基础能力。默认使用本地 Mock 数据与静态路由，可先运行页面，再逐步接入业务接口；本仓库不包含后端服务、数据库或消息队列。
+项目提供登录、工作台、用户/角色/菜单管理示例、表格表单示例，以及菜单、标签页和主题等后台基础能力。默认使用本地 Mock 数据与静态路由，可先运行页面，再逐步接入业务接口；本目录不包含后端服务、数据库或消息队列。
 
 ## 🚀 快速开始
 
@@ -188,18 +188,18 @@ Vite 先加载 [`.env`](.env)，再按运行模式加载 [`.env.development`](.e
 
 ## ✅ 常用命令
 
-| 命令                                   | 用途                                     |
-| -------------------------------------- | ---------------------------------------- |
-| `pnpm install --frozen-lockfile`       | 按已有锁文件安装，适用于首次克隆和 CI    |
-| `pnpm dev`                             | 启动开发服务                             |
-| `pnpm run build`                       | 先执行 TypeScript 检查，再构建到 `dist/` |
-| `pnpm run serve`                       | 本地预览已生成的构建产物                 |
-| `pnpm run lint`                        | 执行 ESLint 检查并自动修复               |
+| 命令                                   | 用途                                      |
+| -------------------------------------- | ----------------------------------------- |
+| `pnpm install --frozen-lockfile`       | 按已有锁文件安装，适用于首次克隆和 CI     |
+| `pnpm dev`                             | 启动开发服务                              |
+| `pnpm run build`                       | 先执行 TypeScript 检查，再构建到 `dist/`  |
+| `pnpm run serve`                       | 本地预览已生成的构建产物                  |
+| `pnpm run lint`                        | 执行 ESLint 检查并自动修复                |
 | `pnpm run lint:check`                  | 执行 ESLint 检查，不修改文件（适用于 CI） |
 | `pnpm run format`                      | 用 Prettier 格式化脚本、JSON、Vue 与样式  |
-| `pnpm run format:check`                | 校验格式是否符合 Prettier，不修改文件    |
-| `pnpm run lint:stylelint`              | 检查并自动修复样式                       |
-| `pnpm exec prettier --check README.md` | 单独检查 README 格式                     |
+| `pnpm run format:check`                | 校验格式是否符合 Prettier，不修改文件     |
+| `pnpm run lint:stylelint`              | 检查并自动修复样式                        |
+| `pnpm exec prettier --check README.md` | 单独检查 README 格式                      |
 
 带自动修复或格式化的命令会修改文件，运行后应检查 Git diff。项目目前没有独立的 `test` 脚本；按改动范围执行检查，并回归相关页面。完整要求见 [开发流程与验证](.agents/rules/workflow.md)。
 

@@ -372,7 +372,13 @@ cp .env.example .env
 
 应用启动时会对已启用的 MySQL 与 Redis 执行 `ping`。开发和测试环境的 `/backend/v1/health` 会返回最近一次 MySQL 与 Redis 连通性状态；生产环境仅返回服务存活状态。
 
-新建数据库直接执行 `src/database/migrations/V1__access_logs.sql`。后续迁移文件按 `V{序号}__{描述}.sql` 顺序命名，规则详见 [AGENTS.md](AGENTS.md)。
+新建数据库时按顺序执行 `src/database/migrations/` 下的 `.sql` 文件（当前为 `V1__access_logs.sql`、`V2__template_items.sql`），也可直接运行：
+
+```bash
+npm run migration:run
+```
+
+该命令按文件名升序执行尚未应用的迁移，并把已执行的文件记录在 `schema_migrations` 表中，可重复执行。后续迁移文件按 `V{序号}__{描述}.sql` 顺序命名，规则详见 [AGENTS.md](AGENTS.md)。
 
 ### 3. 启动开发服务器 ▶️
 

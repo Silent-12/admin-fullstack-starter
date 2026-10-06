@@ -15,14 +15,16 @@
 | `--ao-login-yellow-start` / `--ao-login-yellow-end` / `--ao-login-blue-shadow` | 登录页装饰色和阴影 |
 | `--ao-login-dark-shadow` / `--ao-login-light-shadow` / `--ao-login-banner-dark` | 登录页暗色主题及横幅辅助色 |
 
-### 语义色变量（布局包仓库 `src/styles/theme.scss`）
+### 语义色变量（`@ao/admin-layout/dist/index.css`）
 
 | 变量 | 取值 | 说明 |
 | --- | --- | --- |
 | `--ao-primary` | `var(--el-color-primary)` | 主色，别名到 Element Plus |
+| `--ao-secondary` | `var(--el-color-info)` | 次要色 |
 | `--ao-success` | `var(--el-color-success)` | 成功色 |
 | `--ao-warning` | `var(--el-color-warning)` | 警告色 |
 | `--ao-danger` | `var(--el-color-danger)` | 危险色 |
+| `--ao-error` | `var(--el-color-error)` | 错误色 |
 | `--ao-info` | `var(--el-color-info)` | 信息色 |
 
 ### 灰度色阶变量（亮暗反转）
@@ -73,7 +75,7 @@
 
 `--ao-full-height` 在布局包 `app.scss` 中由 `100vh` 减去运行时写入的头部高度组合而成；内容区上下留白由各容器自身内边距提供（如搜索栏 `10px`、表格卡片体 `10px`、`.page-content` `20px`），不设全局页面间距变量。脚本只负责把头部高度写入 `--ao-header-height` / `--ao-content-header-height`，不参与间距计算。
 
-### Element Plus 桥接变量（`src/assets/styles/el-ui.scss`）
+### Element Plus 桥接变量（宿主 `src/assets/styles/el-ui.scss`）
 
 | 变量名                         | 说明                                          |
 | ------------------------------ | --------------------------------------------- |
@@ -84,13 +86,13 @@
 | `--el-border-radius-base`      | Element 基础圆角（由 `--custom-radius` 计算） |
 | `--el-border-radius-small`     | Element 小圆角（由 `--custom-radius` 计算）   |
 
-### Element Plus 桥接变量（由 `@ao/admin-layout` 提供）
+### Element Plus 桥接变量（`@ao/admin-layout` 包提供）
 
 | 变量名         | 说明                   |
 | --------------- | ----------------------- |
 | `--theme-color` | 指向 `var(--main-color)` |
 
-### Element Plus 暗色覆盖（布局包仓库 `src/styles/dark.scss`，仅 `html.dark` 下生效）
+### Element Plus 暗色覆盖（`@ao/admin-layout/dist/index.css`，仅 `html.dark` 下生效）
 
 | 变量名                    | 暗色值                     |
 | ------------------------- | -------------------------- |

@@ -6,7 +6,7 @@ import { UpdateTemplateItemDto } from './dto/update-template-item.dto.js'
 import { QueryTemplateItemDto } from './dto/query-template-item.dto.js'
 import { ApiResponseDto } from '../../common/dto/api-response.dto.js'
 import { PaginationMetaDto } from './dto/pagination-meta.dto.js'
-import { TemplateItem } from './entities/template-item.entity.js'
+import { TemplateItemResponseDto } from './dto/template-item-response.dto.js'
 
 /**
  * 模板 API 控制器
@@ -39,8 +39,10 @@ export class TemplateApiController {
    */
   @Get()
   @ApiOperation({ summary: '分页查询模板条目列表' })
-  @ApiResponse({ status: 200, description: '查询成功', type: ApiResponseDto })
-  async findAll(@Query() query: QueryTemplateItemDto): Promise<ApiResponseDto<{ list: TemplateItem[]; pagination: PaginationMetaDto }>> {
+  @ApiResponse({ status: 200, description: '查询成功', type: TemplateItemResponseDto })
+  async findAll(
+    @Query() query: QueryTemplateItemDto,
+  ): Promise<ApiResponseDto<{ list: TemplateItemResponseDto[]; pagination: PaginationMetaDto }>> {
     return this.templateApiService.findAll(query)
   }
 
@@ -53,9 +55,9 @@ export class TemplateApiController {
   @Get(':id')
   @ApiOperation({ summary: '根据 ID 查询单条模板条目' })
   @ApiParam({ name: 'id', description: '模板条目 ID', example: 1 })
-  @ApiResponse({ status: 200, description: '查询成功', type: ApiResponseDto })
+  @ApiResponse({ status: 200, description: '查询成功', type: TemplateItemResponseDto })
   @ApiResponse({ status: 404, description: '模板条目不存在' })
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<ApiResponseDto<TemplateItem>> {
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<ApiResponseDto<TemplateItemResponseDto>> {
     return this.templateApiService.findOne(id)
   }
 

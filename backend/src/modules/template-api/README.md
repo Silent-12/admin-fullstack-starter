@@ -11,6 +11,7 @@ template-api/
 ├── README.md                          # 本文档（复制后可保留或删除）
 ├── dto/
 │   ├── pagination-meta.dto.ts         # 分页元信息 DTO（通用，无需修改）
+│   ├── template-item-response.dto.ts # 列表与详情的响应体（显式字段映射）
 │   ├── create-template-item.dto.ts    # 创建请求体 DTO
 │   ├── update-template-item.dto.ts    # 更新请求体 DTO
 │   └── query-template-item.dto.ts     # 查询参数 DTO
@@ -95,6 +96,7 @@ template-api/
 | **必改** | `@InjectRepository(TemplateItem)` → 新实体 |
 | **必改** | 所有 Repository 类型和泛型参数 |
 | **必改** | `ApiResponseDto` 的 `message` 文案（如「创建成功」→「用户创建成功」） |
+| **必改** | 新模块必须同步新增自己的 `{ModuleName}ResponseDto`（放在 `dto/` 下，逐个字段实现 `fromEntity`），列表与详情经它显式映射后返回，不得把实体实例直接塞进 `data`（禁止直接序列化 Entity） |
 | **可选** | 增加/修改查询条件（`where` 对象） |
 
 #### 7. `template-api.module.ts`
@@ -142,5 +144,5 @@ template-api/
 | 场景 | `data` 内容 |
 |------|-------------|
 | 创建/更新/删除 | `null` |
-| 查询单条 | 实体对象 |
+| 查询单条 | 响应 DTO（显式字段映射，见 `dto/template-item-response.dto.ts`） |
 | 列表查询 | `{ list: [...], pagination: { page, pageSize, total, totalPages } }` |

@@ -7,6 +7,7 @@ import { UpdateTemplateItemDto } from './dto/update-template-item.dto.js'
 import { QueryTemplateItemDto } from './dto/query-template-item.dto.js'
 import { ApiResponseDto } from '../../common/dto/api-response.dto.js'
 import { PaginationMetaDto } from './dto/pagination-meta.dto.js'
+import { TemplateItemResponseDto } from './dto/template-item-response.dto.js'
 
 /**
  * 模板 API 服务
@@ -39,7 +40,7 @@ export class TemplateApiService {
    * @param query 查询参数（分页 + 筛选）
    * @returns 统一响应包装的分页数据（包含数据列表和分页元信息）
    */
-  async findAll(query: QueryTemplateItemDto): Promise<ApiResponseDto<{ list: TemplateItem[]; pagination: PaginationMetaDto }>> {
+  async findAll(query: QueryTemplateItemDto): Promise<ApiResponseDto<{ list: TemplateItemResponseDto[]; pagination: PaginationMetaDto }>> {
     const page = query.page ?? 1
     const pageSize = query.pageSize ?? 10
     const skip = (page - 1) * pageSize
@@ -60,7 +61,8 @@ export class TemplateApiService {
     })
 
     const pagination = new PaginationMetaDto(page, pageSize, total)
-    return new ApiResponseDto(200, '查询成功', { list, pagination })
+    const records = list.map((item) => TemplateItemResponseDto.fromEntity(item))
+    return new ApiResponseDto(200, '查询成功', { list: records, pagination })
   }
 
   /**
@@ -69,12 +71,12 @@ export class TemplateApiService {
    * @param id 模板条目 ID
    * @returns 统一响应包装的模板条目数据
    */
-  async findOne(id: number): Promise<ApiResponseDto<TemplateItem>> {
+  async findOne(id: number): Promise<ApiResponseDto<TemplateItemResponseDto>> {
     const item = await this.templateItemRepository.findOneBy({ id })
     if (!item) {
       throw new NotFoundException(`模板条目 ID=${id} 不存在`)
     }
-    return new ApiResponseDto(200, '查询成功', item)
+    return new ApiResponseDto(200, '查询成功', TemplateItemResponseDto.fromEntity(item))
   }
 
   /**

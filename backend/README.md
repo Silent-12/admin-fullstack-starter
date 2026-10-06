@@ -200,6 +200,7 @@ REDIS_DB=0
 src/modules/template-api/
 ├── dto/
 │   ├── pagination-meta.dto.ts      # 分页元信息
+│   ├── template-item-response.dto.ts # 列表与详情的响应体（显式字段映射）
 │   ├── create-template-item.dto.ts # 创建请求体
 │   ├── update-template-item.dto.ts # 更新请求体
 │   └── query-template-item.dto.ts  # 查询参数

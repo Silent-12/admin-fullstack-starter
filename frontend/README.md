@@ -1,6 +1,6 @@
 # 🧩 Ao Design Pro
 
-基于 Vue 3、TypeScript 和 Element Plus 的前端后台管理模板，仓库名为 `admin-template-vue`，`package.json` 中的项目名为 `ao-design-pro`。
+本目录是 `admin-fullstack-starter` 的前端子项目，基于 Vue 3、TypeScript 和 Element Plus，`package.json` 中的项目名为 `ao-design-pro`。后端服务位于同仓库的 `../backend/`；仓库级安装、启动与构建命令见根 [README](../README.md)。
 
 项目提供登录、工作台、用户/角色/菜单管理示例、表格表单示例，以及菜单、标签页和主题等后台基础能力。默认使用本地 Mock 数据与静态路由，可先运行页面，再逐步接入业务接口；本仓库不包含后端服务、数据库或消息队列。
 
@@ -26,13 +26,12 @@ npm install -g pnpm@11.21.0
 以下命令可在 Windows PowerShell 中逐行执行：
 
 ```powershell
-git clone https://github.com/Silent-12/admin-template-vue.git
-cd admin-template-vue
-pnpm install --frozen-lockfile
-pnpm dev
+# 在仓库根目录执行
+pnpm run install:frontend   # 等价于在 frontend/ 执行 pnpm install
+pnpm run dev:frontend       # 或 pnpm dev 同时启动前后端
 ```
 
-默认访问 [http://localhost:3006](http://localhost:3006)，实际地址以终端输出为准。仓库已提供环境配置文件，首次运行无需另外复制 `.env`。
+默认访问 http://localhost:3006，实际地址以终端输出为准。本目录已提供环境配置文件，首次运行无需另外复制 `.env`。单独在本目录内执行 `pnpm dev` 亦可。
 
 ### 演示登录
 
@@ -53,11 +52,10 @@ pnpm dev
 
 ## 📦 项目与公共包
 
-项目由三个独立 Git 仓库协作维护：
+本子项目持有页面、路由注册、API、用户与菜单数据、业务状态；公共能力通过两个外部 Git 依赖包引入：
 
-| 仓库 / 包 | 职责 |
+| 包 | 职责 |
 | --- | --- |
-| [admin-template-vue](https://github.com/Silent-12/admin-template-vue) | 当前业务宿主：页面、路由注册、API、用户与菜单数据、业务状态 |
 | [@ao/admin-components](https://github.com/Silent-12/admin-components) | 公共组件：`AoTable`、`AoForm`、`AoSearchBar`、`AoButtonTable` 等 |
 | [@ao/admin-layout](https://github.com/Silent-12/admin-layout) | 布局骨架、侧栏、头部、标签页、设置面板、主题底座，以及 `setting` / `app` / `worktab` 状态 |
 
@@ -69,12 +67,12 @@ pnpm dev
 
 ```json
 {
-  "@ao/admin-components": "git+https://github.com/Silent-12/admin-components.git#v1",
-  "@ao/admin-layout": "git+https://github.com/Silent-12/admin-layout.git#v2"
+  "@ao/admin-components": "git+https://github.com/Silent-12/admin-components.git#v4",
+  "@ao/admin-layout": "git+https://github.com/Silent-12/admin-layout.git#v5"
 }
 ```
 
-`git+https` 表示从 GitHub 仓库安装，`#v1` / `#v2` 指定 Git 标签；[pnpm-lock.yaml](pnpm-lock.yaml) 进一步锁定对应提交和依赖版本。两个依赖仓库目前公开，读取它们无需配置 GitHub 登录凭据。
+`git+https` 表示从 GitHub 仓库安装，`#v4` / `#v5` 指定 Git 标签；[pnpm-lock.yaml](pnpm-lock.yaml) 进一步锁定对应提交和依赖版本。两个依赖仓库目前公开，读取它们无需配置 GitHub 登录凭据。
 
 公共包仓库保存完整的 `src/`、`playground/`、构建配置、发布脚本和 `dist/`。安装到 `node_modules` 后主要看到 `dist/`，是因为包的 `files` 配置控制了安装包内容，不代表 Git 仓库只保存构建产物。开发模板时无需同时克隆两个包；修改公共能力时，再克隆相应仓库开发。
 
@@ -104,7 +102,7 @@ import '@ao/admin-layout/styles.css'
 ## 📁 目录结构
 
 ```text
-admin-template-vue/
+frontend/
 ├── .agents/                 # 前端专项规则、技能与参考资料（跨端共用技能见仓库根 .agents/）
 ├── public/                  # 无需构建处理的静态资源
 ├── src/
@@ -114,7 +112,6 @@ admin-template-vue/
 │   ├── config/              # 系统名称、主题、头部栏等配置
 │   ├── directives/          # 权限、高亮等指令
 │   ├── enums/               # 枚举定义
-│   ├── hooks/               # 可复用组合式逻辑
 │   ├── locales/             # 宿主语言包与 i18n 初始化
 │   ├── mock/                # 本地演示数据与模拟接口
 │   ├── router/
@@ -151,7 +148,6 @@ Vite 先加载 [`.env`](.env)，再按运行模式加载 [`.env.development`](.e
 | `VITE_API_URL`          | HTTP 请求基础地址       | 开发为 `/`，生产为 Apifox Mock 地址 |
 | `VITE_API_PROXY_URL`    | 开发代理目标            | 开发环境中的 Apifox Mock 地址       |
 | `VITE_WITH_CREDENTIALS` | 跨域请求是否携带 Cookie | `false`                             |
-| `VITE_OPEN_ROUTE_INFO`  | 路由信息调试开关        | `false`                             |
 
 开发代理在 [vite.config.ts](vite.config.ts) 中配置：`/api` 请求转发到 `VITE_API_PROXY_URL`，保留 `/api` 路径前缀。接入本地后端时，修改代理目标即可；直接调用 `src/mock/` 的函数不会经过代理。
 

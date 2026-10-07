@@ -5,9 +5,10 @@
  *
  * 扩展参数（在 `config` 中传入）：
  *   - `showErrorMessage?: boolean`  — 是否显示错误提示（默认 true，设为 false 可静默错误）
- *   - `showSuccessMessage?: boolean` — 是否显示成功提示（默认 false，设为 true 后响应 msg 将弹出成功提示）
+ *   - `showSuccessMessage?: boolean` — 是否显示成功提示（默认 false，设为 true 后响应 message 将弹出成功提示）
  *
  * 内置能力：
+ *   - 响应成败以 HTTP 状态码判定，非 2xx 统一转为 HttpError，业务代码无需判断响应体的 code
  *   - 自动注入 Authorization 请求头
  *   - 401 未授权防抖处理，自动触发退出登录
  *   - 对 408/500/502/503/504 状态码自动重试（最多 0 次，可通过 MAX_RETRIES 调整）
@@ -85,16 +86,17 @@ axiosInstance.interceptors.request.use(
   }
 )
 
-/** 响应拦截器 */
+/**
+ * 响应拦截器
+ * @description 后端以 HTTP 状态码表达成败，非 2xx 响应已由 Axios 判定为失败并交由错误分支处理，
+ * 因此成功分支无需再判断业务码，直接透传响应交由 `request` 解包数据。
+ */
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse<BaseResponse>) => {
-    const { code, msg } = response.data
-    if (code === ApiStatus.success) return response
-    if (code === ApiStatus.unauthorized) handleUnauthorizedError(msg)
-    throw createHttpError(msg || $t('httpMsg.requestFailed'), code)
-  },
+  (response: AxiosResponse<BaseResponse>) => response,
   (error) => {
-    if (error.response?.status === ApiStatus.unauthorized) handleUnauthorizedError()
+    if (error.response?.status === ApiStatus.unauthorized) {
+      handleUnauthorizedError(error.response?.data?.message)
+    }
     return Promise.reject(handleError(error))
   }
 )
@@ -187,8 +189,8 @@ async function request<T = unknown>(config: ExtendedAxiosRequestConfig): Promise
     const res = await axiosInstance.request<BaseResponse<T>>(config)
 
     // 显示成功消息
-    if (config.showSuccessMessage && res.data.msg) {
-      showSuccess(res.data.msg)
+    if (config.showSuccessMessage && res.data.message) {
+      showSuccess(res.data.message)
     }
 
     return res.data.data as T

@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
  * HTTP 错误处理模块
  * - 自定义 HttpError 错误类，封装错误信息、状态码、时间戳等
  * - 错误拦截和转换，将 Axios 错误转换为标准的 HttpError
- * - 错误消息国际化处理，根据状态码返回对应的多语言错误提示
+ * - 错误消息优先取后端返回的 message，缺失时回退到状态码对应的多语言错误提示
  * - 错误日志记录，便于问题追踪和调试
  * - 错误和成功消息的统一展示
  * - 类型守卫函数，用于判断错误类型
@@ -16,14 +16,21 @@ import { AxiosError } from 'axios'
 import { ApiStatus } from './status'
 import { $t } from '@/locales'
 
-// 错误响应接口
+/**
+ * 错误响应结构
+ * @description 描述后端错误响应的响应体，字段与后端 ApiResponseDto 保持一致。
+ */
 export interface ErrorResponse {
-  /** 错误状态码 */
+  // 错误状态码，与 HTTP 状态码同值
   code: number
-  /** 错误消息 */
-  msg: string
-  /** 错误附加数据 */
+  // 错误消息
+  message: string
+  // 可选的错误附加数据
   data?: unknown
+  // 可选的响应生成时间，ISO 8601 字符串
+  timestamp?: string
+  // 可选的错误追踪 ID
+  traceId?: string
 }
 
 // 错误日志数据接口
@@ -117,7 +124,6 @@ export function handleError(error: AxiosError<ErrorResponse>): never {
   }
 
   const statusCode = error.response?.status
-  const errorMessage = error.response?.data?.msg || error.message
   const requestConfig = error.config
 
   // 处理网络错误
@@ -128,10 +134,10 @@ export function handleError(error: AxiosError<ErrorResponse>): never {
     })
   }
 
-  // 处理 HTTP 状态码错误
-  const message = statusCode
-    ? getErrorMessage(statusCode)
-    : errorMessage || $t('httpMsg.requestFailed')
+  // 处理 HTTP 状态码错误：优先后端返回的 message，缺失时回退到本地状态码文案
+  const backendMessage = error.response.data?.message
+  const message =
+    backendMessage || (statusCode ? getErrorMessage(statusCode) : $t('httpMsg.requestFailed'))
   throw new HttpError(message, statusCode || ApiStatus.error, {
     data: error.response.data,
     url: requestConfig?.url,

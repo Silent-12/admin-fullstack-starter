@@ -74,7 +74,17 @@ template-api/
 | **必改** | 类名 `QueryTemplateItemDto` → `QueryXxxDto` |
 | **可选** | 增加/删除筛选字段（如按状态、分类等） |
 
-#### 5. `template-api.controller.ts`
+#### 5. `dto/*-response.dto.ts`
+
+| 项目 | 说明 |
+|------|------|
+| **作用** | 列表与详情的响应体 DTO，逐个字段声明对外暴露的内容，由 `fromEntity` 从实体显式映射 |
+| **必改** | 文件名 `template-item-response.dto.ts` → `xxx-response.dto.ts` |
+| **必改** | 类名 `TemplateItemResponseDto` → `XxxResponseDto` |
+| **必改** | 字段及其 `@ApiProperty` 的 `description`、`example` 随新业务调整 |
+| **必改** | `fromEntity` 中的逐字段赋值：实体新增字段必须显式补入，未补入的字段不会出现在响应里 |
+
+#### 6. `template-api.controller.ts`
 
 | 项目 | 说明 |
 |------|------|
@@ -86,7 +96,7 @@ template-api/
 | **必改** | 所有 DTO import 路径和类型引用 |
 | **必改** | 所有 `@ApiResponse` 的 `type` 泛型参数 |
 
-#### 6. `template-api.service.ts`
+#### 7. `template-api.service.ts`
 
 | 项目 | 说明 |
 |------|------|
@@ -99,7 +109,7 @@ template-api/
 | **必改** | 新模块必须同步新增自己的 `{ModuleName}ResponseDto`（放在 `dto/` 下，逐个字段实现 `fromEntity`），列表与详情经它显式映射后返回，不得把实体实例直接塞进 `data`（禁止直接序列化 Entity） |
 | **可选** | 增加/修改查询条件（`where` 对象） |
 
-#### 7. `template-api.module.ts`
+#### 8. `template-api.module.ts`
 
 | 项目 | 说明 |
 |------|------|
@@ -120,7 +130,7 @@ template-api/
    - `template-item` → `xxx`
    - `TemplateItem` → `Xxx`
 3. **修改实体**：编辑 `entities/xxx.entity.ts`，定义表名和字段
-4. **修改 DTO**：编辑 `dto/` 下三个业务 DTO，调整字段和校验规则
+4. **修改 DTO**：编辑 `dto/` 下四个业务 DTO，调整字段和校验规则
 5. **修改路由**：编辑 `xxx-api.controller.ts` 的 `@Controller('v1/xxx')` 和 `@ApiTags`
 6. **修改消息**：编辑 `xxx-api.service.ts` 的成功/错误消息文案
 7. **注册模块**：在 `app.module.ts` 中 import 并添加到 `imports` 数组

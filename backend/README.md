@@ -39,7 +39,8 @@ backend/
 │   │   ├── database-naming-strategy.ts  # 数据库命名策略
 │   │   └── redis.config.ts       # Redis 配置
 │   ├── database/                 # 数据库相关
-│   │   └── migrations/           # 数据库迁移文件
+│   │   ├── migrations/           # 数据库迁移文件
+│   │   └── run-migrations.ts     # SQL 迁移执行器
 │   ├── health/                   # 健康检查模块
 │   ├── modules/                  # 业务模块目录
 │   │   ├── access-log/           # 访问日志模块
@@ -256,6 +257,9 @@ GET /backend/v1/template-api?page=1&pageSize=10&name=示例
         "id": 1,
         "name": "示例模板",
         "description": "这是一个示例模板条目",
+        "status": "active",
+        "priority": 0,
+        "isEnabled": true,
         "createdAt": 1779444000,
         "updatedAt": 1779444000
       }
@@ -287,6 +291,9 @@ GET /backend/v1/template-api/1
     "id": 1,
     "name": "示例模板",
     "description": "这是一个示例模板条目",
+    "status": "active",
+    "priority": 0,
+    "isEnabled": true,
     "createdAt": 1779444000,
     "updatedAt": 1779444000
   },
@@ -396,17 +403,18 @@ npm run start:prod
 
 ## 开发脚本 🛠️
 
-| 命令                   | 说明                                 |
-| ---------------------- | ------------------------------------ |
-| `npm run start`        | 启动应用                             |
-| `npm run start:dev`    | 开发模式启动（热重载）               |
-| `npm run start:debug`  | 调试模式启动                         |
-| `npm run start:prod`   | 生产模式启动                         |
-| `npm run build`        | 构建生产版本                         |
-| `npm run format`       | 使用 Prettier 格式化 `src/**/*.ts`   |
-| `npm run format:check` | 校验格式，不修改文件（适用于 CI）    |
-| `npm run lint`         | ESLint 检查并自动修复                |
-| `npm run lint:check`   | ESLint 检查，不修改文件（适用于 CI） |
+| 命令                    | 说明                                 |
+| ----------------------- | ------------------------------------ |
+| `npm run start`         | 启动应用                             |
+| `npm run start:dev`     | 开发模式启动（热重载）               |
+| `npm run start:debug`   | 调试模式启动                         |
+| `npm run start:prod`    | 生产模式启动                         |
+| `npm run build`         | 构建生产版本                         |
+| `npm run migration:run` | 执行未应用的 SQL 迁移（先构建）      |
+| `npm run format`        | 使用 Prettier 格式化 `src/**/*.ts`   |
+| `npm run format:check`  | 校验格式，不修改文件（适用于 CI）    |
+| `npm run lint`          | ESLint 检查并自动修复                |
+| `npm run lint:check`    | ESLint 检查，不修改文件（适用于 CI） |
 
 ## 技术栈 💻
 

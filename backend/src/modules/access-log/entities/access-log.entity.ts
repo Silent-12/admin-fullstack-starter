@@ -1,4 +1,4 @@
-import { Entity, Column, Index, PrimaryGeneratedColumn, BeforeInsert } from 'typeorm'
+import { Entity, Column, Index, PrimaryColumn, BeforeInsert } from 'typeorm'
 import dayjs from 'dayjs'
 
 /**
@@ -14,8 +14,17 @@ import dayjs from 'dayjs'
 export class AccessLog {
   /**
    * 主键 ID
+   * @description 列 transformer 把 bigint 主键归一为 number：MySQL 驱动默认
+   * supportBigNumbers / bigNumberStrings，bigint 会以字符串回传，与 `id!: number` 声明不一致。
+   * 这里用 `@PrimaryColumn({ generated: 'increment' })`，它与 `@PrimaryGeneratedColumn` 注册的
+   * 元数据相同，且其选项类型声明了 `transformer`。
    */
-  @PrimaryGeneratedColumn({ type: 'bigint', comment: '主键 ID' })
+  @PrimaryColumn({
+    type: 'bigint',
+    generated: 'increment',
+    comment: '主键 ID',
+    transformer: { from: (value: string) => Number(value), to: (value: number) => value },
+  })
   id!: number
 
   /**

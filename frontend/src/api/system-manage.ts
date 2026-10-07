@@ -10,7 +10,7 @@ import type {
 // 获取用户列表
 export function fetchGetUserList(params: UserSearchParams) {
   return request.get<UserList>({
-    url: '/api/user/list',
+    url: '/v1/user/list',
     params
   })
 }
@@ -18,7 +18,7 @@ export function fetchGetUserList(params: UserSearchParams) {
 // 获取角色列表
 export function fetchGetRoleList(params: RoleSearchParams) {
   return request.get<RoleList>({
-    url: '/api/role/list',
+    url: '/v1/role/list',
     params
   })
 }
@@ -30,6 +30,6 @@ export function fetchGetRoleList(params: RoleSearchParams) {
  */
 export function fetchGetMenuList(): Promise<AppRouteRecord[]> {
   return request.get<AppRouteRecord[]>({
-    url: '/api/v3/system/menus/simple'
+    url: '/v1/system/menus/simple'
   })
 }

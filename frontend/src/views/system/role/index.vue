@@ -66,7 +66,7 @@
   import type { SearchFormItem } from '@ao/admin-components'
   import type { TablePaginationState } from '@ao/admin-components'
   import { useTableColumns } from '@ao/admin-components'
-  import { fetchGetRoleList } from '@/mock'
+  import { fetchGetRoleList } from '@/api/system-manage'
   import RoleEditDialog from './components/RoleEditDialog.vue'
   import RolePermissionDialog from './components/RolePermissionDialog.vue'
   import type {

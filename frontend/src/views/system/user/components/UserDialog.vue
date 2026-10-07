@@ -50,7 +50,8 @@
     ElOption,
     ElSelect
   } from 'element-plus'
-  import { ROLE_LIST_DATA } from '@/mock'
+  import { fetchGetRoleList } from '@/api/system-manage'
+  import type { RoleListItem } from '@/types/api/system-manage'
   import type { FormInstance, FormRules } from 'element-plus'
   import type { UserDialogProps, UserDialogEmits } from '../types'
 
@@ -60,7 +61,7 @@
   const emit = defineEmits<UserDialogEmits>()
 
   // 角色列表数据
-  const roleList = ref(ROLE_LIST_DATA)
+  const roleList = ref<RoleListItem[]>([])
 
   /**
    * @description 对话框显示控制双向绑定
@@ -98,6 +99,14 @@
   }
 
   /**
+   * @description 加载角色下拉选项
+   */
+  const fetchRoleList = async (): Promise<void> => {
+    const res = await fetchGetRoleList({ current: 1, size: 100 })
+    roleList.value = res.records
+  }
+
+  /**
    * @description 初始化表单数据
    * 根据对话框类型（新增/编辑）填充表单
    */
@@ -115,13 +124,14 @@
 
   /**
    * @description 监听对话框状态变化
-   * 当对话框打开时初始化表单数据并清除验证状态
+   * 当对话框打开时初始化表单数据、加载角色选项并清除验证状态
    */
   watch(
     () => [props.modelValue, props.type, props.userData],
     ([visible]) => {
       if (visible) {
         initFormData()
+        fetchRoleList()
         nextTick(() => {
           formRef.value?.clearValidate()
         })

@@ -2,7 +2,7 @@
 
 本目录是 `admin-fullstack-starter` 的前端子项目，基于 Vue 3、TypeScript 和 Element Plus，`package.json` 中的项目名为 `ao-design-pro`。后端服务位于同仓库的 `../backend/`；仓库级安装、启动与构建命令见根 [README](../README.md)。
 
-项目提供登录、工作台、用户/角色/菜单管理示例、表格表单示例，以及菜单、标签页和主题等后台基础能力。默认使用本地 Mock 数据与静态路由，可先运行页面，再逐步接入业务接口；本目录不包含后端服务、数据库或消息队列。
+项目提供登录、工作台、用户/角色/菜单管理示例、表格表单示例，以及菜单、标签页和主题等后台基础能力。接口统一通过 `src/api/` 调用后端 `/backend` 服务，默认使用静态路由；本目录不包含后端服务、数据库或消息队列。
 
 ## 🚀 快速开始
 
@@ -37,7 +37,7 @@ pnpm run dev:frontend       # 或 pnpm dev 同时启动前后端
 
 登录页默认填入 `Super / 123456`，也可以在页面中选择其他演示账号。
 
-当前登录与用户信息来自 [src/mock/auth.ts](src/mock/auth.ts)：登录仅校验账号、密码非空，用户信息固定返回 `admin` 和 `R_SUPER`。页面中的账号切换不会自动模拟不同角色权限；接入真实认证前，需要替换对应的 Mock 调用。
+登录与用户信息通过 [src/api/auth.ts](src/api/auth.ts) 调用后端 `POST /backend/v1/auth/login` 与 `GET /backend/v1/user/info`。本地 Mock 已移除，后端认证模块尚未提供，接口就绪前登录与用户信息获取不可用。
 
 ## 🛠️ 技术栈
 
@@ -113,7 +113,6 @@ frontend/
 │   ├── directives/          # 权限、高亮等指令
 │   ├── enums/               # 枚举定义
 │   ├── locales/             # 宿主语言包与 i18n 初始化
-│   ├── mock/                # 本地演示数据与模拟接口
 │   ├── router/
 │   │   ├── guards/          # 路由守卫
 │   │   ├── routes/          # 公共路由与业务系统路由
@@ -145,36 +144,42 @@ Vite 先加载 [`.env`](.env)，再按运行模式加载 [`.env.development`](.e
 | `VITE_PORT`             | 开发服务端口            | `3006`                              |
 | `VITE_BASE_URL`         | 部署基础路径            | `/`                                 |
 | `VITE_ROUTE_SOURCE`     | 菜单路由来源            | `static`；可改为 `dynamic`          |
-| `VITE_API_URL`          | HTTP 请求基础地址       | 开发为 `/`，生产为 Apifox Mock 地址 |
-| `VITE_API_PROXY_URL`    | 开发代理目标            | 开发环境中的 Apifox Mock 地址       |
+| `VITE_API_URL`          | HTTP 请求基础地址       | `/backend`，与后端 `API_PREFIX` 一致 |
+| `VITE_API_PROXY_URL`    | 开发代理目标            | `http://localhost:3000`             |
 | `VITE_WITH_CREDENTIALS` | 跨域请求是否携带 Cookie | `false`                             |
 
-开发代理在 [vite.config.ts](vite.config.ts) 中配置：`/api` 请求转发到 `VITE_API_PROXY_URL`，保留 `/api` 路径前缀。接入本地后端时，修改代理目标即可；直接调用 `src/mock/` 的函数不会经过代理。
+开发代理在 [vite.config.ts](vite.config.ts) 中配置：`/backend` 请求转发到 `VITE_API_PROXY_URL`，保留 `/backend` 路径前缀。接入本地后端时，修改代理目标即可。
 
 新增环境变量的命名、文件同步和类型声明要求见 [开发流程与验证](.agents/rules/workflow.md)。
 
-## 🔌 接入真实接口
+## 🔌 接口对接
 
-当前采用本地 Mock 的入口包括登录页、路由守卫中的用户信息获取，以及用户、角色、菜单管理示例页面。切换步骤如下：
+本地 Mock 已移除，登录页、路由守卫的用户信息获取，以及用户、角色、菜单管理示例页面均直接调用后端接口。请求路径由 `VITE_API_URL`（`/backend`）与 [src/api](src/api) 中的 `/v1/...` 拼接而成：
 
-1. 配置开发环境的 `VITE_API_PROXY_URL` 和生产环境的 `VITE_API_URL`。
-2. 在 [src/api/auth.ts](src/api/auth.ts)、[src/api/system-manage.ts](src/api/system-manage.ts) 中对接实际接口，维护 `src/types/` 中对应的类型。
-3. 将调用处从 `@/mock` 导入的方法替换为对应的 `@/api/auth` 或 `@/api/system-manage` 方法；列表读取之外的新增、修改、删除等操作也需按业务接入。
-4. 若菜单由后端提供，将 `VITE_ROUTE_SOURCE` 改为 `dynamic`，并确认菜单接口返回符合 `AppRouteRecord[]` 的业务系统路由数据。
+| 调用方   | 请求路径                              |
+| -------- | ------------------------------------- |
+| 登录页   | `POST /backend/v1/auth/login`         |
+| 路由守卫 | `GET /backend/v1/user/info`           |
+| 用户管理 | `GET /backend/v1/user/list`           |
+| 角色管理 | `GET /backend/v1/role/list`           |
+| 菜单管理 | `GET /backend/v1/system/menus/simple` |
 
-`VITE_ROUTE_SOURCE` 只控制菜单路由来源，不是全局 Mock 开关。动态菜单由 [MenuRouteService](src/router/services/MenuRouteService.ts) 调用真实接口，当前地址为 `/api/v3/system/menus/simple`。
+上述接口的后端实现尚未提供，后端补齐前这些页面无法正常加载数据；新增、修改、删除等写操作也需按业务接入 [src/api](src/api)。
+
+`VITE_ROUTE_SOURCE` 只控制菜单路由来源。动态菜单由 [MenuRouteService](src/router/services/MenuRouteService.ts) 调用 `/backend/v1/system/menus/simple`。
 
 所有 HTTP 请求统一通过 [src/utils/http/index.ts](src/utils/http/index.ts) 的默认 `request` 实例发起。后端响应遵循 [BaseResponse](src/types/common/response.ts)：
 
 ```json
 {
   "code": 200,
-  "msg": "成功",
-  "data": {}
+  "message": "成功",
+  "data": {},
+  "timestamp": "2026-10-07T07:00:00.000Z"
 }
 ```
 
-请求封装校验业务状态码，并将 `data` 解包后返回给调用方；同时处理登录令牌、错误提示及未授权退出。接口约定见 [接口请求与响应](.agents/rules/api.md)。
+后端以 HTTP 状态码表达成败，非 2xx 响应由封装统一转为错误对象并展示后端返回的 `message`；成功响应将 `data` 解包后返回给调用方，同时处理登录令牌、错误提示及未授权退出。接口约定见 [接口请求与响应](.agents/rules/api.md)。
 
 ## 🗺️ 页面与路由开发
 
@@ -214,8 +219,7 @@ pnpm run serve
 构建产物位于 `dist/`，可部署到静态站点服务或 Nginx。`pnpm run serve` 用于本地检查构建结果，正式部署使用实际的静态资源服务。
 
 - 根路径部署时保留 `VITE_BASE_URL=/`；部署到 `/admin/` 等子目录时，构建前设置相应基础路径。
-- 生产环境需配置可访问的后端 API 地址；如使用同源 `/api`，由部署环境配置反向代理。开发服务器的代理配置不会打包进 `dist/`。
-- 默认生产 API 地址仍指向 Apifox Mock，使用 `src/mock/` 的代码也不会因执行生产构建自动切换为真实接口。
+- 生产环境需配置可访问的后端 API 地址；当前 `VITE_API_URL` 为同源相对路径 `/backend`，由部署环境配置反向代理转发到后端服务。开发服务器的代理配置不会打包进 `dist/`。
 
 ## 📚 开发约定
 

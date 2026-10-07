@@ -74,7 +74,7 @@
   import { AoTable } from '@ao/admin-components'
   import { AoButtonTable } from '@ao/admin-components'
   import AoImage from '@/components/media/AoImage.vue'
-  import { fetchGetUserList } from '@/mock'
+  import { fetchGetUserList } from '@/api/system-manage'
   import { useTableColumns } from '@ao/admin-components'
   import UserDialog from './components/UserDialog.vue'
   import type { SearchFormItem } from '@ao/admin-components'

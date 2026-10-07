@@ -8,7 +8,7 @@ import type { LoginParams, LoginResponse, UserInfo } from '@/types/api/auth'
  */
 export function fetchLogin(params: LoginParams) {
   return request.post<LoginResponse>({
-    url: '/api/auth/login',
+    url: '/v1/auth/login',
     params
     // showSuccessMessage: true // 显示成功消息
     // showErrorMessage: false // 不显示错误消息
@@ -21,7 +21,7 @@ export function fetchLogin(params: LoginParams) {
  */
 export function fetchGetUserInfo() {
   return request.get<UserInfo>({
-    url: '/api/user/info'
+    url: '/v1/user/info'
     // 自定义请求头
     // headers: {
     //   'X-Custom-Header': 'your-custom-value'

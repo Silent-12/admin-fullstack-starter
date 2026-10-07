@@ -123,7 +123,7 @@ pnpm run dev:backend
 | 后端健康检查 | http://localhost:3000/backend/v1/health |
 | Knife4j 接口文档 | http://localhost:3000/backend/doc.html （仅开发/测试环境） |
 
-前端演示登录：登录页表单预填 `Super / 123456`（另有 `Admin`、`User` 两个演示账号，密码同为 `123456`）。Mock 只校验账号密码非空——**任意非空组合均可登录**，返回的用户名固定为 `admin`。逻辑见 `frontend/src/mock/auth.ts`。
+前端登录：登录页表单预填 `Super / 123456`（另有 `Admin`、`User` 两个演示账号，密码同为 `123456`）。登录与用户信息已改为调用后端 `POST /backend/v1/auth/login` 与 `GET /backend/v1/user/info`（见 `frontend/src/api/auth.ts`），本地 Mock 已移除；后端认证模块尚未提供，接口就绪前无法登录。
 
 ---
 
@@ -212,9 +212,9 @@ git commit -m "chore(eslint): verify hooks"
 
 合并后两端**尚未接通**，当前状态与联调要点如下：
 
-1. **前端仍走 Mock**：登录、用户信息、用户/角色/菜单管理示例页面的数据来自 `frontend/src/mock/`，不经过 HTTP 请求。
-2. **开发代理指向 Mock 服务**：`frontend/.env.development` 的 `VITE_API_PROXY_URL` 当前指向 Apifox Mock，`vite.config.ts` 将 `/api` 前缀的请求转发到该地址。接入本地后端时，把 `VITE_API_PROXY_URL` 改为 `http://localhost:3000` 即可。
-3. **路径前缀不一致**：前端代理使用 `/api` 前缀，后端全局前缀为 `backend`。联调时需二选一并保持两端一致——要么在 Vite 代理中配置 `rewrite` 去掉 `/api`，要么把后端 `.env` 的 `API_PREFIX` 调整为 `api`。
+1. **前端已移除 Mock**：登录、用户信息、用户/角色/菜单管理示例页面均通过 `frontend/src/api/` 调用后端接口，请求路径由 `VITE_API_URL`（`/backend`）与 `/v1/...` 拼接而成。
+2. **开发代理指向本地后端**：`frontend/.env.development` 的 `VITE_API_PROXY_URL` 为 `http://localhost:3000`，`vite.config.ts` 将 `/backend` 前缀的请求转发到该地址。
+3. **路径前缀已对齐**：前端 baseURL 与后端全局前缀同为 `backend`，接口路径统一为 `/backend/v1/...`。
 4. **后端现有端点**：`GET /backend/v1/health`（健康检查，始终可用）、`/backend/v1/template-api`（CRUD 示例，仅在 `MYSQL_ENABLED=true` 时注册）。
 
 > 后端 `MYSQL_ENABLED=false` 时，所有依赖 TypeORM 的模块（含 `template-api`、`access-log`）都不会被加载，这是 `app.module.ts` 中的条件化导入设计，属于预期行为。
@@ -255,5 +255,5 @@ git commit -m "chore(eslint): verify hooks"
 以下内容**不在**本次合并范围内，属于后续需要补齐的能力。逐项分析、目标接口契约、决策点与建议执行顺序见 [TODO.md](TODO.md)：
 
 - **后端缺少用户、角色、权限、菜单模块**。当前 `backend/src/modules/` 仅有 `template-api`（CRUD 示例）与 `access-log`（访问日志），后端尚未提供认证与权限管理接口。
-- **前端仍依赖 Mock**。前端已具备用户/角色/菜单管理页面，但数据源是 `frontend/src/mock/`，需在后端补齐对应模块后切换到 `frontend/src/api/` 中的真实请求。
-- **两端未做接口契约对齐**。响应结构上，前端期望 `{ code, msg, data }`（见 `frontend/src/types/common/response.ts`），后端统一返回 `{ code, message, data }`（见 `backend/src/common/dto/api-response.dto.ts`），字段名 `msg` 与 `message` 不一致，联调时需要统一。
+- **前端接口已接通，等待后端实现**。用户/角色/菜单管理页面已改为调用 `frontend/src/api/` 中的真实请求，后端对应模块补齐前这些页面无法加载数据。
+- **响应契约已对齐**。前端 `BaseResponse`（见 `frontend/src/types/common/response.ts`）与后端 `ApiResponseDto`（见 `backend/src/common/dto/api-response.dto.ts`）字段一致，均为 `code`、`message`、`data`、`timestamp`；请求成败以后端 HTTP 状态码判定，前端不再判断响应体的 `code`。

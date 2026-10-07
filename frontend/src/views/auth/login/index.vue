@@ -83,7 +83,7 @@
   import AppConfig from '@/config'
   import { useUserStore } from '@/store/modules/user'
   import { HttpError } from '@/utils/http/error'
-  import { fetchLogin } from '@/mock'
+  import { fetchLogin } from '@/api/auth'
   import { ElNotification, type FormInstance, type FormRules } from 'element-plus'
   import AuthTopBar from './components/AuthTopBar.vue'
   import LoginLeftView from './components/LoginLeftView.vue'

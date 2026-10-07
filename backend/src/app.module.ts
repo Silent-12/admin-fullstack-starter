@@ -96,7 +96,7 @@ const typeOrmRootModule = isMysqlEnabled
     RedisModule,
     /**
      * 日志模块
-     * 注册 Winston 日志（控制台 + 三路按日滚动落盘），并使 WINSTON_MODULE_NEST_PROVIDER 全局可注入
+     * 注册 Winston 日志（控制台 + error / combined 两路按日滚动落盘），并使 WINSTON_MODULE_NEST_PROVIDER 全局可注入
      */
     LoggerModule,
     /**

@@ -17,15 +17,15 @@
 
 ### 语义色变量（`@ao/admin-layout/dist/index.css`）
 
-| 变量 | 取值 | 说明 |
-| --- | --- | --- |
-| `--ao-primary` | `var(--el-color-primary)` | 主色，别名到 Element Plus |
-| `--ao-secondary` | `var(--el-color-info)` | 次要色 |
-| `--ao-success` | `var(--el-color-success)` | 成功色 |
-| `--ao-warning` | `var(--el-color-warning)` | 警告色 |
-| `--ao-danger` | `var(--el-color-danger)` | 危险色 |
-| `--ao-error` | `var(--el-color-error)` | 错误色 |
-| `--ao-info` | `var(--el-color-info)` | 信息色 |
+| 变量             | 取值                      | 说明                      |
+| ---------------- | ------------------------- | ------------------------- |
+| `--ao-primary`   | `var(--el-color-primary)` | 主色，别名到 Element Plus |
+| `--ao-secondary` | `var(--el-color-info)`    | 次要色                    |
+| `--ao-success`   | `var(--el-color-success)` | 成功色                    |
+| `--ao-warning`   | `var(--el-color-warning)` | 警告色                    |
+| `--ao-danger`    | `var(--el-color-danger)`  | 危险色                    |
+| `--ao-error`     | `var(--el-color-error)`   | 错误色                    |
+| `--ao-info`      | `var(--el-color-info)`    | 信息色                    |
 
 ### 灰度色阶变量（亮暗反转）
 
@@ -88,8 +88,8 @@
 
 ### Element Plus 桥接变量（`@ao/admin-layout` 包提供）
 
-| 变量名         | 说明                   |
-| --------------- | ----------------------- |
+| 变量名          | 说明                     |
+| --------------- | ------------------------ |
 | `--theme-color` | 指向 `var(--main-color)` |
 
 ### Element Plus 暗色覆盖（`@ao/admin-layout/dist/index.css`，仅 `html.dark` 下生效）

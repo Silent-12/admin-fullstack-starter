@@ -1648,7 +1648,7 @@ curl -s http://localhost:3000/backend/v1/health
 ls -R logs
 ```
 
-Expected: 控制台出现 Nest 格式的彩色日志；`logs/combined/`、`logs/access/`、`logs/error/` 三个目录下生成对应日志文件，且 `combined` 中有本次启动记录。
+Expected: 控制台出现 Nest 格式的彩色日志；`logs/combined/`、`logs/error/` 两个目录下生成对应日志文件，且 `combined` 中有本次启动记录。（原计划为三个目录，`logs/access/` 因与 `combined` 逐行重复已于后续提交移除。）
 
 **若启动报 `Nest can't resolve dependencies of the LoggerService`**，说明注入令牌仍未命中，回到 Step 2 核对；**若报模块解析失败**，检查 Step 3 的 import 路径是否带 `.js` 后缀。
 

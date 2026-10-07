@@ -206,6 +206,7 @@
 | 现状 | 全仓库仅 `V1__access_logs.sql` 一个迁移；`template-item.entity.ts:8` 声明的 `template_items` 表无任何建表脚本。`backend/README.md:375` 却指示"新建数据库直接执行 `V1__access_logs.sql`"，而 `.env.example:40` 的 `DB_SYNCHRONIZE=false`，照做后 `/backend/v1/template-api` 必然报表不存在 |
 | 深层问题 | `app.module.ts:34-55` 的 DataSource 选项中没有 `migrations`/`migrationsRun`；仓库无 `data-source.ts`/`ormconfig`，TypeORM CLI 不可用；无 `db:migrate` 类脚本。`nest-cli.json` 也无 `compilerOptions.assets`，`.sql` 不会进入 `dist/`。**`AGENTS.md:25`「迁移文件是数据库变更的唯一事实来源」目前没有落地机制** |
 | 纠正 | ① 新增 `src/database/migrations/V2__template_items.sql`，列定义与 `template-item.entity.ts` 对齐；② 新增 `src/database/data-source.ts` 供 TypeORM CLI 使用；③ `package.json` 增加 `migration:run` / `migration:revert` 脚本；④ `backend/README.md` 更新建库步骤 |
+| **实现修正（实施时）** | 上条「纠正」的 ②③ **不可行，已废弃**：TypeORM 的 `migration:run` 只接受实现 `up`/`down` 的 TS/JS 迁移类，**无法执行原始 `.sql` 文件**，而 `AGENTS.md:25` 又规定迁移文件是 `V{序号}__{描述}.sql`。实际交付为：新增 `src/database/run-migrations.ts`（按文件名中版本号**数值**升序执行 `src/database/migrations/*.sql`，用 `schema_migrations` 表记录已应用文件，可重复执行），`package.json` 只提供 `migration:run`，**没有 `migration:revert`**；回滚方式见 `backend/document/deployment-change-record.md`。**照本设计文档的 ②③ 操作会失败——以本行为准** |
 | 明确不做 | 不开启 `migrationsRun`（不在应用启动时自动跑迁移），不改 `DB_SYNCHRONIZE` 默认值 |
 
 ### 6.2 让 `template-api` 符合它自己引用的规则
@@ -222,8 +223,9 @@
 | 项 | 内容 |
 | --- | --- |
 | 现状 | `logger.module.ts:15` 的 `LoggerModule` 除自身定义外**零引用**，`app.module.ts:61-125` 的 `imports` 中未注册；`logger.config.ts`、`logger.service.ts` 仅被该模块引用。连带 `nest-winston`、`winston`、`winston-daily-rotate-file` 三个依赖完全不生效 |
-| 判断依据 | 该能力属"待用能力"而非冗余（标准 1）：`logger.config.ts:36-85` 已完整设计 `logs/error\|access\|combined` 三路滚动落盘，`.gitignore:5` 早已忽略 `logs/`，`AGENTS.md:15` 也以"集中异常过滤器的 Logger"为前提书写规则——意图明确为"忘了接上"。同时根 `README.md:58` 与 `backend/README.md:15,32,411` 共 4 处宣称该能力 |
+| 判断依据 | 该能力属"待用能力"而非冗余（标准 1）：`logger.config.ts` 已完整设计控制台与按日滚动落盘的文件 transport，`.gitignore:5` 早已忽略 `logs/`，`AGENTS.md:15` 也以"集中异常过滤器的 Logger"为前提书写规则——意图明确为"忘了接上"。同时根 `README.md:58` 与 `backend/README.md:15,32,411` 共 4 处宣称该能力 |
 | 纠正 | ① `app.module.ts` 注册 `LoggerModule`；② `main.ts` 使用 Winston logger 替代默认 Logger；③ 不改动 `logger.config.ts` 既有的落盘策略 |
+| **实现修正（实施后）** | 原配置的第三路 `logs/access/` 已**移除**：它未设任何过滤（`level: 'info'`，而基础级别同为 `info`），与 `logs/combined/` 逐行重复；且 HTTP 访问记录实际由 `LoggingMiddleware` 经 `AccessLogService` 写入数据库 `access_logs` 表，**从不经过 Winston**，该文件名具有误导性。现落盘为控制台 + `logs/error` + `logs/combined`，并在 `logger.config.ts` 留有注释说明为何不应恢复该 transport |
 | 影响 | 应用日志输出格式与落盘行为会变化，属预期的行为修正 |
 
 ### 6.4 对齐 `V1__access_logs.sql` 与实体
@@ -254,7 +256,7 @@
 | --- | --- |
 | 第一层 | 删除的每一项先 `git grep` 复核零引用；`pnpm run lint:check`、`pnpm run format:check` 退出码须仍为 0；改依赖后重跑 `pnpm run install:all` 并确认两端 lock 已同步 |
 | 第二层 | 无改动 |
-| 第三层 | 前后端各跑一次 `build`；用真实 MySQL 跑一次「空库 → 依次执行 V1、V2 → 启动服务 → template-api CRUD 全通」闭环；确认 `logs/` 下按配置生成三路日志 |
+| 第三层 | 前后端各跑一次 `build`；用真实 MySQL 跑一次「空库 → 依次执行 V1、V2 → 启动服务 → template-api CRUD 全通」闭环；确认 `logs/` 下按配置生成 error 与 combined 两路日志 |
 | 全局 | 完成后 `git status` 干净；按层分批提交，便于回溯与回滚 |
 
 `frontend` 的 `vue-tsc` 需在删除 `.auto-import.json` + `auto-imports.d.ts` 后单独跑一次，确认没有此前被掩盖的类型错误——若有，逐条修复后再继续。

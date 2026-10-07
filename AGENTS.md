@@ -13,7 +13,7 @@
 2. **强制加载路径**：任务只涉及单端时，按改动路径读取对应子项目规则，并遵循其内部优先级：
    - 改动 `frontend/**` → 读取 [frontend/AGENTS.md](frontend/AGENTS.md)，再按其中的「按需加载索引」加载 `frontend/.agents/rules/`、`frontend/.agents/skills/`、`frontend/.agents/references/` 中的匹配项。
    - 改动 `backend/**` → 读取 [backend/AGENTS.md](backend/AGENTS.md)。**两端规则体系不对称**：`backend/AGENTS.md` 自身即规则主体（通用规则直接内联），`backend/.agents/` 下仅保留 `rules/ponytail.md` 与 `skills/database-design/`，按需加载；**不要假定后端存在与前端同名的专项规则文件**。
-3. **跨端共用技能**：提交信息生成、改动说明生成、代码审查、编码行为准则、TypeDoc 注释规范统一位于**仓库根 `.agents/skills/`**（当前 5 个：`commit-msg`、`git-commit-changelog`、`code-review`、`karpathy-guidelines`、`typedoc-style`），两端以 `../.agents/skills/` 引用，**不得在子项目内重复实现同名技能**。
+3. **跨端共用技能**：提交信息生成、改动说明生成、代码审查、编码行为准则、TypeDoc 注释规范统一位于**仓库根 `.agents/skills/`**（当前 5 个：`commit-msg`、`git-commit-changelog`、`code-review`、`karpathy-guidelines`、`typedoc-style`）。`frontend/AGENTS.md` 以 `../.agents/skills/` 相对路径引用，`backend/AGENTS.md` 以文字说明指向同一目录，**不得在子项目内重复实现同名技能**。
 4. **文档定位**：子项目 `README.md` 仅作使用说明（安装、启动、接口示例），**不是规则来源**；规则一律以该目录下的 `AGENTS.md` 为准。仓库级说明见根 [README.md](README.md)。
 5. 两端规则冲突时，以**改动所在子项目的规则**为准；根级配置（脚本、钩子、提交规范）以本文件与根目录实现为准。
 6. 用户明确要求优先于上述项目规则。

@@ -373,7 +373,7 @@ if (accessToken) request.headers.set('Authorization', accessToken)
 
 ---
 
-## 6. 已登记未修复项（2026-10-07 清理中确认，按"模板待用能力"保留）
+## 6. 已登记未修复项（2026-10-07 清理中确认，按「模板待用能力」保留）
 
 以下各项经审计确认当前无引用，但按「模板项目中未使用 ≠ 冗余」的判断标准保留，登记备查：
 
@@ -384,7 +384,8 @@ if (accessToken) request.headers.set('Authorization', accessToken)
 | `backend/src/common/redis/redis.service.ts` 的 `set`/`setIfAbsent`/`get`/`del` | 当前仅有 `getClient()` 与 `getStatus()` 被调用 | 无（属预期预留） |
 | `backend/package.json` 的 `@types/ioredis@^4` | ioredis 实际为 v5（自带类型），该桩包为 v4 API 类型 | 暂无实际影响（`tsc` 通过）；建议后续移除 |
 | `backend/package.json` 未声明 `dotenv`，但 `src/app.module.ts:6` 直接 `import { config } from 'dotenv'` | 依赖 `@nestjs/config` 的传递依赖被提升后可用 | npm 扁平安装下正常；若改用 pnpm 严格链接会解析失败，建议显式声明 |
-| `backend/src/modules/template-api/dto/create-template-item.dto.ts:21-25` 只允许 `active`/`inactive`，而实体注释与默认值含 `archived` | `archived` 状态无法通过接口写入，校验规则与实体注释互相矛盾 | 参考模板的示例数据不一致，建议二者取其一 |
+| `backend/src/modules/template-api/dto/create-template-item.dto.ts:21-25` 只允许 `active`/`inactive`，而实体注释含 `archived`（实体默认值为 `'active'`） | `archived` 状态无法通过接口写入，校验规则与实体注释互相矛盾 | 参考模板的示例数据不一致，建议二者取其一 |
+| `backend/src/modules/template-api/entities/template-item.entity.ts:17-23` 与 `backend/src/modules/access-log/entities/access-log.entity.ts:22-28` 的 bigint 主键 | 已裁定加列 transformer，把驱动按 `bigNumberStrings` 回传的字符串 `id` 归一为 `number`，使声明、Swagger 与运行时一致 | `Number()` 在超过 2^53 时丢精度；本脚手架的主键规模不触及，将来需要超大主键时应改用 string 约定 |
 
 ---
 

@@ -22,7 +22,7 @@ export class AccessLog {
   @PrimaryColumn({
     type: 'bigint',
     generated: 'increment',
-    comment: '主键 ID',
+    comment: '主键',
     transformer: { from: (value: string) => Number(value), to: (value: number) => value },
   })
   id!: number
@@ -30,25 +30,25 @@ export class AccessLog {
   /**
    * 请求追踪 ID
    */
-  @Column({ length: 255, comment: '请求追踪 ID' })
+  @Column({ length: 255, comment: '请求链路追踪 ID' })
   traceId!: string
 
   /**
    * HTTP 请求方法
    */
-  @Column({ length: 255, comment: 'HTTP 请求方法' })
+  @Column({ length: 255, comment: 'HTTP 方法 (GET/POST/PUT/DELETE 等)' })
   method!: string
 
   /**
    * 请求 URL
    */
-  @Column({ length: 255, comment: '请求 URL' })
+  @Column({ length: 255, comment: '请求路径（含 query 参数）' })
   url!: string
 
   /**
    * HTTP 状态码
    */
-  @Column({ type: 'int', comment: 'HTTP 状态码' })
+  @Column({ type: 'int', comment: 'HTTP 响应状态码' })
   statusCode!: number
 
   /**
@@ -60,7 +60,7 @@ export class AccessLog {
   /**
    * 客户端 IP 地址
    */
-  @Column({ length: 255, comment: '客户端 IP 地址' })
+  @Column({ length: 255, comment: '客户端 IP 地址（兼容 IPv6）' })
   ip!: string
 
   /**
@@ -73,31 +73,31 @@ export class AccessLog {
   /**
    * 用户代理字符串
    */
-  @Column({ length: 255, nullable: true, comment: '用户代理字符串' })
+  @Column({ length: 255, nullable: true, comment: '客户端 User-Agent' })
   userAgent!: string
 
   /**
    * 请求来源 URL
    */
-  @Column({ length: 255, nullable: true, comment: '请求来源 URL' })
+  @Column({ length: 255, nullable: true, comment: '请求来源 Referer' })
   referer!: string
 
   /**
    * 请求体内容（JSON 格式）
    */
-  @Column({ type: 'longtext', nullable: true, comment: '请求体内容（JSON 格式）' })
+  @Column({ type: 'longtext', nullable: true, comment: '请求体 JSON 字符串（脱敏后）' })
   requestBody!: string
 
   /**
    * 响应体内容（JSON 格式）
    */
-  @Column({ type: 'longtext', nullable: true, comment: '响应体内容（JSON 格式）' })
+  @Column({ type: 'longtext', nullable: true, comment: '响应体 JSON 字符串（可选）' })
   responseBody!: string
 
   /**
    * 创建时间（Unix 时间戳）
    */
-  @Column({ type: 'int', comment: '创建时间（Unix 时间戳）' })
+  @Column({ type: 'int', comment: '记录时间（10 位 Unix 时间戳）' })
   createdAt!: number
 
   @BeforeInsert()

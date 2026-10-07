@@ -10,6 +10,7 @@ import databaseConfig from './config/database.config.js'
 import redisConfig from './config/redis.config.js'
 import { SnakeNamingStrategy } from './config/database-naming-strategy.js'
 import { DatabaseHealthService } from './common/database/database.health.service.js'
+import { LoggerModule } from './common/logger/logger.module.js'
 import { LoggingMiddleware } from './common/middleware/logging.middleware.js'
 import { MissingRouteThrottleMiddleware } from './common/middleware/missing-route-throttle.middleware.js'
 import { RedisModule } from './common/redis/redis.module.js'
@@ -93,6 +94,11 @@ const typeOrmRootModule = isMysqlEnabled
       inject: [ConfigService],
     }),
     RedisModule,
+    /**
+     * 日志模块
+     * 注册 Winston 日志（控制台 + 三路按日滚动落盘），并使 WINSTON_MODULE_NEST_PROVIDER 全局可注入
+     */
+    LoggerModule,
     /**
      * 数据库相关模块（条件化导入）
      * 仅 MYSQL_ENABLED 为 true 时启用，所有依赖 TypeORM 的模块必须在此条件内导入，

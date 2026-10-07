@@ -6,12 +6,14 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import type { Response } from 'express'
 import basicAuth from 'express-basic-auth'
 import helmet, { type HelmetOptions } from 'helmet'
+import { WinstonModule } from 'nest-winston'
 import { knife4jSetup } from 'nestjs-knife4j-plus'
 import { isAbsolute, join } from 'node:path'
 import { AppModule } from './app.module.js'
 import { DatabaseHealthService } from './common/database/database.health.service.js'
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js'
 import { DefaultHttpStatusInterceptor } from './common/interceptors/default-http-status.interceptor.js'
+import { winstonConfig } from './common/logger/logger.config.js'
 
 /**
  * 应用启动入口。
@@ -20,7 +22,10 @@ import { DefaultHttpStatusInterceptor } from './common/interceptors/default-http
  */
 async function main(): Promise<void> {
   // 初始化 Nest 应用实例（Express 平台），保留原始请求体供验签类接口使用。
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true })
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+    logger: WinstonModule.createLogger(winstonConfig),
+  })
   app.set('trust proxy', true)
 
   const configService = app.get(ConfigService)

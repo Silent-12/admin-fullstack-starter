@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common'
-import { WinstonLogger } from 'nest-winston'
+import { Inject, Injectable } from '@nestjs/common'
+import { WINSTON_MODULE_NEST_PROVIDER, WinstonLogger } from 'nest-winston'
 
 /**
  * 日志服务
@@ -7,7 +7,10 @@ import { WinstonLogger } from 'nest-winston'
  */
 @Injectable()
 export class LoggerService {
-  constructor(private readonly logger: WinstonLogger) {}
+  constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: WinstonLogger,
+  ) {}
 
   /**
    * 记录错误日志

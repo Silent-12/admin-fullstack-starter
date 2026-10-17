@@ -4,7 +4,7 @@ import DailyRotateFile = require('winston-daily-rotate-file')
 
 /**
  * Winston 日志配置
- * @description 配置日志级别、格式和输出目标
+ * @description 配置日志级别、格式与输出目标：控制台、按日滚动的错误日志和综合日志
  */
 export const winstonConfig: winston.LoggerOptions = {
   levels: winston.config.npm.levels,

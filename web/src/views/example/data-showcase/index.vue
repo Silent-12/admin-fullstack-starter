@@ -243,7 +243,7 @@
   )
 
   /**
-   * @description 展示 Excel 本地解析结果，不写入业务数据。
+   * @description 展示 Excel 本地解析结果，不写入业务数据
    * @param rows 首个工作表解析出的数据行。
    */
   const handleExcelImport = (rows: Array<Record<string, unknown>>): void => {
@@ -251,7 +251,7 @@
   }
 
   /**
-   * @description 提示 Excel 解析失败原因。
+   * @description 提示 Excel 解析失败原因
    * @param error 文件解析错误。
    */
   const handleExcelError = (error: Error): void => {

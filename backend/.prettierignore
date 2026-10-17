@@ -10,3 +10,6 @@ pnpm-lock.yaml
 
 # 数据库迁移 SQL：由数据库规范维护，不交给 Prettier 排版
 src/database/migrations/*.sql
+
+# Markdown 文档：排版由人工维护，不交给 Prettier（避免重排表格、链接与换行语义）
+*.md

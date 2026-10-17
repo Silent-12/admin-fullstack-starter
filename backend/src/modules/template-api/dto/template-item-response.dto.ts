@@ -4,7 +4,7 @@ import { TemplateItem } from '../entities/template-item.entity.js'
 /**
  * 模板条目响应体
  * @description 显式声明对外暴露的字段，避免直接序列化实体。新增字段必须同时在此声明，
- * 以保证「接口字段最小化」的约定不被绕过。
+ * 以保证「接口字段最小化」的约定不被绕过
  */
 export class TemplateItemResponseDto {
   @ApiProperty({ description: '模板条目 ID', example: 1 })
@@ -33,7 +33,7 @@ export class TemplateItemResponseDto {
 
   /**
    * 由实体构造响应体
-   * @description 逐个字段显式映射，实体新增字段不会被自动透出。
+   * @description 逐个字段显式映射，实体新增字段不会被自动透出
    * @param item 模板条目实体
    * @returns 对外响应体
    */

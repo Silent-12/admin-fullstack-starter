@@ -22,4 +22,4 @@
 - 样式整理完成后必须执行 `pnpm run lint`、`pnpm run lint:stylelint`、`pnpm run format` 和 `pnpm run build`；涉及选择器归并时还应执行 `git diff --check` 并检查最终 diff 只包含预期的样式结构、格式和 CSS 变量调整。
 
 - `lint`、`lint:stylelint` 和 `format` 会自动写入文件，执行后复查 diff，避免混入无关修改。
-- 仅修改文档时，检查内容完整性、相对链接、UTF-8 无 BOM 编码与 Markdown 格式，并执行 `git diff --check`；无需运行源码构建。现有 `format` 脚本不覆盖 Markdown，可用 `pnpm exec prettier --check <本次修改的文档路径>` 定向检查。
+- 仅修改文档时，检查内容完整性、相对链接、UTF-8 无 BOM 编码与 Markdown 排版（标题层级、列表缩进、表格对齐、代码块语言标注），并执行 `git diff --check`；无需运行源码构建。Markdown 文档不纳入 Prettier：两端 `.prettierignore` 均已排除 `*.md`，不要用 Prettier 格式化或校验文档。

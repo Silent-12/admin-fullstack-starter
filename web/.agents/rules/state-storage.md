@@ -30,4 +30,5 @@
 
 - 本地存储（localStorage）操作规则：
   - 业务状态需要持久化时，必须通过 Pinia Store 的 `persist` 选项实现（`pinia-plugin-persistedstate`），key 使用语义清晰的业务域名称；禁止通过版本号拼接持久化 key 或自动迁移旧版本数据；**禁止在业务代码中直接调用 `localStorage.getItem/setItem/removeItem`**。
-  - 仅在少数基础配置或跨登录态辅助场景才允许直接操作 localStorage（如主题键 `StorageConfig.THEME_KEY` 对应 `sys-theme`、上次登录用户 ID `StorageConfig.LAST_USER_ID_KEY` 对应 `sys-last-user-id`）；键名必须引用 `StorageConfig` 常量（定义于 `src/utils/storage/storageConfig.ts`），禁止硬编码字符串键名。
+  - 仅在少数基础配置或跨登录态辅助场景才允许直接操作 localStorage（如主题键 `StorageConfig.THEME_KEY` 对应 `sys-theme`）；键名必须引用 `StorageConfig` 常量（定义于 `src/utils/storage/storageConfig.ts`），禁止硬编码字符串键名。
+  - 标签页归属 UUID 使用 sessionStorage 的 `StorageConfig.WORKTAB_OWNER_KEY`，与工作区保持相同生命周期；仅在 profile 验证后比较并更新，不能依赖退出时才记录的运行时资料。

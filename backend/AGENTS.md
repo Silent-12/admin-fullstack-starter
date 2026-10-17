@@ -9,10 +9,11 @@
 # 通用规则
 
 - 调试命令必须兼容 Windows。
-- 新增或修改公共 API、Controller、Service、Entity 或复杂逻辑时，保留有效既有注释并使用 `/** */` JSDoc。JSDoc 应包含 `@description`；仅在存在参数时写 `@param`，仅在返回值需要说明时写 `@returns`。简单私有函数、构造函数、接口实现或可从上下文直接理解的代码可省略重复注释。
+- 新增或修改公共 API、Controller、Service、Entity 或复杂逻辑时，保留有效既有注释并使用 `/** */` JSDoc；JSDoc 必须包含 `@description`，完整块布局、标签与标点格式见 [注释风格](.agents/rules/comment-style.md)。简单私有函数、构造函数、接口实现或可从上下文直接理解的代码可省略重复注释。
+- 新增模块并注册到 `src/app.module.ts` 的 `imports` 数组时，必须在该模块前补齐注释，格式为「模块名标题行 + 普通说明行」，与相邻模块保持一致。
 - 函数保持单一职责；在入口处对非法输入、异常状态和不满足条件提前返回或抛错，避免深层嵌套。
 - 新增跨模块常量前，先检索 `src/common/constants`。公共常量使用普通对象字面量和 JSDoc，禁止散落同义常量。
-- 详细异常只能写入产生异常的类或集中异常过滤器的 `Logger`；业务代码不得使用 `console`，启动脚本、CLI 或一次性诊断允许使用 `console.error/warn`。不得向接口响应透传原始错误、堆栈、SQL 或第三方响应细节。
+- 详细异常只能写入产生异常的类或集中异常过滤器的 `Logger`；业务代码不得使用 `console`，启动脚本、CLI 或一次性诊断允许使用 `console.error/warn`。不得向接口响应透传原始错误、堆栈、SQL 或第三方响应细节；客户端提示与诊断分离的完整约定见 [错误响应规则](.agents/rules/error-response.md)。
 - 面向业务的 JSON HTTP API 默认使用 `ApiResponseDto`，至少包含 `code`、`message`、`data`。页码分页列表统一返回 `data: { list, pagination: { page, pageSize, total, totalPages } }`。文件下载、流式响应、SSE、Webhook、健康探针及 `204 No Content` 等按其协议返回。
 - 创建、编辑、更新、删除类接口的成功响应统一返回 `data: null`，不得在写操作响应中暴露完整实体或数据库记录；列表和详情接口可在 `data` 中返回业务数据。若业务确实需要返回新建资源，必须明确设计独立的详情查询接口或经用户确认采用例外响应。
 - 接口字段遵循最小化原则：只返回当前页面、流程和调用方确实需要的字段；禁止直接序列化 Entity 或透出数据库原始字段、内部状态、审计字段、敏感信息及无业务意义的冗余字段。新增字段必须有明确的调用方需求和脱敏判断。
@@ -29,4 +30,5 @@
 - `src/config/app.config.ts` 新增实际生效的配置项时，同步补充 `.env`、`.env.example` 与非空校验策略。
 - 导出接口必须使用独立的 `Export{ModuleName}Dto`，只包含导出筛选条件，不得复用带 `page`、`pageSize` 或其他分页语义的列表查询 DTO；只有确实存在导出接口时适用。
 - 修改已有文件前先检查编码；发现 GBK、ANSI、乱码或 BOM 异常时先报告并转换。新增或修改源码文件使用 UTF-8 无 BOM；中文注释不得乱码。
+- 测试按类型放入 `test/`（单元，`*.test.mjs`）与 `test-integration/`（集成，`*.integration.mjs`）目录，由 `pnpm run test` / `pnpm run test:integration` 批量执行；不得为单个测试用例新增 `package.json` 专用命令。
 - 完成 TypeScript 代码修改后必须执行 `pnpm run lint` 和 `pnpm run build`（在 `backend/` 目录执行，或在仓库根执行 `pnpm run lint:backend`、`pnpm run build:backend`），并修复错误；仅修改文档、SQL 或环境示例时执行与变更相称的检查。`pnpm run lint` 可能带自动修复，提交前应复查其改动并报告无法修复的环境问题。

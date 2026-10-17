@@ -8,7 +8,7 @@ import type { HealthResponse } from '../types/health.js'
 
 /**
  * 健康检查控制器
- * @description 提供 /health 端点，用于检查服务运行状态
+ * @description 提供 `v1/health` 端点，用于检查服务运行状态
  */
 @ApiTags('健康检查')
 @Controller('v1/health')
@@ -20,14 +20,15 @@ export class HealthController {
   ) {}
 
   /**
-   * 查询服务健康状态。
-   * @description 生产环境仅暴露存活状态，其他环境额外返回运行信息与基础设施连通性。
-   * @returns 统一健康状态响应
+   * 查询服务健康状态
+   * @description 生产环境仅暴露存活状态，其他环境额外返回运行信息与基础设施连通性
+   * @returns 统一健康状态响应，`data` 为存活状态与可选的运行信息
    */
   @Get()
   @ApiOperation({ summary: '查询服务健康状态' })
   @ApiResponse({ status: 200, description: '服务运行正常' })
   check(): ApiResponseDto<HealthResponse> {
+    // 生产环境不暴露运行时长、内存与依赖状态，避免泄露运行环境细节
     if (this.configService.get<string>('app.nodeEnv') === 'production') {
       return ApiResponseDto.success({ status: 'ok' }, '查询成功')
     }

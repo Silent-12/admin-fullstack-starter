@@ -7,35 +7,35 @@ import { getClientIp } from '../utils/client-ip.util.js'
 import { isMissingRouteThrottleRequest } from '../utils/throttle-request.util.js'
 
 /**
- * 未知路由 404 限流中间件。
- * @description 在 Nest 路由匹配前检查 IP 封禁状态，并在响应完成后统计 API 未知路由 404。
+ * 未知路由 404 限流中间件
+ * @description 在 Nest 路由匹配前检查 IP 封禁状态，并在响应完成后统计 API 未知路由 404
  */
 @Injectable()
 export class MissingRouteThrottleMiddleware implements NestMiddleware {
   /**
-   * 构造未知路由限流中间件。
-   * @description 注入 Redis 限流存储服务，复用全局限流的原子计数与封禁实现。
+   * 构造未知路由限流中间件
+   * @description 注入 Redis 限流存储服务，复用全局限流的原子计数与封禁实现
    * @param storage Redis 限流存储服务
-   * @returns 无返回值
    */
   constructor(private readonly storage: RedisThrottlerStorageService) {}
 
   /**
-   * 处理未知路由限流。
-   * @description 封禁中的 IP 直接返回统一 429；未封禁请求继续执行，并在响应完成后对未知路由 404 做原子计数。
+   * 处理未知路由限流
+   * @description 封禁中的 IP 直接返回统一 429；未封禁请求继续执行，并在响应完成后对未知路由 404 做原子计数
    * @param request HTTP 请求
    * @param response HTTP 响应
    * @param next 下一个中间件
-   * @returns 无返回值
    */
   async use(request: Request, response: Response, next: NextFunction): Promise<void> {
     const key = `${THROTTLE_POLICY.MISSING_ROUTE_KEY_PREFIX}${getClientIp(request)}`
     const remaining = await this.storage.getBlockRemaining(key)
+    // 已封禁的 IP 直接返回统一 429，并通过 `Retry-After` 告知剩余等待秒数。
     if (remaining > 0) {
       response.setHeader('Retry-After', remaining)
       response.status(HttpStatus.TOO_MANY_REQUESTS).json(ApiResponseDto.error(HttpStatus.TOO_MANY_REQUESTS, THROTTLE_POLICY.MESSAGE))
       return
     }
+    // 仅统计未被任何路由匹配的 404，且只对 API 业务路径计数；异步执行不阻塞响应。
     response.on('finish', () => {
       if (response.statusCode === Number(HttpStatus.NOT_FOUND) && !request.route && isMissingRouteThrottleRequest(request)) {
         void this.storage.increment(

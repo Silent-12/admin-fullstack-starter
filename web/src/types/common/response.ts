@@ -18,7 +18,7 @@
 
 /**
  * 基础 API 响应结构
- * @description 描述后端统一返回的响应包装，字段与后端 ApiResponseDto 保持一致；成功与失败由 HTTP 状态码判定。
+ * @description 描述后端统一返回的响应包装，字段与后端 ApiResponseDto 保持一致；成功与失败由 HTTP 状态码判定
  */
 export interface BaseResponse<T = unknown> {
   // 状态码，与 HTTP 状态码同值

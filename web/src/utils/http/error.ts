@@ -18,7 +18,7 @@ import { $t } from '@/locales'
 
 /**
  * 错误响应结构
- * @description 描述后端错误响应的响应体，字段与后端 ApiResponseDto 保持一致。
+ * @description 描述后端错误响应的响应体，字段与后端 ApiResponseDto 保持一致
  */
 export interface ErrorResponse {
   // 错误状态码，与 HTTP 状态码同值

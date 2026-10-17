@@ -3,12 +3,13 @@ import { Request, Response } from 'express'
 import { ApiResponseDto } from '../dto/api-response.dto.js'
 import { generateTraceId } from '../utils/trace-id.util.js'
 import { getDefaultErrorMessage } from '../utils/error-message.util.js'
+import { isDependencyUnavailable } from '../utils/dependency-unavailable.util.js'
 
 /**
  * 全局异常过滤器
- * @description 捕获所有异常，返回统一的 ApiResponseDto 格式。
- * 默认返回通用错误提示，特定场景可在业务层抛出带自定义消息的 HttpException。
- * 详细错误信息记录在服务器日志中（包含 traceId 和堆栈）。
+ * @description 捕获所有异常并返回统一的 `ApiResponseDto`：4xx 透传业务提示，
+ * 基础设施不可用统一收敛为 503 通用提示，其余 5xx 仅返回状态码对应的默认提示，
+ * 依赖名称、原始错误与堆栈只写入服务端日志
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -16,7 +17,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   /**
    * 捕获并处理所有异常
-   * @description 区分 HttpException 和未知异常，统一返回 { code, message, data, timestamp, traceId } 格式
+   * @description 区分 4xx 业务异常与 5xx 服务端异常：前者透传业务消息，后者按依赖不可用与非依赖故障分别返回
+   * 503 或原状态码的通用提示；同时保留 `allowedPaths` 的 204 放行与 `ApiResponseDto` 统一结构
    * @param exception 异常对象
    * @param host 参数宿主
    */
@@ -24,7 +26,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp()
     const response = ctx.getResponse<Response>()
     const request = ctx.getRequest<Request>()
-    // 放行指定路径，直接响应 204 ,避免日志噪音
+    // 放行指定路径，直接响应 204，避免日志噪音
     const allowedPaths = ['/favicon.ico', '/']
     if (allowedPaths.includes(request.url)) {
       response.status(HttpStatus.NO_CONTENT).end()
@@ -40,23 +42,38 @@ export class AllExceptionsFilter implements ExceptionFilter {
       status = exception.getStatus()
       const exceptionResponse = exception.getResponse()
 
-      if (typeof exceptionResponse === 'string') {
-        message = exceptionResponse
-      } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null && 'message' in exceptionResponse) {
-        const messageFromResponse = (exceptionResponse as Record<string, unknown>).message
-        if (typeof messageFromResponse === 'string') {
-          message = messageFromResponse
-        } else if (Array.isArray(messageFromResponse) && messageFromResponse.length && typeof messageFromResponse[0] === 'string') {
-          message = messageFromResponse[0]
+      if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+        // 5xx 不向客户端透传异常消息：依赖不可用统一返回 503，其余保留原状态码但使用默认提示。
+        this.logger.error(`[${traceId}] ${status} ${exception.message} at ${request.url}`, exception.stack)
+        status = isDependencyUnavailable(exception) ? HttpStatus.SERVICE_UNAVAILABLE : status
+        message = getDefaultErrorMessage(status)
+      } else {
+        if (typeof exceptionResponse === 'string') {
+          message = exceptionResponse
+        } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null && 'message' in exceptionResponse) {
+          const messageFromResponse = (exceptionResponse as Record<string, unknown>).message
+          if (typeof messageFromResponse === 'string') {
+            message = messageFromResponse
+          } else if (Array.isArray(messageFromResponse) && messageFromResponse.length && typeof messageFromResponse[0] === 'string') {
+            message = messageFromResponse[0]
+          } else {
+            message = getDefaultErrorMessage(status)
+          }
+          data = 'data' in exceptionResponse ? ((exceptionResponse as Record<string, unknown>).data ?? null) : null
         } else {
           message = getDefaultErrorMessage(status)
         }
-        data = 'data' in exceptionResponse ? ((exceptionResponse as Record<string, unknown>).data ?? null) : null
-      } else {
-        message = getDefaultErrorMessage(status)
-      }
 
-      this.logger.warn(`[${traceId}] ${status} ${message} at ${request.url}`)
+        this.logger.warn(`[${traceId}] ${status} ${message} at ${request.url}`)
+      }
+    } else if (isDependencyUnavailable(exception)) {
+      // 未包装成 HttpException 的依赖故障同样只返回通用提示，原始错误仅写服务端日志。
+      status = HttpStatus.SERVICE_UNAVAILABLE
+      message = getDefaultErrorMessage(status)
+      this.logger.error(
+        `[${traceId}] ${status} Dependency unavailable at ${request.url}`,
+        exception instanceof Error ? exception.stack : String(exception),
+      )
     } else if (exception instanceof Error) {
       this.logger.error(`[${traceId}] 500 Unhandled Exception at ${request.url}`, exception.stack)
     } else {

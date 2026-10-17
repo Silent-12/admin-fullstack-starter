@@ -7,3 +7,6 @@
 
 # 静态资源目录（favicon、模板 HTML 等无需格式化）
 /public/*
+
+# Markdown 文档：排版由人工维护，不交给 Prettier（避免重排表格、链接与换行语义）
+*.md

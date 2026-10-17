@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 
 /**
  * 统一响应 DTO
- * @description 全局通用响应结构，所有接口统一使用此格式返回。支持成功响应、错误响应、分页响应
+ * @description 全局通用响应结构，所有接口统一使用此格式返回，支持成功响应、错误响应与分页响应
  */
 export class ApiResponseDto<T = unknown> {
   @ApiProperty({ description: '状态码', example: 200 })
@@ -30,9 +30,9 @@ export class ApiResponseDto<T = unknown> {
 
   /**
    * 创建成功响应
-   * @description 快捷创建 200 成功响应
+   * @description 快捷创建 200 成功响应，避免调用方重复指定状态码与时间戳
    * @param data 响应数据
-   * @param message 提示消息，默认 '成功'
+   * @param message 提示消息，默认 `成功`
    * @returns 成功响应实例
    */
   static success<T>(data: T, message = '成功'): ApiResponseDto<T> {
@@ -41,7 +41,7 @@ export class ApiResponseDto<T = unknown> {
 
   /**
    * 创建错误响应
-   * @description 快捷创建错误响应
+   * @description 快捷创建错误响应，并写入本次请求的错误追踪 ID
    * @param code HTTP 状态码
    * @param message 错误消息
    * @param traceId 错误追踪 ID

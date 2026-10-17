@@ -34,7 +34,7 @@ import { useUserStore } from '@/store/modules/user'
 export type AuthDirective = Directive<HTMLElement, string>
 
 /**
- * @description 根据当前用户的后端授权数据校验指令权限。
+ * @description 根据当前用户的后端授权数据校验指令权限
  * @param el 指令绑定的 DOM 元素。
  * @param binding 指令绑定信息。
  * @return 无返回值。
@@ -45,7 +45,7 @@ function checkAuthPermission(el: HTMLElement, binding: DirectiveBinding<string>)
 }
 
 /**
- * @description 从 DOM 中移除无权限元素。
+ * @description 从 DOM 中移除无权限元素
  * @param el 需要移除的 DOM 元素。
  * @return 无返回值。
  */
@@ -60,7 +60,7 @@ const authDirective: AuthDirective = {
 }
 
 /**
- * @description 注册全局按钮权限指令。
+ * @description 注册全局按钮权限指令
  * @param app Vue 应用实例。
  * @return 无返回值。
  */

@@ -6,7 +6,7 @@
  * ## 主要功能
  *
  * - 主题存储键配置
- * - 上次登录用户 ID 存储键配置
+ * - 当前标签页工作区所属用户 ID 存储键配置
  *
  * ## 使用场景
  *
@@ -14,9 +14,11 @@
  * - 登录用户切换时的工作台状态处理
  */
 export class StorageConfig {
+  /** 用户凭证与偏好持久化键名 */
+  static readonly USER_KEY = 'user'
   /** 主题键名（index.html中使用了，如果修改，需要同步修改） */
   static readonly THEME_KEY = 'sys-theme'
 
-  /** 上次登录用户ID键名（用于判断是否为同一用户登录） */
-  static readonly LAST_USER_ID_KEY = 'sys-last-user-id'
+  /** sessionStorage 中的标签页归属 UUID，重载或清理会话时保留，profile 验证后更新 */
+  static readonly WORKTAB_OWNER_KEY = 'sys-worktab-owner'
 }

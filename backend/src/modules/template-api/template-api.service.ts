@@ -13,7 +13,7 @@ import type { PaginatedData } from '../../common/types/response.js'
 
 /**
  * 模板 API 服务
- * @description 提供模板条目的增删改查能力，作为新业务模块开发的基础模板，所有接口均返回统一响应结构
+ * @description 提供模板条目的增删改查能力，作为新业务模块开发的基础模板，所有方法均返回 `ApiResponseDto` 统一响应结构
  */
 @Injectable()
 export class TemplateApiService {
@@ -26,9 +26,9 @@ export class TemplateApiService {
 
   /**
    * 创建模板条目
-   * @description 根据 DTO 创建新的模板数据并持久化，返回统一响应包装
+   * @description 按请求体创建并持久化模板条目，返回统一响应包装
    * @param dto 创建模板条目请求体
-   * @returns 创建成功的空数据响应
+   * @returns 创建成功的空数据响应，`data` 为 null
    */
   async create(dto: CreateTemplateItemDto): Promise<ApiResponseDto<null>> {
     const item = this.templateItemRepository.create(dto)
@@ -38,9 +38,9 @@ export class TemplateApiService {
 
   /**
    * 分页查询模板条目列表
-   * @description 支持分页和按名称、状态筛选，返回统一响应包装
-   * @param query 查询参数（分页 + 筛选）
-   * @returns 统一响应包装的分页数据（包含数据列表和分页元信息）
+   * @description 支持按名称模糊匹配与状态筛选，未传分页参数时使用全局默认页码与每页条数
+   * @param query 分页与筛选参数
+   * @returns 分页结果，`data` 含 `list` 与 `pagination`
    */
   async findAll(query: QueryTemplateItemDto): Promise<ApiResponseDto<PaginatedData<TemplateItemResponseDto>>> {
     const page = query.page ?? DEFAULT_PAGE
@@ -69,9 +69,9 @@ export class TemplateApiService {
 
   /**
    * 根据 ID 查询单条模板条目
-   * @description 查询指定 ID 的模板数据，不存在则抛出 404，返回统一响应包装
+   * @description 查询指定 ID 的模板条目，不存在时抛出 404
    * @param id 模板条目 ID
-   * @returns 统一响应包装的模板条目数据
+   * @returns 模板条目详情，`data` 为响应体
    */
   async findOne(id: number): Promise<ApiResponseDto<TemplateItemResponseDto>> {
     const item = await this.templateItemRepository.findOneBy({ id })
@@ -83,10 +83,10 @@ export class TemplateApiService {
 
   /**
    * 更新模板条目
-   * @description 根据 ID 更新模板数据，不存在则抛出 404，返回统一响应包装
+   * @description 按 ID 更新模板条目并持久化，不存在时抛出 404
    * @param id 模板条目 ID
    * @param dto 更新模板条目请求体
-   * @returns 更新成功的空数据响应
+   * @returns 更新成功的空数据响应，`data` 为 null
    */
   async update(id: number, dto: UpdateTemplateItemDto): Promise<ApiResponseDto<null>> {
     const item = await this.templateItemRepository.findOneBy({ id })
@@ -100,9 +100,9 @@ export class TemplateApiService {
 
   /**
    * 删除模板条目
-   * @description 根据 ID 删除模板数据，不存在则抛出 404，返回统一响应包装
+   * @description 按 ID 删除模板条目，不存在时抛出 404
    * @param id 模板条目 ID
-   * @returns 统一响应包装的空数据
+   * @returns 删除成功的空数据响应，`data` 为 null
    */
   async remove(id: number): Promise<ApiResponseDto<null>> {
     const item = await this.templateItemRepository.findOneBy({ id })

@@ -21,7 +21,7 @@
         <div class="header">
           <AoImage class="avatar" :src="avatar" :preview-src-list="[]" fit="cover" />
           <div class="info">
-            <span class="name">{{ info.userName }}</span>
+            <span class="name">{{ info.name || info.userName }}</span>
             <span class="email">{{ info.email }}</span>
           </div>
         </div>
@@ -46,6 +46,8 @@
   import AoImage from '@/components/media/AoImage.vue'
   import { useUserStore } from '@/store/modules/user'
   import defaultAvatar from '@imgs/avatar/avatar.webp'
+  import { fetchLogout } from '@/api/auth'
+  import { isHttpError } from '@/utils/http/error'
 
   defineOptions({ name: 'UserMenu' })
 
@@ -58,6 +60,8 @@
 
   // 用户菜单弹出层实例
   const popoverRef = ref()
+  // 登出进行中标记，避免确认框与撤销请求期间重复提交
+  const loggingOut = ref(false)
 
   /**
    * @description 展示用户中心占位提示
@@ -76,19 +80,33 @@
   }
 
   /**
-   * @description 二次确认后退出登录
+   * @description 二次确认后调用后端撤销该账号全部令牌，再清理本地会话；401 降级为本地清理，其他失败保留登录态以便重试
    */
-  const handleLogout = (): void => {
+  const handleLogout = async (): Promise<void> => {
+    if (loggingOut.value) return
+    loggingOut.value = true
     closePopover()
-    setTimeout(() => {
-      ElMessageBox.confirm('您是否要退出登录?', '提示', {
+    try {
+      await ElMessageBox.confirm('退出后，此账号所有设备的登录都将失效，是否继续？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         customClass: 'login-out-dialog'
-      }).then(() => {
-        userStore.logOut()
       })
-    }, 200)
+    } catch {
+      loggingOut.value = false
+      return
+    }
+    const version = userStore.getSessionVersion()
+    try {
+      await fetchLogout()
+      if (version === userStore.getSessionVersion()) userStore.clearSession()
+    } catch (error) {
+      if (isHttpError(error) && error.code === 401 && version === userStore.getSessionVersion())
+        userStore.clearSession()
+      // 其他失败已由请求层提示，保留登录态以便重试。
+    } finally {
+      loggingOut.value = false
+    }
   }
 </script>
 

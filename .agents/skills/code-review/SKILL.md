@@ -71,9 +71,11 @@ git ls-files --others --exclude-standard   # untracked 新文件清单，diff �
 
 规范以项目自身文档为准，审查前先收集：
 
-- 项目根目录的 `CLAUDE.md`、`AGENTS.md.md`、`README` 等主文档。
+- 项目根目录的 `AGENTS.md` 与子项目 `AGENTS.md` 等规则入口。
 - 项目内的 rules/skills 目录（如 `.agents/rules/`、`.claude/rules/`）。
 - 代码风格工具配置（lint/formatter），仅用于判断哪些项工具已强制覆盖，这些项不必人工审查。
+
+README 只介绍项目、架构与上手路径，不是规范来源；不得以"README 未同步"为由要求为内部实现改动更新 README，除非本次改动改变了项目定位、架构、技术栈或上手路径。
 
 项目中没有文档化规范的方面，**不得**从个人偏好或外部惯例出发挑毛病；这些方面只按通用风险原则（见审查重点）审查。
 

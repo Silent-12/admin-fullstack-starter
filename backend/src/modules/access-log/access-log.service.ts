@@ -6,7 +6,7 @@ import type { AccessLogSource } from '../../common/types/access-log.js'
 
 /**
  * 访问日志服务
- * @description 提供 HTTP 请求日志的持久化写入能力，异步非阻塞操作
+ * @description 提供 HTTP 请求日志的持久化写入能力；由调用方异步触发，写入失败只记录错误日志，不影响请求处理
  */
 @Injectable()
 export class AccessLogService {
@@ -19,8 +19,8 @@ export class AccessLogService {
 
   /**
    * 创建访问日志记录
-   * @description 异步写入数据库，失败仅记录错误日志，不抛出异常
-   * @param data 访问日志数据（不含 id 和 createdAt）
+   * @description 将请求日志写入数据库，失败仅记录错误日志，不抛出异常
+   * @param data 访问日志数据（不含 `id` 和 `createdAt`）
    */
   async create(data: {
     traceId: string
@@ -50,8 +50,8 @@ export class AccessLogService {
   }
 
   /**
-   * 截断字符串至数据库字段长度。
-   * @description 防止客户端请求头或 Referer 超长导致访问日志写入失败。
+   * 截断字符串至数据库字段长度
+   * @description 防止客户端请求头或 Referer 超长导致访问日志写入失败
    * @param value 原始字符串
    * @param maxLength 最大长度
    * @returns 截断后的字符串

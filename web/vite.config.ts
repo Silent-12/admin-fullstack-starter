@@ -8,7 +8,7 @@ import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 /**
- * @description 创建 Vite 构建配置并加载当前运行模式的环境变量。
+ * @description 创建 Vite 构建配置并加载当前运行模式的环境变量
  * @param options Vite 当前运行模式参数。
  * @return Vite 构建配置。
  */
@@ -16,6 +16,8 @@ export default ({ mode }: { mode: string }) => {
   const root = process.cwd()
   const env = loadEnv(mode, root)
   const { VITE_PORT, VITE_BASE_URL, VITE_API_URL, VITE_API_PROXY_URL } = env
+  // 仅站内相对路径的 API 基础地址需要开发代理；缺失配置视为不启用，避免配置阶段中断构建。
+  const apiProxyPath = (VITE_API_URL ?? '').trim().replace(/\/+$/, '')
 
   console.log(`🚀 API_URL = ${VITE_API_URL}`)
 
@@ -23,12 +25,14 @@ export default ({ mode }: { mode: string }) => {
     base: VITE_BASE_URL,
     server: {
       port: Number(VITE_PORT),
-      proxy: {
-        '/backend': {
-          target: VITE_API_PROXY_URL,
-          changeOrigin: true
-        }
-      },
+      proxy: apiProxyPath.startsWith('/')
+        ? {
+            [apiProxyPath]: {
+              target: VITE_API_PROXY_URL,
+              changeOrigin: true
+            }
+          }
+        : undefined,
       host: true
     },
     // 路径别名

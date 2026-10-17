@@ -1,5 +1,5 @@
 /**
- * 业务系统菜单路由来源与规范化服务。
+ * 业务系统菜单路由来源与规范化服务
  */
 import type { AppRouteRecord } from '@/types/router'
 import { fetchGetUserMenus } from '@/api/system-manage'
@@ -9,7 +9,7 @@ import { applicationRoutes } from '@/router/routes/applications'
 
 export class MenuRouteService {
   /**
-   * @description 按环境配置获取并规范化业务系统路由。
+   * @description 按环境配置获取并规范化业务系统路由
    * @return 完整的一级业务系统路由列表。
    */
   async getRoutes(): Promise<AppRouteRecord[]> {
@@ -19,7 +19,7 @@ export class MenuRouteService {
   }
 
   /**
-   * @description 将嵌套路由路径规范化为完整路径，并为目录推导默认跳转地址。
+   * @description 将嵌套路由路径规范化为完整路径，并为目录推导默认跳转地址
    * @param routes 待规范化的路由列表。
    * @param parentPath 父级完整路径。
    * @param applicationPath 当前一级业务系统完整路径。
@@ -61,7 +61,7 @@ export class MenuRouteService {
   }
 
   /**
-   * @description 拼接父子路由路径。
+   * @description 拼接父子路由路径
    * @param path 当前路由路径。
    * @param parentPath 父级完整路径。
    * @param applicationPath 当前一级业务系统完整路径。
@@ -84,7 +84,7 @@ export class MenuRouteService {
   }
 
   /**
-   * @description 判断是否为需要归入当前业务系统的公共 iframe 路径。
+   * @description 判断是否为需要归入当前业务系统的公共 iframe 路径
    * @param path 待判断的路由路径。
    * @return 是否为公共 iframe 路径。
    */

@@ -42,6 +42,7 @@ const requestSessions = new WeakMap<InternalAxiosRequestConfig, number>()
 interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
   showErrorMessage?: boolean
   showSuccessMessage?: boolean
+  anonymous?: boolean
 }
 
 const { VITE_API_URL, VITE_WITH_CREDENTIALS } = import.meta.env
@@ -73,7 +74,13 @@ axiosInstance.interceptors.request.use(
     const userStore = useUserStore()
     const { accessToken } = userStore
     requestSessions.set(request, userStore.getSessionVersion())
-    if (accessToken) request.headers.set('Authorization', `Bearer ${accessToken}`)
+    if (accessToken && !(request as ExtendedAxiosRequestConfig).anonymous) {
+      if (!userStore.hasValidSession()) {
+        userStore.clearSession()
+        throw new HttpError('登录已过期，请重新登录', ApiStatus.unauthorized)
+      }
+      request.headers.set('Authorization', `Bearer ${accessToken}`)
+    }
 
     if (request.data && !(request.data instanceof FormData) && !request.headers['Content-Type']) {
       request.headers.set('Content-Type', 'application/json')
@@ -91,14 +98,16 @@ axiosInstance.interceptors.request.use(
 /**
  * 响应拦截器
  * @description 后端以 HTTP 状态码表达成败，非 2xx 响应已由 Axios 判定为失败并交由错误分支处理，
- * 因此成功分支无需再判断业务码，直接透传响应交由 `request` 解包数据。
+ * 因此成功分支无需再判断业务码，直接透传响应交由 `request` 解包数据
  */
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse<BaseResponse>) => response,
   (error) => {
+    if (error instanceof HttpError) return Promise.reject(error)
     if (
       error.response?.status === ApiStatus.unauthorized &&
       error.config &&
+      !error.config.anonymous &&
       requestSessions.get(error.config) === useUserStore().getSessionVersion()
     ) {
       handleUnauthorizedError(error.response?.data?.message)
@@ -113,14 +122,14 @@ function createHttpError(message: string, code: number) {
 }
 
 /**
- * @description 收到 401 时立即清理登录态并跳转登录页，仅对错误提示进行防抖。
+ * @description 收到 401 时立即清理登录态并跳转登录页，仅对错误提示进行防抖
  * @param message 后端返回的未授权提示。
  * @return 始终抛出 401 错误。
  */
 function handleUnauthorizedError(message?: string): never {
   const error = createHttpError(message || $t('httpMsg.unauthorized'), ApiStatus.unauthorized)
   const userStore = useUserStore()
-  if (userStore.isLogin) userStore.logOut()
+  if (userStore.accessToken) userStore.clearSession()
 
   if (!isUnauthorizedErrorShown) {
     isUnauthorizedErrorShown = true
@@ -174,7 +183,7 @@ function delay(ms: number) {
 }
 
 /**
- * @description 发起经过拦截器处理的 HTTP 请求并返回业务数据。
+ * @description 发起经过拦截器处理的 HTTP 请求并返回业务数据
  * @param config 请求地址、方法和请求配置。
  * @return 业务响应数据。
  */
@@ -199,7 +208,7 @@ async function request<T = unknown>(config: ExtendedAxiosRequestConfig): Promise
 
     return res.data.data as T
   } catch (error) {
-    if (error instanceof HttpError && error.code !== ApiStatus.unauthorized) {
+    if (error instanceof HttpError && (error.code !== ApiStatus.unauthorized || config.anonymous)) {
       const showMsg = config.showErrorMessage !== false
       showError(error, showMsg)
     }

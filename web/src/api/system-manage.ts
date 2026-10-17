@@ -10,7 +10,7 @@ import type {
 
 /**
  * 获取用户列表
- * @description 后台管理端用户资源，路径遵循 `/v1/admin/{资源}` 约定。
+ * @description 后台管理端用户资源
  * @param params 分页与筛选参数
  * @returns 用户分页列表
  */
@@ -23,7 +23,7 @@ export function fetchGetUserList(params: UserSearchParams) {
 
 /**
  * 获取角色列表
- * @description 后台管理端角色资源，路径遵循 `/v1/admin/{资源}` 约定。
+ * @description 后台管理端角色资源
  * @param params 分页与筛选参数
  * @returns 角色分页列表
  */
@@ -36,7 +36,7 @@ export function fetchGetRoleList(params: RoleSearchParams) {
 
 /**
  * 获取角色下拉选项
- * @description 角色下拉专用的精简接口，避免用分页列表接口冒充选项数据源。
+ * @description 角色下拉专用的精简接口
  * @returns 角色选项列表
  */
 export function fetchGetRoleOptions() {
@@ -46,7 +46,7 @@ export function fetchGetRoleOptions() {
 }
 
 /**
- * @description 获取后台管理端的完整菜单与权限树，供菜单管理页维护菜单与按钮权限。
+ * @description 获取后台管理端的完整菜单与权限树，供菜单管理页维护菜单与按钮权限
  * @return 完整菜单树。
  */
 export function fetchGetMenuTree(): Promise<AppRouteRecord[]> {
@@ -56,7 +56,7 @@ export function fetchGetMenuTree(): Promise<AppRouteRecord[]> {
 }
 
 /**
- * @description 通过后台认证端点获取当前登录用户有权访问的菜单，供 `VITE_ROUTE_SOURCE=dynamic` 时注册动态路由。
+ * @description 通过后台认证端点获取当前登录用户有权访问的菜单，供 `VITE_ROUTE_SOURCE=dynamic` 时注册动态路由
  * @return 当前用户可见的菜单树。
  */
 export function fetchGetUserMenus(): Promise<AppRouteRecord[]> {

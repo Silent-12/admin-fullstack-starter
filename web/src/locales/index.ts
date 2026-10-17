@@ -44,7 +44,7 @@ export const languageOptions = [
 ]
 
 /**
- * @description 获取应用启动时的默认语言，持久化用户状态由 Pinia 在应用初始化后恢复。
+ * @description 获取应用启动时的默认语言，持久化用户状态由 Pinia 在应用初始化后恢复
  * @return 默认语言枚举值。
  */
 const getDefaultLanguage = (): LanguageEnum => {

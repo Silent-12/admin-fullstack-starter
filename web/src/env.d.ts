@@ -2,7 +2,7 @@
 
 /**
  * Vite 环境变量声明
- * @description 定义构建期可读取的业务路由来源配置。
+ * @description 定义构建期可读取的业务路由来源配置
  */
 interface ImportMetaEnv {
   // 应用版本

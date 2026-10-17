@@ -39,7 +39,7 @@ export interface ThemeSetting {
 
 /**
  * 系统基础配置接口
- * @description 定义系统名称、版本及其他基础信息。
+ * @description 定义系统名称、版本及其他基础信息
  */
 export interface SystemBasicConfig {
   // 系统名称
@@ -76,7 +76,7 @@ export interface SystemConfig {
 
 /**
  * 环境配置接口
- * @description 定义 Vite 构建和运行时读取的环境变量。
+ * @description 定义 Vite 构建和运行时读取的环境变量
  */
 export interface EnvConfig {
   // 环境名称

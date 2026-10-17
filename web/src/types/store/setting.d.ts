@@ -2,7 +2,7 @@ import { MenuThemeEnum, SystemThemeEnum } from '@/enums'
 
 /**
  * 系统主题样式
- * @description 定义系统主题对应的 CSS 类名。
+ * @description 定义系统主题对应的 CSS 类名
  */
 export interface SystemThemeType {
   // 主题类名
@@ -11,7 +11,7 @@ export interface SystemThemeType {
 
 /**
  * 系统主题样式集合
- * @description 定义除自动模式外的系统主题配置。
+ * @description 定义除自动模式外的系统主题配置
  */
 export type SystemThemeTypes = {
   [key in Exclude<SystemThemeEnum, SystemThemeEnum.AUTO>]: SystemThemeType
@@ -19,7 +19,7 @@ export type SystemThemeTypes = {
 
 /**
  * 菜单主题样式
- * @description 定义侧边菜单的颜色和背景配置。
+ * @description 定义侧边菜单的颜色和背景配置
  */
 export interface MenuThemeType {
   // 主题类型
@@ -38,7 +38,7 @@ export interface MenuThemeType {
 
 /**
  * 设置状态
- * @description 定义设置中心持久化的基础状态。
+ * @description 定义设置中心持久化的基础状态
  */
 export interface SettingState {
   // 主题
@@ -57,7 +57,7 @@ export interface SettingState {
 
 /**
  * 设置 Store 状态
- * @description 定义设置 Store 中包含的完整运行时状态。
+ * @description 定义设置 Store 中包含的完整运行时状态
  */
 export interface SettingStoreState extends SettingState {
   // 菜单是否折叠

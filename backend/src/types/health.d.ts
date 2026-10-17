@@ -1,10 +1,11 @@
 /**
  * 健康检查响应接口
+ * @description 描述健康检查接口返回的服务状态与运行指标
  */
 export interface HealthResponse {
   // 服务状态，可选值：ok, error
   status: string
-  // 服务启动时间戳 格式：YYYY-MM-DD HH:mm:ss.SSSZ
+  // 服务启动时间戳，格式：YYYY-MM-DD HH:mm:ss.SSSZ
   timestamp?: string
   // 服务运行时间（秒）
   uptime?: number

@@ -9,20 +9,23 @@ import { createPool } from 'mysql2/promise'
 @Injectable()
 export class DatabaseHealthService {
   private readonly logger = new Logger(DatabaseHealthService.name)
+  // 是否启用 MySQL 数据库
   private enabled = false
+  // 最近一次启动连通性检查是否通过
   private available = false
 
   constructor(private readonly configService: ConfigService) {}
 
   /**
    * 检查数据库连接
-   * @description 如果 MYSQL_ENABLED 为 true，则尝试连接数据库
-   * @returns Promise<boolean> 连接是否成功
-   * @throws Error 如果连接失败则抛出错误
+   * @description MySQL 未启用时直接视为通过；启用时使用单连接池执行一次 ping，失败则抛出错误终止启动
+   * @returns 连接是否成功
+   * @throws Error 连接失败时抛出包含失败原因的异常
    */
   async checkConnection(): Promise<boolean> {
     this.enabled = this.configService.get('database.enabled') as boolean
 
+    // 未启用 MySQL 时不建立连接，直接视为启动检查通过。
     if (!this.enabled) {
       this.available = false
       this.logger.log('MySQL is disabled, skipping connection check')
@@ -40,6 +43,7 @@ export class DatabaseHealthService {
 
       this.logger.log(`Attempting to connect to MySQL at ${dbConfig.host}:${dbConfig.port}`)
 
+      // 使用单连接池做一次连通性检查，检查完成后立即释放。
       const pool = createPool({
         host: dbConfig.host,
         port: dbConfig.port,
@@ -66,8 +70,8 @@ export class DatabaseHealthService {
   }
 
   /**
-   * 获取 MySQL 连通性状态。
-   * @description 返回最近一次启动连通性检查结果，禁用数据库时不视为连接失败。
+   * 获取 MySQL 连通性状态
+   * @description 返回最近一次启动连通性检查结果，禁用数据库时不视为连接失败
    * @returns MySQL 是否已启用及通过启动检查
    */
   getStatus(): { enabled: boolean; available: boolean } {

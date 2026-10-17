@@ -1,5 +1,5 @@
 /**
- * 业务系统路由配置校验服务。
+ * 业务系统路由配置校验服务
  */
 import type { AppRouteRecord } from '@/types/router'
 import { RoutePath } from '@/router/constants'
@@ -11,7 +11,7 @@ export interface RouteValidationResult {
 
 export class RouteConfigValidator {
   /**
-   * @description 校验业务系统路由树的基础结构与全局路由名称唯一性。
+   * @description 校验业务系统路由树的基础结构与全局路由名称唯一性
    * @param routes 一级业务系统路由列表。
    * @param reservedRouteNames 已由公共路由占用的名称集合。
    * @return 校验结果。
@@ -28,7 +28,7 @@ export class RouteConfigValidator {
   }
 
   /**
-   * @description 递归校验单个业务路由节点。
+   * @description 递归校验单个业务路由节点
    * @param route 当前路由节点。
    * @param depth 当前节点深度。
    * @param routeNames 已出现的路由名称集合。

@@ -6,7 +6,7 @@ import { loadingService } from '@/utils/ui'
 import { getPendingLoading, resetPendingLoading } from './beforeEach'
 
 /**
- * @description 在导航成功后处理滚动位置、进度条与加载状态，取消的旧导航不干扰新导航。
+ * @description 在导航成功后处理滚动位置、进度条与加载状态，取消的旧导航不干扰新导航
  * @param router Vue Router 实例。
  * @return 无返回值。
  */

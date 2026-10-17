@@ -18,7 +18,7 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 2
 
-# Markdown 中的行尾双空格是换行语法，不能裁剪
+# Markdown 文档不纳入 Prettier 格式化；行尾双空格是换行语法，不能裁剪
 [*.md]
 trim_trailing_whitespace = false
 

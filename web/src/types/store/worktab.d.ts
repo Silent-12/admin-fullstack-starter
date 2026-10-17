@@ -2,7 +2,7 @@ import type { LocationQueryRaw } from 'vue-router'
 
 /**
  * 工作标签页
- * @description 定义工作台标签页的路由和展示状态。
+ * @description 定义工作台标签页的路由和展示状态
  */
 export interface WorkTab {
   // 标签标题

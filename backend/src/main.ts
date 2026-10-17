@@ -14,15 +14,15 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js'
 import { DefaultHttpStatusInterceptor } from './common/interceptors/default-http-status.interceptor.js'
 
 /**
- * 应用启动入口。
- * @description 创建 Express Nest 应用并注册安全、文档、静态资源和全局基础设施。
- * @returns 应用启动完成后的空结果
+ * 应用启动入口
+ * @description 创建 Express Nest 应用并注册安全、文档、静态资源和全局基础设施
  */
 async function main(): Promise<void> {
   // 初始化 Nest 应用实例（Express 平台），保留原始请求体供验签类接口使用。
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
   })
+  // 信任反向代理传入的 X-Forwarded-For，使客户端 IP 交由 Express 统一解析。
   app.set('trust proxy', true)
 
   const configService = app.get(ConfigService)
@@ -103,12 +103,12 @@ async function main(): Promise<void> {
 }
 
 /**
- * 配置 Knife4j 接口文档。
- * @description 在开发和测试环境注册 OpenAPI JSON、Knife4j UI 与可选 Basic Auth 保护。
+ * 配置 Knife4j 接口文档
+ * @description 在开发和测试环境注册 OpenAPI JSON、Knife4j UI 与可选 Basic Auth 保护
  * @param app Express Nest 应用
  * @param configService 配置服务
  * @param apiPrefix 规范化后的 API 前缀
- * @returns 无返回值
+ * @throws Error 启用 Basic Auth 但未配置用户名或密码时抛出
  */
 function configureKnife4j(app: NestExpressApplication, configService: ConfigService, apiPrefix: string): void {
   if (configService.get<boolean>('app.knife4jAuthEnabled')) {
@@ -131,6 +131,7 @@ function configureKnife4j(app: NestExpressApplication, configService: ConfigServ
     .setTitle('Backend Template API')
     .setDescription('Backend Template API documentation')
     .setVersion('1.0')
+    .addBearerAuth()
     .build()
   const document = SwaggerModule.createDocument(app, documentConfig)
   SwaggerModule.setup('api', app, document, { useGlobalPrefix: true, ui: false, jsonDocumentUrl: 'api-json' })

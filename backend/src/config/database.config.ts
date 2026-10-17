@@ -1,13 +1,12 @@
 import { registerAs } from '@nestjs/config'
 
 /**
- * 校验自动同步开关的使用环境。
- * @description `synchronize` 会按实体与库表的差异直接执行 DROP / ALTER：删除实体字段即删除对应列且数据
- * 不可恢复，MySQL 的 DDL 隐式提交也无法回滚。因此只允许在 development / test 环境开启，其余环境在启动
- * 阶段直接失败，避免带着自动改表的开关部署。
+ * 校验自动同步开关的使用环境
+ * @description `synchronize` 会按实体与库表的差异直接执行 `DROP` / `ALTER`：删除实体字段即删除对应列且数据
+ * 不可恢复，MySQL 的 DDL 隐式提交也无法回滚。因此只允许在 `development` / `test` 环境开启，其余环境在启动
+ * 阶段直接失败，避免带着自动改表的开关部署
  * @param synchronize 是否开启自动同步
  * @param nodeEnv 当前运行环境
- * @returns 无返回值
  */
 function assertSynchronizeAllowed(synchronize: boolean, nodeEnv: string): void {
   if (!synchronize) return

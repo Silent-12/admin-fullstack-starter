@@ -10,10 +10,10 @@ import { TEMPLATE_ITEM_STATUS, TEMPLATE_ITEM_STATUS_VALUES } from '../constants/
 export class TemplateItem {
   /**
    * 主键 ID
-   * @description 列 transformer 把 bigint 主键归一为 number：MySQL 驱动默认
-   * supportBigNumbers / bigNumberStrings，bigint 会以字符串回传，与 `id!: number` 声明不一致。
+   * @description 列 `transformer` 把 bigint 主键归一为 number：MySQL 驱动默认
+   * supportBigNumbers / bigNumberStrings，bigint 会以字符串回传，与 `id!: number` 声明不一致
    * 这里用 `@PrimaryColumn({ generated: 'increment' })`，它与 `@PrimaryGeneratedColumn` 注册的
-   * 元数据相同，且其选项类型声明了 `transformer`。
+   * 元数据相同，且其选项类型声明了 `transformer`
    */
   @PrimaryColumn({
     type: 'bigint',
@@ -23,49 +23,35 @@ export class TemplateItem {
   })
   id!: number
 
-  /**
-   * 名称
-   */
+  /** 名称 */
   @Column({ length: 255, comment: '名称' })
   name!: string
 
-  /**
-   * 描述
-   */
+  /** 描述 */
   @Column({ length: 500, nullable: true, comment: '描述' })
   description!: string
 
-  /**
-   * 状态
-   * @description 合法取值与默认值均来自 TEMPLATE_ITEM_STATUS，与 DTO 校验共用同一真源。
-   */
+  /** 状态：合法取值与默认值均来自 `TEMPLATE_ITEM_STATUS`，与 DTO 校验共用同一真源 */
   @Column({ length: 50, default: TEMPLATE_ITEM_STATUS.ACTIVE, comment: `状态（${TEMPLATE_ITEM_STATUS_VALUES.join(' | ')}）` })
   status!: string
 
-  /**
-   * 优先级（数值越大优先级越高）
-   */
+  /** 优先级（数值越大优先级越高） */
   @Column({ type: 'int', default: 0, comment: '优先级（数值越大优先级越高）' })
   priority!: number
 
-  /**
-   * 是否启用
-   */
+  /** 是否启用 */
   @Column({ type: 'boolean', default: true, comment: '是否启用' })
   isEnabled!: boolean
 
-  /**
-   * 创建时间（Unix 时间戳）
-   */
+  /** 创建时间（Unix 时间戳） */
   @Column({ type: 'int', comment: '创建时间（Unix 时间戳）' })
   createdAt!: number
 
-  /**
-   * 更新时间（Unix 时间戳）
-   */
+  /** 更新时间（Unix 时间戳） */
   @Column({ type: 'int', comment: '更新时间（Unix 时间戳）' })
   updatedAt!: number
 
+  // 插入前同时初始化创建时间与更新时间（Unix 秒）
   @BeforeInsert()
   setCreatedAt(): void {
     const now = dayjs().unix()
@@ -73,6 +59,7 @@ export class TemplateItem {
     this.updatedAt = now
   }
 
+  // 更新前刷新更新时间（Unix 秒）
   @BeforeUpdate()
   setUpdatedAt(): void {
     this.updatedAt = dayjs().unix()

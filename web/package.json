@@ -3,10 +3,11 @@
   "version": "0.0.0",
   "type": "module",
   "engines": {
-    "node": ">=20.19.0",
+    "node": ">=24.0.0",
     "pnpm": ">=8.8.0"
   },
   "scripts": {
+    "test:auth": "node --test test/auth.test.mjs test/user-session.test.mjs",
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "serve": "vite preview",

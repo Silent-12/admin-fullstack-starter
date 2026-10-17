@@ -1,5 +1,5 @@
 /**
- * 路由组件加载服务。
+ * 路由组件加载服务
  */
 import type { Component } from 'vue'
 import { h } from 'vue'
@@ -10,7 +10,7 @@ export class RouteComponentLoader {
   private readonly modules: Record<string, AsyncComponentLoader>
 
   /**
-   * @description 初始化视图组件映射。
+   * @description 初始化视图组件映射
    * @return 无返回值。
    */
   constructor() {
@@ -18,7 +18,7 @@ export class RouteComponentLoader {
   }
 
   /**
-   * @description 根据约定的视图路径加载页面组件。
+   * @description 根据约定的视图路径加载页面组件
    * @param componentPath 不含扩展名的视图路径。
    * @return 异步 Vue 组件加载函数。
    */
@@ -35,7 +35,7 @@ export class RouteComponentLoader {
   }
 
   /**
-   * @description 加载后台布局组件。
+   * @description 加载后台布局组件
    * @return 异步 Vue 组件加载函数。
    */
   loadLayout(): AsyncComponentLoader {
@@ -43,7 +43,7 @@ export class RouteComponentLoader {
   }
 
   /**
-   * @description 加载公共 iframe 组件。
+   * @description 加载公共 iframe 组件
    * @return 异步 Vue 组件加载函数。
    */
   loadIframe(): AsyncComponentLoader {
@@ -51,7 +51,7 @@ export class RouteComponentLoader {
   }
 
   /**
-   * @description 创建空白路由组件。
+   * @description 创建空白路由组件
    * @return 异步 Vue 组件加载函数。
    */
   private createEmptyComponent(): AsyncComponentLoader {
@@ -59,7 +59,7 @@ export class RouteComponentLoader {
   }
 
   /**
-   * @description 创建组件路径错误提示组件。
+   * @description 创建组件路径错误提示组件
    * @param componentPath 未找到的组件路径。
    * @return 异步 Vue 组件加载函数。
    */

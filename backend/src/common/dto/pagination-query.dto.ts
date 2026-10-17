@@ -6,7 +6,7 @@ import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../constants/pag
 /**
  * 分页查询参数
  * @description 所有分页列表接口共用的页码与每页条数。业务查询 DTO 继承本类即可获得统一的校验、
- * 默认值与 Swagger 文档，不得在模块内重复声明 `page` / `pageSize`。
+ * 默认值与 Swagger 文档，不得在模块内重复声明 `page` / `pageSize`
  */
 export class PaginationQueryDto {
   @ApiPropertyOptional({ description: '当前页码', default: DEFAULT_PAGE })

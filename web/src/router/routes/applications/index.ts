@@ -1,5 +1,5 @@
 /**
- * 本地业务系统路由集合。
+ * 本地业务系统路由集合
  */
 import type { AppRouteRecord } from '@/types/router'
 import { exampleRoutes } from './example'

@@ -1,5 +1,6 @@
 /**
- *  数据库配置接口
+ * 数据库配置接口
+ * @description 描述 MySQL 连接、SQL 日志、自动同步与连接池的数据结构
  */
 export interface DatabaseConfig {
   // 数据库主机地址
@@ -12,9 +13,9 @@ export interface DatabaseConfig {
   password: string
   // 数据库名称
   database: string
-  // 数据库是否启用 SQL 日志
+  // 是否输出 SQL 查询日志
   logging: boolean
-  // 数据库是否同步模式
+  // 是否按实体自动同步表结构
   synchronize: boolean
   // 数据库连接池额外配置
   extra: {

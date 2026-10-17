@@ -14,7 +14,7 @@
   const iframeUrl = computed(() => String(route.meta.link || ''))
 
   /**
-   * @description 处理 iframe 加载完成事件并隐藏加载状态。
+   * @description 处理 iframe 加载完成事件并隐藏加载状态
    * @return 无返回值。
    */
   const handleIframeLoad = (): void => {

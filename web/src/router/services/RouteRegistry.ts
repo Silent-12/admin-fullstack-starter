@@ -1,5 +1,5 @@
 /**
- * 业务系统动态路由注册服务。
+ * 业务系统动态路由注册服务
  */
 import type { Router } from 'vue-router'
 import type { AppRouteRecord } from '@/types/router'
@@ -15,14 +15,14 @@ export class RouteRegistry {
   private registered = false
 
   /**
-   * @description 初始化路由注册服务。
+   * @description 初始化路由注册服务
    * @param router Vue Router 实例。
    * @return 无返回值。
    */
   constructor(private readonly router: Router) {}
 
   /**
-   * @description 校验并注册全部业务系统路由。
+   * @description 校验并注册全部业务系统路由
    * @param routes 一级业务系统路由列表。
    * @return 无返回值。
    */
@@ -46,7 +46,7 @@ export class RouteRegistry {
   }
 
   /**
-   * @description 注销本服务注册的全部业务系统路由。
+   * @description 注销本服务注册的全部业务系统路由
    * @return 无返回值。
    */
   unregister(): void {
@@ -56,7 +56,7 @@ export class RouteRegistry {
   }
 
   /**
-   * @description 判断业务系统路由是否已经注册。
+   * @description 判断业务系统路由是否已经注册
    * @return 是否已经注册。
    */
   isRegistered(): boolean {

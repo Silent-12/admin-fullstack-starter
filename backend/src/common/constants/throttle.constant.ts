@@ -1,6 +1,6 @@
 /**
- * HTTP 限流策略常量。
- * @description 定义用户端全局请求限流与未知路由 404 封禁所需的窗口、阈值、封禁时长和 Redis key 前缀。
+ * HTTP 限流策略常量
+ * @description 定义用户端全局请求限流与未知路由 404 封禁所需的窗口、阈值、封禁时长和 Redis key 前缀
  */
 export const THROTTLE_POLICY = {
   /** 用户端全局限流时间窗口，单位毫秒 */

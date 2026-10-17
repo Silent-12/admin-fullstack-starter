@@ -14,10 +14,10 @@ import dayjs from 'dayjs'
 export class AccessLog {
   /**
    * 主键 ID
-   * @description 列 transformer 把 bigint 主键归一为 number：MySQL 驱动默认
-   * supportBigNumbers / bigNumberStrings，bigint 会以字符串回传，与 `id!: number` 声明不一致。
+   * @description 列 `transformer` 把 bigint 主键归一为 number：MySQL 驱动默认
+   * supportBigNumbers / bigNumberStrings，bigint 会以字符串回传，与 `id!: number` 声明不一致
    * 这里用 `@PrimaryColumn({ generated: 'increment' })`，它与 `@PrimaryGeneratedColumn` 注册的
-   * 元数据相同，且其选项类型声明了 `transformer`。
+   * 元数据相同，且其选项类型声明了 `transformer`
    */
   @PrimaryColumn({
     type: 'bigint',
@@ -27,79 +27,55 @@ export class AccessLog {
   })
   id!: number
 
-  /**
-   * 请求追踪 ID
-   */
+  /** 请求追踪 ID */
   @Column({ length: 255, comment: '请求链路追踪 ID' })
   traceId!: string
 
-  /**
-   * HTTP 请求方法
-   */
+  /** HTTP 请求方法 */
   @Column({ length: 255, comment: 'HTTP 方法 (GET/POST/PUT/DELETE 等)' })
   method!: string
 
-  /**
-   * 请求 URL
-   */
+  /** 请求 URL */
   @Column({ length: 255, comment: '请求路径（含 query 参数）' })
   url!: string
 
-  /**
-   * HTTP 状态码
-   */
+  /** HTTP 状态码 */
   @Column({ type: 'int', comment: 'HTTP 响应状态码' })
   statusCode!: number
 
-  /**
-   * 请求处理耗时（毫秒）
-   */
+  /** 请求处理耗时（毫秒） */
   @Column({ type: 'int', comment: '请求处理耗时（毫秒）' })
   duration!: number
 
-  /**
-   * 客户端 IP 地址
-   */
+  /** 客户端 IP 地址 */
   @Column({ length: 255, comment: '客户端 IP 地址（兼容 IPv6）' })
   ip!: string
 
-  /**
-   * 请求来源。
-   * @description 1=用户端，2=后台管理，3=外部回调或系统接口。
-   */
+  /** 请求来源：1=用户端，2=后台管理，3=外部回调或系统接口 */
   @Column({ type: 'tinyint', default: 1, comment: '请求来源：1=用户端 2=后台管理 3=外部回调/系统接口' })
   source!: number
 
-  /**
-   * 用户代理字符串
-   */
+  /** 用户代理字符串 */
   @Column({ length: 255, nullable: true, comment: '客户端 User-Agent' })
   userAgent!: string
 
-  /**
-   * 请求来源 URL
-   */
+  /** 请求来源 URL */
   @Column({ length: 255, nullable: true, comment: '请求来源 Referer' })
   referer!: string
 
-  /**
-   * 请求体内容（JSON 格式）
-   */
-  @Column({ type: 'longtext', nullable: true, comment: '请求体 JSON 字符串（脱敏后）' })
+  /** 请求体内容（JSON 格式） */
+  @Column({ type: 'longtext', nullable: true, comment: '请求体 JSON 字符串' })
   requestBody!: string
 
-  /**
-   * 响应体内容（JSON 格式）
-   */
+  /** 响应体内容（JSON 格式） */
   @Column({ type: 'longtext', nullable: true, comment: '响应体 JSON 字符串（可选）' })
   responseBody!: string
 
-  /**
-   * 创建时间（Unix 时间戳）
-   */
+  /** 创建时间（Unix 时间戳） */
   @Column({ type: 'int', comment: '记录时间（10 位 Unix 时间戳）' })
   createdAt!: number
 
+  // 插入前写入创建时间（Unix 秒）。
   @BeforeInsert()
   setCreatedAt(): void {
     this.createdAt = dayjs().unix()

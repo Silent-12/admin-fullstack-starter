@@ -1,5 +1,5 @@
 /**
- * 无需业务菜单注册的公共路由。
+ * 无需业务菜单注册的公共路由
  */
 import type { RouteRecordRaw } from 'vue-router'
 

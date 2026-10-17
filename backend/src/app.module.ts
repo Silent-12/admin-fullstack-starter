@@ -20,17 +20,20 @@ import { getIpThrottleTracker } from './common/utils/throttle-tracker.util.js'
 import { generateUserApiThrottleKey, shouldSkipUserApiThrottle } from './common/utils/throttle-request.util.js'
 import { AccessLogModule } from './modules/access-log/access-log.module.js'
 import { TemplateApiModule } from './modules/template-api/template-api.module.js'
+import { AdminAuthModule } from './modules/auth/admin/admin-auth.module.js'
 import { HealthController } from './health/health.controller.js'
 import { DatabaseConfig } from './common/types/database.js'
 
+// 按优先级加载环境变量文件：`.env.local` 覆盖 `.env` 中的同名变量。
 config({ path: resolve(process.cwd(), '.env') })
 config({ path: resolve(process.cwd(), '.env.local'), override: true })
 
+// 是否启用 MySQL 数据库，决定 TypeORM 根连接与数据库相关模块是否导入。
 const isMysqlEnabled = process.env.MYSQL_ENABLED === 'true'
 
 /**
  * TypeORM 数据库连接模块工厂
- * @description 仅 MYSQL_ENABLED 为 true 时创建 TypeORM 根连接配置
+ * @description 仅 `MYSQL_ENABLED` 为 `true` 时创建 TypeORM 根连接配置，否则为 null
  */
 const typeOrmRootModule = isMysqlEnabled
   ? TypeOrmModule.forRootAsync({
@@ -57,7 +60,7 @@ const typeOrmRootModule = isMysqlEnabled
 
 /**
  * 应用根模块
- * 负责配置和导入全局模块，注册控制器和服务提供者
+ * @description 负责配置和导入全局模块，注册控制器和服务提供者
  */
 @Module({
   imports: [
@@ -93,6 +96,10 @@ const typeOrmRootModule = isMysqlEnabled
       }),
       inject: [ConfigService],
     }),
+    /**
+     * Redis 模块
+     * 提供全局 Redis 服务，用于限流计数与短期业务锁
+     */
     RedisModule,
     /**
      * 日志模块
@@ -118,6 +125,11 @@ const typeOrmRootModule = isMysqlEnabled
            * 后续新增的数据库业务模块应添加在此数组内
            */
           TemplateApiModule,
+          /**
+           * 后台认证模块
+           * 注册后台认证控制器、服务与全局认证守卫，提供登录、当前用户信息与登出的 JWT 认证能力
+           */
+          AdminAuthModule,
         ]
       : []),
   ],
@@ -125,6 +137,7 @@ const typeOrmRootModule = isMysqlEnabled
   providers: [
     DatabaseHealthService,
     RedisThrottlerStorageService,
+    // 全局限流计数改由 Redis 存储实现，保证多实例共享计数与封禁状态。
     { provide: ThrottlerStorage, useExisting: RedisThrottlerStorageService },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
@@ -132,9 +145,8 @@ const typeOrmRootModule = isMysqlEnabled
 export class AppModule implements NestModule {
   /**
    * 配置中间件
-   * @description 按环境开关注册访问日志与未知路由限流中间件。
+   * @description 按环境开关注册访问日志与未知路由限流中间件
    * @param consumer 中间件消费者
-   * @returns 无返回值
    */
   configure(consumer: MiddlewareConsumer): void {
     const httpLogEnabled = process.env.HTTP_LOG_ENABLED === 'true'

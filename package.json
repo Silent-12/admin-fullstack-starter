@@ -4,7 +4,7 @@
   "private": true,
   "description": "Vue 3 + NestJS 后台管理系统全栈基础模板（类 Monorepo：web / backend 独立依赖，根目录统一编排）",
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=24.0.0"
   },
   "packageManager": "pnpm@11.21.0",
   "scripts": {

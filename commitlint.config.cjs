@@ -1,7 +1,7 @@
 /**
  * commitlint 配置（仓库级）
  * @description 统一 web/ 与 backend/ 的提交信息规范。类型枚举取两个子模板的并集，
- * 并保留更严格的格式约束，避免合并后出现两套校验口径。
+ * 并保留更严格的格式约束，避免合并后出现两套校验口径
  * 参考：https://commitlint.js.org/#/reference-rules
  */
 module.exports = {

@@ -35,7 +35,7 @@ export default tseslint.config(
   },
   {
     rules: {
-      // 允许保留告警级别的 console（error/warn）
+      // console 仅放行 error/warn，其余用法以告警级别报告
       'no-console': [
         'warn',
         {

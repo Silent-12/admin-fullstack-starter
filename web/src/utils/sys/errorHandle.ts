@@ -66,7 +66,7 @@ function isIgnorableScriptError(message: Event | string, source?: string): boole
 }
 
 /**
- * @description 处理 Vue 运行时错误并输出组件上下文。
+ * @description 处理 Vue 运行时错误并输出组件上下文
  * @param err Vue 捕获的运行时错误。
  * @param instance 发生错误的组件实例。
  * @param info Vue 提供的错误位置信息。

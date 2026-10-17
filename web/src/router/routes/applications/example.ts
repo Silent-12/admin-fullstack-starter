@@ -1,5 +1,5 @@
 /**
- * Example 应用路由。
+ * Example 应用路由
  */
 import type { AppRouteRecord } from '@/types/router'
 import { RoutePath } from '@/router/constants'

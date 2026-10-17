@@ -4,7 +4,7 @@ import type { UserListItem as ApiUserListItem } from '@/types/api/system-manage'
 
 /**
  * 用户弹窗类型
- * @description 定义用户新增和编辑弹窗的业务模式。
+ * @description 定义用户新增和编辑弹窗的业务模式
  */
 export type DialogType = 'add' | 'edit'
 

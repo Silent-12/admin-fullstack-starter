@@ -1,5 +1,5 @@
 /**
- * 业务菜单路由到 Vue Router 路由的转换服务。
+ * 业务菜单路由到 Vue Router 路由的转换服务
  */
 import type { RouteRecordRaw } from 'vue-router'
 import type { AppRouteRecord } from '@/types/router'
@@ -8,14 +8,14 @@ import { RouteComponentLoader } from './RouteComponentLoader'
 
 export class RouteTransformer {
   /**
-   * @description 初始化路由转换服务。
+   * @description 初始化路由转换服务
    * @param componentLoader 路由组件加载服务。
    * @return 无返回值。
    */
   constructor(private readonly componentLoader: RouteComponentLoader) {}
 
   /**
-   * @description 将业务菜单路由转换为 Vue Router 可注册路由。
+   * @description 将业务菜单路由转换为 Vue Router 可注册路由
    * @param route 业务菜单路由。
    * @return Vue Router 路由配置。
    */

@@ -2,13 +2,13 @@ import type { CommonSearchParams, PaginatedResponse } from './common'
 
 /**
  * 用户列表
- * @description 定义系统管理用户分页列表响应。
+ * @description 定义系统管理用户分页列表响应
  */
 export type UserList = PaginatedResponse<UserListItem>
 
 /**
  * 用户列表项
- * @description 定义系统管理用户列表中的用户信息。
+ * @description 定义系统管理用户列表中的用户信息
  */
 export interface UserListItem {
   // 用户 ID
@@ -41,7 +41,7 @@ export interface UserListItem {
 
 /**
  * 用户搜索参数
- * @description 定义系统管理用户列表的筛选和分页参数。
+ * @description 定义系统管理用户列表的筛选和分页参数
  */
 export type UserSearchParams = Partial<
   Pick<UserListItem, 'id' | 'userName' | 'userGender' | 'userPhone' | 'userEmail' | 'status'> &
@@ -50,13 +50,13 @@ export type UserSearchParams = Partial<
 
 /**
  * 角色列表
- * @description 定义系统管理角色分页列表响应。
+ * @description 定义系统管理角色分页列表响应
  */
 export type RoleList = PaginatedResponse<RoleListItem>
 
 /**
  * 角色列表项
- * @description 定义系统管理角色列表中的角色信息。
+ * @description 定义系统管理角色列表中的角色信息
  */
 export interface RoleListItem {
   /** 角色 ID */
@@ -75,7 +75,7 @@ export interface RoleListItem {
 
 /**
  * 角色下拉选项
- * @description 供用户表单选择角色使用的精简结构，不含分页与审计字段，对应后端 `/v1/admin/roles/options`。
+ * @description 供用户表单选择角色使用的精简结构，不含分页与审计字段，对应后端 `/v1/admin/roles/options`
  */
 export interface RoleOption {
   /** 角色编码 */
@@ -86,7 +86,7 @@ export interface RoleOption {
 
 /**
  * 角色搜索参数
- * @description 定义系统管理角色列表的筛选和分页参数。
+ * @description 定义系统管理角色列表的筛选和分页参数
  */
 export type RoleSearchParams = Partial<
   Pick<RoleListItem, 'roleId' | 'roleName' | 'roleCode' | 'description' | 'enabled'> &
@@ -100,7 +100,7 @@ export type RoleSearchParams = Partial<
 
 /**
  * 角色搜索表单参数
- * @description 在角色查询参数基础上补充表单日期区间，提交查询时拆分为起止时间。
+ * @description 在角色查询参数基础上补充表单日期区间，提交查询时拆分为起止时间
  */
 export type RoleSearchFormParams = RoleSearchParams & {
   // 可选的创建日期区间

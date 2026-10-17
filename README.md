@@ -25,7 +25,7 @@ admin-fullstack-starter/
 │   └── .agents/              # 前端专项规则与技能
 ├── backend/                  # 后端：NestJS + TypeORM + MySQL + Redis
 │   ├── src/
-│   │   ├── modules/          # 业务模块（当前含 template-api、access-log）
+│   │   ├── modules/          # 业务模块（auth/admin、template-api、access-log）
 │   │   ├── common/           # 公共过滤器、拦截器、日志、Redis、限流
 │   │   └── config/           # app / database / redis 配置
 │   ├── .env.example          # 环境变量示例（需自行复制为 .env）
@@ -108,6 +108,8 @@ Copy-Item .env.example .env
 > 注意：`backend/src/config/app.config.ts` 的约定是「`.env` 中声明过的变量必须有非空值」，一旦把某个变量写进 `.env`，就必须为其填写有效值，否则启动会直接报错。数据库表结构由实体维护，本地开发需把 `DB_SYNCHRONIZE` 设为 `true` 才能自动建表；该开关在非 development / test 环境会在启动阶段直接报错。
 
 ### 3. 启动开发服务
+
+需要实际登录时，先启用 MySQL 与 Redis，配置随机 `JWT_SECRET`，并按 [后端认证说明](backend/README.md#后台用户认证)准备 `admin_user` 表。随后在根目录执行 `pnpm --dir backend run admin:init`，仅首次显示内置 admin 的随机密码。该命令不自动修改表结构，也不会覆盖已有密码。
 
 ```powershell
 # 前后端并行启动

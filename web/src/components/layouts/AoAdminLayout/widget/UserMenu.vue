@@ -1,38 +1,31 @@
-<!-- 顶部栏用户菜单：头像触发 + 用户信息展示与登出 -->
+<!-- 顶部栏用户菜单：头像与用户名触发 + 个人资料入口与登出 -->
 <!-- 由 AoAdminLayout 经 #user-avatar 插槽注入；用户数据与登出逻辑由模板 user store 持有 -->
 <template>
   <ElPopover
     ref="popoverRef"
     placement="bottom-end"
-    :width="240"
-    :hide-after="0"
-    :offset="10"
+    :width="170"
     trigger="hover"
     :show-arrow="false"
     popper-class="user-menu-popover"
-    popper-style="padding: 5px 16px;"
+    popper-style="padding: 12px 16px;"
   >
     <template #reference>
-      <!-- 关闭点击预览，避免与 hover 弹层交互冲突 -->
-      <AoImage class="trigger-avatar" :src="avatar" :preview-src-list="[]" fit="cover" />
+      <div class="user-menu-trigger">
+        <!-- 关闭点击预览，避免与 hover 弹层交互冲突 -->
+        <AoImage class="trigger-avatar" :src="avatar" :preview-src-list="[]" fit="cover" />
+        <span class="name">{{ info.name || info.userName }}</span>
+      </div>
     </template>
     <template #default>
       <div class="user-menu">
-        <div class="header">
-          <AoImage class="avatar" :src="avatar" :preview-src-list="[]" fit="cover" />
-          <div class="info">
-            <span class="name">{{ info.name || info.userName }}</span>
-            <span class="email">{{ info.email }}</span>
-          </div>
-        </div>
         <ul class="list">
           <li class="item" @click="showDevTip">
             <AoSvgIcon icon="ri:user-3-line" />
-            <span>个人中心</span>
+            <span>个人资料</span>
           </li>
-          <div class="divider"></div>
-          <div class="log-out" @click="handleLogout">退出登录</div>
         </ul>
+        <div class="log-out" @click="handleLogout">退出登录</div>
       </div>
     </template>
   </ElPopover>
@@ -45,14 +38,14 @@
   import { AoSvgIcon } from '@ao/admin-components'
   import AoImage from '@/components/media/AoImage.vue'
   import { useUserStore } from '@/store/modules/user'
-  import defaultAvatar from '@imgs/avatar/avatar.webp'
+  import defaultAvatar from '@imgs/avatar/avatar.svg'
   import { fetchLogout } from '@/api/auth'
   import { isHttpError } from '@/utils/http/error'
 
   defineOptions({ name: 'UserMenu' })
 
   const userStore = useUserStore()
-  // 用户信息：头像、用户名与邮箱
+  // 用户信息：顶部头像与用户名
   const { info } = storeToRefs(userStore)
 
   /** 头像地址：后端未返回头像时回退到默认头像 */
@@ -64,7 +57,7 @@
   const loggingOut = ref(false)
 
   /**
-   * @description 展示用户中心占位提示
+   * @description 展示个人资料占位提示
    */
   const showDevTip = (): void => {
     ElMessage.info('正在开发中')
@@ -111,75 +104,49 @@
 </script>
 
 <style scoped lang="scss">
-  // 头像（弹层触发器）：间距由布局包 .header-bar__user-avatar 容器统一提供，此处不再重复设置
-  .trigger-avatar {
-    width: 2.125rem;
-    height: 2.125rem;
+  // 头像与用户名共同触发弹层，外侧间距由布局包统一提供
+  .user-menu-trigger {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
     cursor: pointer;
-    border-radius: 9999px;
-    @media (width <= 39.99rem) {
-      width: 1.625rem;
-      height: 1.625rem;
+
+    .trigger-avatar {
+      flex-shrink: 0;
+      width: 2.125rem;
+      height: 2.125rem;
+      border-radius: 9999px;
+
+      @media (width <= 39.99rem) {
+        width: 1.625rem;
+        height: 1.625rem;
+      }
+    }
+
+    .name {
+      max-width: 8rem;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      color: var(--ao-gray-700);
+      @include ellipsis;
+
+      @media (width <= 39.99rem) {
+        max-width: 5rem;
+      }
     }
   }
 
   // 用户菜单弹层
   .user-menu {
-    padding-top: 0.75rem;
-
-    .header {
-      display: flex;
-      align-items: center;
-      padding-bottom: 0.25rem;
-    }
-
-    .avatar {
-      width: 2.5rem;
-      height: 2.5rem;
-      margin-right: 0.75rem;
-      overflow: hidden;
-      border-radius: 9999px;
-    }
-
-    .info {
-      width: calc(100% - 60px);
-      height: 100%;
-    }
-
-    // 用户名
-    .name {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 500;
-      line-height: 1.25rem;
-      color: var(--ao-gray-800);
-      @include ellipsis;
-    }
-
-    // 邮箱
-    .email {
-      display: block;
-      margin-top: 0.125rem;
-      font-size: 0.75rem;
-      line-height: 1rem;
-      color: var(--ao-gray-500);
-      @include ellipsis;
-    }
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 
     .list {
-      padding-top: 1rem;
-      padding-bottom: 1rem;
-      margin-top: 0.75rem;
-      border-top: 1px solid color-mix(in srgb, var(--ao-gray-300) 80%, transparent);
-    }
-
-    // 分割线
-    .divider {
-      width: 100%;
-      height: 1px;
-      margin-top: 0.5rem;
-      margin-bottom: 0.5rem;
-      background: color-mix(in srgb, var(--ao-gray-300) 80%, transparent);
+      padding: 0 0 0.5rem;
+      margin: 0;
+      list-style: none;
+      border-bottom: 1px solid color-mix(in srgb, var(--ao-gray-300) 80%, transparent);
     }
 
     // 菜单项
@@ -187,7 +154,6 @@
       display: flex;
       align-items: center;
       padding: 0.5rem;
-      margin-bottom: 0.75rem;
       cursor: pointer;
       user-select: none;
       border-radius: 0.375rem;
@@ -212,7 +178,6 @@
     .log-out {
       padding-top: 0.375rem;
       padding-bottom: 0.375rem;
-      margin-top: 1.25rem;
       font-size: 0.75rem;
       line-height: 1rem;
       text-align: center;

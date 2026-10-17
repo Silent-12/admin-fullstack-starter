@@ -9,7 +9,6 @@
       <div class="auth-right-wrap">
         <div class="form">
           <h3 class="title">欢迎回来</h3>
-          <p class="sub-title">输入您的账号和密码登录</p>
           <ElForm
             ref="formRef"
             :model="formData"
@@ -17,18 +16,6 @@
             @keyup.enter="handleSubmit"
             style="margin-top: 25px"
           >
-            <ElFormItem prop="account">
-              <ElSelect v-model="formData.account" @change="setupAccount">
-                <ElOption
-                  v-for="account in accounts"
-                  :key="account.key"
-                  :label="account.label"
-                  :value="account.key"
-                >
-                  <span>{{ account.label }}</span>
-                </ElOption>
-              </ElSelect>
-            </ElFormItem>
             <ElFormItem prop="username">
               <ElInput
                 class="custom-height"
@@ -69,17 +56,9 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, onMounted, reactive, ref } from 'vue'
+  import { computed, reactive, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
-  import {
-    ElButton,
-    ElCheckbox,
-    ElForm,
-    ElFormItem,
-    ElInput,
-    ElOption,
-    ElSelect
-  } from 'element-plus'
+  import { ElButton, ElCheckbox, ElForm, ElFormItem, ElInput } from 'element-plus'
   import AppConfig from '@/config'
   import { useUserStore } from '@/store/modules/user'
   import { HttpError } from '@/utils/http/error'
@@ -87,33 +66,8 @@
   import { ElNotification, type FormInstance, type FormRules } from 'element-plus'
   import AuthTopBar from './components/AuthTopBar.vue'
   import LoginLeftView from './components/LoginLeftView.vue'
-  import type { AccountKey, Account } from './types'
 
   defineOptions({ name: 'Login' })
-
-  const accounts = computed<Account[]>(() => [
-    {
-      key: 'super',
-      label: '超级管理员',
-      userName: 'Super',
-      password: '123456',
-      roles: ['R_SUPER']
-    },
-    {
-      key: 'admin',
-      label: '管理员',
-      userName: 'Admin',
-      password: '123456',
-      roles: ['R_ADMIN']
-    },
-    {
-      key: 'user',
-      label: '普通用户',
-      userName: 'User',
-      password: '123456',
-      roles: ['R_USER']
-    }
-  ])
 
   const userStore = useUserStore()
   const router = useRouter()
@@ -123,7 +77,6 @@
   const formRef = ref<FormInstance>()
 
   const formData = reactive({
-    account: '',
     username: '',
     password: '',
     rememberPassword: true
@@ -135,21 +88,6 @@
   }))
 
   const loading = ref(false)
-
-  onMounted(() => {
-    setupAccount('super')
-  })
-
-  /**
-   * @description 设置选中账号并填充用户名密码
-   * @param key 账号标识
-   */
-  const setupAccount = (key: AccountKey): void => {
-    const selectedAccount = accounts.value.find((account: Account) => account.key === key)
-    formData.account = key
-    formData.username = selectedAccount?.userName ?? ''
-    formData.password = selectedAccount?.password ?? ''
-  }
 
   /**
    * @description 提交登录表单
@@ -275,13 +213,6 @@
         padding-top: 2.5rem;
       }
     }
-    /* 副标题 */
-    .sub-title {
-      margin-top: 10px;
-      font-size: 0.875rem;
-      line-height: 1.25rem;
-      color: var(--ao-gray-600);
-    }
     /* 表单控件统一高度 */
     .custom-height {
       height: var(--login-input-height, 40px) !important;
@@ -310,11 +241,6 @@
   /* 提交按钮宽度 */
   .submit-btn {
     width: 100%;
-  }
-
-  /* Element Plus 选择器高度调整 */
-  :deep(.el-select__wrapper) {
-    height: var(--login-input-height, 40px) !important;
   }
 
   /* 滑入动画 */

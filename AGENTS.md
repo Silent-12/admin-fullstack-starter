@@ -1,44 +1,43 @@
 # 仓库规则入口（admin-fullstack-starter）
 
-## 项目定位
+## 职责边界
 
-本仓库是 **Vue 3 + NestJS** 的后台管理系统全栈基础模板，采用**类 Monorepo** 结构：`frontend/` 与 `backend/` 各自拥有独立的 `package.json`、锁文件与依赖目录，**不使用** pnpm workspace 提升依赖。仓库根目录只承担编排职责：统一安装、开发启动、构建、检查与 Git 提交规范。
-
-- 不包含具体业务模块。前端提供登录、工作台与用户/角色/菜单管理示例；后端提供健康检查、访问日志与 CRUD 模板模块。
-- 两个子项目来自独立模板仓库（`admin-template-vue`、`backend-template-nest`），合并后**各自保留原有规则体系**。
+`web/` 与 `backend/` 独立管理依赖与端内规则；仓库根目录只负责安装、开发启动、构建、检查与 Git 提交规范的统一编排。
 
 ## 规则加载与优先级
 
-1. **作用域**：本文件是**仓库级**规则入口，只承载**跨端、根级配置与仓库整体**的约定，**不替代**子项目规则。处理任一子项目的代码前，必须先加载该子项目的 `AGENTS.md`，再按其中的索引加载专项规则与技能。
-2. **强制加载路径**：任务只涉及单端时，按改动路径读取对应子项目规则，并遵循其内部优先级：
-   - 改动 `frontend/**` → 读取 [frontend/AGENTS.md](frontend/AGENTS.md)，再按其中的「按需加载索引」加载 `frontend/.agents/rules/`、`frontend/.agents/skills/`、`frontend/.agents/references/` 中的匹配项。
-   - 改动 `backend/**` → 读取 [backend/AGENTS.md](backend/AGENTS.md)。**两端规则体系不对称**：`backend/AGENTS.md` 自身即规则主体（通用规则直接内联），`backend/.agents/` 下仅保留 `rules/ponytail.md` 与 `skills/database-design/`，按需加载；**不要假定后端存在与前端同名的专项规则文件**。
-3. **跨端共用技能**：提交信息生成、改动说明生成、代码审查、编码行为准则、TypeDoc 注释规范统一位于**仓库根 `.agents/skills/`**（当前 5 个：`commit-msg`、`git-commit-changelog`、`code-review`、`karpathy-guidelines`、`typedoc-style`）。`frontend/AGENTS.md` 以 `../.agents/skills/` 相对路径引用，`backend/AGENTS.md` 以文字说明指向同一目录，**不得在子项目内重复实现同名技能**。
-4. **文档定位**：子项目 `README.md` 仅作使用说明（安装、启动、接口示例），**不是规则来源**；规则一律以该目录下的 `AGENTS.md` 为准。仓库级说明见根 [README.md](README.md)。
-5. 两端规则冲突时，以**改动所在子项目的规则**为准；根级配置（脚本、钩子、提交规范）以本文件与根目录实现为准。
-6. 用户明确要求优先于上述项目规则。
+1. 本文件只承载跨端与根级约定，不替代子项目规则。处理 `web/**` 前读取 [web/AGENTS.md](web/AGENTS.md)，处理 `backend/**` 前读取 [backend/AGENTS.md](backend/AGENTS.md)，并按各自入口加载与任务匹配的规则、技能和参考资料；跨端任务读取两端规则。
+2. 跨端共用技能统一维护在根 `.agents/skills/`，禁止在子项目中重复实现同名技能。
+3. README 承载使用说明，TODO 承载待办、阶段状态与决策记录，均不替代 AGENTS.md 及其引用的专项规则；结构调整后同步更新相关文档。
+4. 端内实现以对应子项目规则为准；跨端契约、根级配置、脚本、钩子与提交规范以本文件及根目录实现为准。用户明确要求优先于项目规则。
 
-## 目录职责边界
+## 项目阶段与实现原则
 
-| 路径 | 职责 | 改动注意 |
-| --- | --- | --- |
-| `frontend/` | 前端应用：页面、路由、API、状态、样式 | 遵循 [frontend/AGENTS.md](frontend/AGENTS.md)；请求统一走 `src/utils/http` 的默认 `request` 实例 |
-| `backend/` | 后端服务：Controller、Service、Entity、迁移 | 遵循 [backend/AGENTS.md](backend/AGENTS.md)；写操作响应统一 `data: null`；数据库变更走 `src/database/migrations` |
-| `package.json`（根） | 编排脚本 | 新增脚本需同时更新根 `README.md` 的命令表 |
-| `.agents/skills/`（根） | 跨端共用技能：提交信息、改动说明、代码审查、编码准则、TypeDoc 规范 | **唯一真源**，禁止在 `frontend/`、`backend/` 内重复放置同名技能 |
-| `.husky/`、`commitlint.config.cjs` | 仓库级提交规范 | **唯一生效的钩子入口**，不要改为依赖子项目 `.husky/` |
-| `AGENTS.md`（根） | 仓库级规则入口 | 仅承载跨端与根级约定，**不替代**子项目规则 |
-| `frontend/AGENTS.md`、`backend/AGENTS.md` | 子项目规则入口 | 改动对应子项目前**必须先读**；两端体系不对称，见「规则加载与优先级」第 2 条 |
-| `README.md`（根、子项目） | 使用说明，**非规则来源** | 规则一律以同级 `AGENTS.md` 为准；结构调整后同步更新 |
+- 当前项目尚未上线。新增、修改与重构功能时，一律以当前业务需求、项目规范和最佳实践为依据，直接实现合理的目标方案。
+- 已有功能、接口或数据结构已经实现，不构成保留旧设计或进行兼容处理的理由；禁止仅为兼容现有实现而新增兼容层、旧字段别名、双轨逻辑或过渡版本。
+- 当现有实现不符合目标方案时，应在本次变更范围内直接调整或替换，并清理受影响的旧实现、废弃字段与无效分支；同步更新相关调用、类型、文档与验证，确保整体一致。
+- 最佳实践应服务于当前需求，保持实现简洁、职责清晰、可维护且可验证，避免为假设中的未来需求过度设计。
 
 ## 根级工程约定
 
-- **包管理器分工固定**：`frontend/` 使用 pnpm（`pnpm-lock.yaml`），`backend/` 使用 npm（`package-lock.json`），根目录使用 pnpm。不要跨端混用，也不要新增根 `pnpm-workspace.yaml`。
-- **子项目不得再声明 `prepare: husky`**：`core.hooksPath` 是仓库级配置，子目录执行 `husky` 会覆盖根钩子指向，导致根 `.husky/` 静默失效。
-- **根脚本委托方式**：调用前端用 `pnpm --dir frontend run <script>`，调用后端用 `npm --prefix backend run <script>`。两者都会把工作目录切到对应子项目，这对前端 `vite.config.ts`（依赖 `process.cwd()` 加载 `.env`）与后端实体扫描（依赖 `process.cwd()/dist`）是必需的。
-- **后端安装依赖不得使用 `npm --prefix backend install`**：该写法在仓库根执行时，npm 会把根 `package.json` 当作上层包，向 `backend/package.json` 注入 `"admin-fullstack-starter": "file:.."` 依赖、生成指向仓库根的自链接软链，并污染 `backend/package-lock.json`。安装统一使用 `cd backend && npm install`（即根 `install:backend` 脚本的写法）。
-- **提交信息**：遵循根 `commitlint.config.cjs`，格式 `type(scope): subject`；`pre-commit` 按改动归属分别执行子项目 `lint-staged`。
+- **依赖管理**：根目录与两个子项目统一使用 pnpm，各自维护 `package.json`、`pnpm-lock.yaml` 和依赖目录；禁止使用 npm/yarn 安装项目依赖或引入其锁文件。子项目 `pnpm-workspace.yaml` 只承载设置，不得声明 `packages`；不得新增根 `pnpm-workspace.yaml`。
+- **依赖声明**：源码直接引用的包必须在对应子项目 `package.json` 中显式声明；带构建脚本的依赖必须在对应 `pnpm-workspace.yaml` 的 `allowBuilds` 中显式配置 `true` 或 `false`，不得留占位值。
+- **脚本委托**：根脚本安装子项目依赖使用 `pnpm --dir <子项目> install`，运行脚本使用 `pnpm --dir <子项目> run <script>`，确保工作目录正确。新增根脚本时同步更新根 README 的命令表。
+- **Git 钩子与提交**：根 `.husky/` 是唯一生效的钩子入口，子项目不得声明 `prepare: husky` 或覆盖根钩子配置。提交信息遵循根 `commitlint.config.cjs`，格式为 `type(scope): subject`；`pre-commit` 按改动归属执行子项目 `lint-staged`。
 
-## 合并状态说明
+## 跨端接口约定
 
-两端尚未联调，且后端缺少用户、角色、权限、菜单模块。接口契约上，前端期望 `{ code, msg, data }`，后端返回 `{ code, message, data, timestamp }`，字段名不一致。补齐这些能力前，请勿默认前端 Mock 数据与后端接口已经对齐。详见根 [README.md](README.md) 的「已知差距」。
+| 契约项 | 口径 |
+| --- | --- |
+| 响应包裹 | `{ code, message, data, timestamp, traceId? }`，成功与失败一律以 HTTP 状态码判定 |
+| 分页请求 | `page`、`pageSize`（默认 `1` / `10`，上限 `100`） |
+| 分页响应 | `data: { list, pagination: { page, pageSize, total, totalPages } }` |
+| 全局 API 前缀 | 由 `backend/.env` 的 `API_PREFIX` 决定；`backend` 仅为默认值，不得写死为固定前缀 |
+| 后台接口路径 | 全局前缀之后统一使用 `v1/admin/{资源}`（如 `/{API_PREFIX}/v1/admin/users`），包含认证接口 |
+| 后台认证端点 | `v1/admin/auth/*`（登录、登出、刷新令牌、当前用户信息、当前用户授权菜单） |
+| 用户端接口路径 | 不使用 `admin` 前缀，与后台接口区分 |
+| 认证头 | `Authorization: Bearer <token>` |
+
+- 不得单端擅自改变上述契约；涉及契约的变更必须同步更新受影响的前后端调用、类型、文档与验证。
+- 未上线阶段直接修改现有接口、DTO 和响应字段，清理旧实现与旧字段；不新增兼容版本、兼容层或旧字段别名，业务接口保持 `v1`。
+- 禁止恢复本地 Mock，页面通过 API 对接后端。

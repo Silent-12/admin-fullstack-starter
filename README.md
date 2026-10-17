@@ -92,6 +92,10 @@ pnpm run install:web       # 等价于在 web/ 执行 pnpm install
 pnpm run install:backend   # 等价于在 backend/ 执行 pnpm install
 ```
 
+两个子项目各自维护依赖，`pnpm-workspace.yaml` 仅配置 `allowBuilds` 等设置，不声明 workspace 包。若安装报 `ERR_PNPM_IGNORED_BUILDS`，请检查对应文件，为报错依赖的构建脚本明确配置 `true`（允许）或 `false`（禁止）。源码直接引用的依赖需要在对应子项目声明，不能依赖传递依赖提升。
+
+根脚本通过 `pnpm --dir <子项目>` 委托执行，以保证工作目录正确：前端 Vite 根据 `process.cwd()` 加载环境文件，后端也据此加载环境文件并扫描 `dist/` 下的实体。
+
 ### 2. 配置后端环境变量（可选）
 
 后端在**没有 `.env`** 时也能启动：此时 MySQL、Redis、限流、HTTP 日志均为关闭状态，服务使用默认端口 `3000` 与 API 前缀 `backend`。需要接入数据库或 Redis 时再创建配置文件：
@@ -206,7 +210,9 @@ git commit -m "chore(eslint): verify hooks"
 
 ## 🔗 前后端联调约定
 
-1. **数据库结构**：后端不维护 SQL 迁移文件，表结构以 `backend/src/**/entities` 的 TypeORM 实体为唯一来源；本地开发用 `DB_SYNCHRONIZE=true` 自动建表，非 development / test 环境开启会在启动阶段直接报错。详见 [backend/README.md](backend/README.md) 的「数据库结构策略」。
+1. **数据库结构**：后端不维护 SQL 迁移文件，表结构以 `backend/src/**/entities` 的 TypeORM 实体为唯一来源；本地开发用 `DB_SYNCHRONIZE=true` 自动建表，非 development / test 环境开启会在启用 MySQL 时阻止启动。操作流程见后端 [数据库结构策略](backend/README.md#数据库结构策略)。
+2. **接口与版本**：接口约定以根 [AGENTS.md](AGENTS.md#跨端接口约定) 为准。全局前缀由 `backend/.env` 的 `API_PREFIX` 决定，`backend` 仅为默认值；后台接口（含认证）统一使用 `v1/admin/*`，用户端接口不带 `admin`。未上线阶段直接修改现有 `v1` 接口并同步调用方，不保留兼容版本或旧字段别名。
+3. **功能缺口与进度**：认证、用户、角色、菜单等能力的缺口及建库基线 SQL 的准备状态统一登记在 [TODO.md](TODO.md)。
 
 > 后端 `MYSQL_ENABLED=false` 时，所有依赖 TypeORM 的模块（含 `template-api`、`access-log`）都不会被加载，这是 `app.module.ts` 中的条件化导入设计，属于预期行为。
 

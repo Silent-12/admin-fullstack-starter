@@ -160,6 +160,21 @@ DB_SYNCHRONIZE=true     # 按实体自动同步表结构（仅 development / tes
 DB_LOGGING=false        # SQL 执行日志
 ```
 
+### 数据库结构策略
+
+表结构以 `src/**/entities` 下的 TypeORM 实体为准，不维护 SQL 迁移文件；开发约束见 [AGENTS.md](AGENTS.md)。
+
+- 本地 development / test 环境可使用 `DB_SYNCHRONIZE=true` 自动建表或改表。启用 MySQL 后，其他环境开启该选项会阻止启动。自动同步可能直接执行 `ALTER` / `DROP`，删除实体字段可能删除对应列及其数据；MySQL DDL 隐式提交，不能依赖事务回滚恢复。
+- 新实体需在所属模块注册，并将模块加入 `src/app.module.ts` 的 MySQL 条件化导入；删除实体不会自动删除库表，遗留表需要人工确认和清理。
+
+共享或生产环境按以下顺序准备与核验：
+
+1. 根据实体导出基线 SQL，覆盖表、索引与外键，纳入版本管理；执行前核对目标数据库、环境和 `DB_SYNCHRONIZE=false`。
+2. 首次部署时人工执行基线 SQL；后续改表先更新实体，再准备与差异对应的人工 SQL，并在本节记录具体 SQL 文件、执行顺序及核验方式。
+3. 执行后通过 `SHOW CREATE TABLE`、`SHOW INDEX` 等核对表结构、索引与外键，启动应用并验证受影响接口；不能只以健康检查通过作为结构变更完成的依据。
+
+基线 SQL 的准备状态登记在根 [TODO.md](../TODO.md)，由该文件跟踪部署前待办。
+
 ### Redis 🔴
 
 项目集成了 Redis 用于缓存和会话存储。

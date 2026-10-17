@@ -37,7 +37,7 @@ pnpm run dev:web       # 或 pnpm dev 同时启动前后端
 
 登录页默认填入 `Super / 123456`，也可以在页面中选择其他演示账号。
 
-登录与用户信息通过 [src/api/auth.ts](src/api/auth.ts) 调用后端 `POST /backend/v1/auth/login` 与 `GET /backend/v1/auth/profile`。本地 Mock 已移除，后端认证模块尚未提供，接口就绪前登录与用户信息获取不可用。
+登录与用户信息通过 [src/api/auth.ts](src/api/auth.ts) 调用后端 `POST /backend/v1/admin/auth/login` 与 `GET /backend/v1/admin/auth/profile`。本地 Mock 已移除，后端认证模块尚未提供，接口就绪前登录与用户信息获取不可用。
 
 ## 🛠️ 技术栈
 
@@ -148,29 +148,29 @@ Vite 先加载 [`.env`](.env)，再按运行模式加载 [`.env.development`](.e
 | `VITE_API_PROXY_URL`    | 开发代理目标            | `http://localhost:3000`             |
 | `VITE_WITH_CREDENTIALS` | 跨域请求是否携带 Cookie | `false`                             |
 
-开发代理在 [vite.config.ts](vite.config.ts) 中配置：`/backend` 请求转发到 `VITE_API_PROXY_URL`，保留 `/backend` 路径前缀。接入本地后端时，修改代理目标即可。
+开发代理在 [vite.config.ts](vite.config.ts) 中配置：当前将 `/backend` 请求转发到 `VITE_API_PROXY_URL`，保留路径前缀。后端全局前缀由 `backend/.env` 的 `API_PREFIX` 决定，`backend` 仅为默认值；修改该配置时，需同步调整前端 `VITE_API_URL`、开发代理匹配路径及部署代理配置。
 
 新增环境变量的命名、文件同步和类型声明要求见 [开发流程与验证](.agents/rules/workflow.md)。
 
 ## 🔌 接口对接
 
-本地 Mock 已移除，登录页、路由守卫的用户信息获取，以及用户、角色、菜单管理示例页面均直接调用后端接口。请求路径由 `VITE_API_URL`（`/backend`）与 [src/api](src/api) 中的 `/v1/...` 拼接而成：
+本地 Mock 已移除，登录页、路由守卫的用户信息获取，以及用户、角色、菜单管理示例页面均直接调用后端接口。请求路径由 `VITE_API_URL` 与 [src/api](src/api) 中的 `/v1/admin/...` 拼接而成，以下以默认全局前缀 `/backend` 为例；未来用户端接口不带 `admin` 前缀：
 
 | 调用方   | 请求路径                                |
 | -------- | --------------------------------------- |
-| 登录页   | `POST /backend/v1/auth/login`           |
-| 路由守卫 | `GET /backend/v1/auth/profile`          |
+| 登录页   | `POST /backend/v1/admin/auth/login`           |
+| 路由守卫 | `GET /backend/v1/admin/auth/profile`          |
 | 用户管理 | `GET /backend/v1/admin/users`           |
 | 角色管理 | `GET /backend/v1/admin/roles`           |
 | 角色下拉 | `GET /backend/v1/admin/roles/options`   |
 | 菜单管理 | `GET /backend/v1/admin/menus/tree`      |
-| 动态路由 | `GET /backend/v1/auth/menus`            |
+| 动态路由 | `GET /backend/v1/admin/auth/menus`            |
 
 路径与分页口径（请求 `page` / `pageSize`，响应 `{ list, pagination }`）已与后端约定冻结，见根 [README](../README.md) 的「前后端联调约定」；分页类型定义在 [src/types/api/common.d.ts](src/types/api/common.d.ts)。
 
 上述接口的后端实现尚未提供，后端补齐前这些页面无法正常加载数据；新增、修改、删除等写操作也需按业务接入 [src/api](src/api)。
 
-`VITE_ROUTE_SOURCE` 只控制菜单路由来源。动态菜单由 [MenuRouteService](src/router/services/MenuRouteService.ts) 调用 `/backend/v1/auth/menus`（当前用户可访问的菜单），菜单管理页则调用 `/backend/v1/admin/menus/tree`（完整菜单树），两者语义不同，不得混用。
+`VITE_ROUTE_SOURCE` 只控制菜单路由来源。动态菜单由 [MenuRouteService](src/router/services/MenuRouteService.ts) 调用 `/backend/v1/admin/auth/menus`（当前用户可访问的菜单），菜单管理页则调用 `/backend/v1/admin/menus/tree`（完整菜单树），两者语义不同，不得混用。
 
 所有 HTTP 请求统一通过 [src/utils/http/index.ts](src/utils/http/index.ts) 的默认 `request` 实例发起。后端响应遵循 [BaseResponse](src/types/common/response.ts)：
 

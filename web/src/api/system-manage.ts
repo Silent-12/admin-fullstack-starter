@@ -56,11 +56,11 @@ export function fetchGetMenuTree(): Promise<AppRouteRecord[]> {
 }
 
 /**
- * @description 获取当前登录用户有权访问的菜单，供 `VITE_ROUTE_SOURCE=dynamic` 时注册动态路由。
+ * @description 通过后台认证端点获取当前登录用户有权访问的菜单，供 `VITE_ROUTE_SOURCE=dynamic` 时注册动态路由。
  * @return 当前用户可见的菜单树。
  */
 export function fetchGetUserMenus(): Promise<AppRouteRecord[]> {
   return request.get<AppRouteRecord[]>({
-    url: '/v1/auth/menus'
+    url: '/v1/admin/auth/menus'
   })
 }

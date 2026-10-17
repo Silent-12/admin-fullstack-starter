@@ -3,13 +3,13 @@ import type { LoginParams, LoginResponse, UserInfo } from '@/types/api/auth'
 
 /**
  * 登录
- * @description 认证协议端点，路径固定为 `/v1/auth/*`；请求头统一使用 `Authorization: Bearer <token>`。
+ * @description 后台认证端点统一使用 `/v1/admin/auth/*`；全局前缀由请求实例提供，请求头使用 `Authorization: Bearer <token>`。
  * @param params 登录参数
  * @returns 登录响应
  */
 export function fetchLogin(params: LoginParams) {
   return request.post<LoginResponse>({
-    url: '/v1/auth/login',
+    url: '/v1/admin/auth/login',
     params
     // showSuccessMessage: true // 显示成功消息
     // showErrorMessage: false // 不显示错误消息
@@ -23,7 +23,7 @@ export function fetchLogin(params: LoginParams) {
  */
 export function fetchGetUserInfo() {
   return request.get<UserInfo>({
-    url: '/v1/auth/profile'
+    url: '/v1/admin/auth/profile'
     // 自定义请求头
     // headers: {
     //   'X-Custom-Header': 'your-custom-value'

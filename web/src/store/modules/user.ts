@@ -58,6 +58,14 @@ export const useUserStore = defineStore(
     const accessToken = ref('')
     // 刷新令牌
     const refreshToken = ref('')
+    // 仅在内存中区分会话，防止旧请求影响重新登录后的状态
+    let sessionVersion = 0
+
+    /**
+     * @description 获取当前会话版本，供异步请求和路由初始化校验归属。
+     * @return 当前页面内的会话版本。
+     */
+    const getSessionVersion = (): number => sessionVersion
 
     // 计算属性：获取用户信息
     const getUserInfo = computed(() => info.value)
@@ -100,23 +108,25 @@ export const useUserStore = defineStore(
     }
 
     /**
-     * 设置令牌
+     * @description 设置登录令牌并重置业务路由，使上一会话的异步操作失效，即使新旧令牌相同。
      * @param newAccessToken 访问令牌
      * @param newRefreshToken 刷新令牌（可选）
      */
     const setToken = (newAccessToken: string, newRefreshToken?: string) => {
+      sessionVersion++
       accessToken.value = newAccessToken
       if (newRefreshToken) {
         refreshToken.value = newRefreshToken
       }
+      resetRouterState()
     }
 
     /**
-     * 退出登录
-     * 清空所有用户相关状态并跳转到登录页
-     * 如果是同一账号重新登录，保留工作台标签页
+     * @description 清空登录态和路由状态并替换为登录页，同一账号重新登录时保留工作台标签页。
+     * @return 无返回值。
      */
     const logOut = () => {
+      sessionVersion++
       // 保存当前用户 ID，用于下次登录时判断是否为同一用户
       const currentUserId = info.value.userId
       if (currentUserId) {
@@ -135,14 +145,9 @@ export const useUserStore = defineStore(
       // 清空主页路径
       useMenuStore().setHomePath('')
       // 重置路由状态
-      resetRouterState(500)
-      // 跳转到登录页，携带当前路由作为 redirect 参数
-      const currentRoute = router.currentRoute.value
-      const redirect = currentRoute.path !== '/login' ? currentRoute.fullPath : undefined
-      router.push({
-        name: 'Login',
-        query: redirect ? { redirect } : undefined
-      })
+      resetRouterState()
+      // 不携带错误页地址，避免重新登录后再次进入异常页面
+      void router.replace({ name: 'Login' })
     }
 
     /**
@@ -180,6 +185,7 @@ export const useUserStore = defineStore(
       searchHistory,
       accessToken,
       refreshToken,
+      getSessionVersion,
       getUserInfo,
       getSettingState,
       getWorktabState,

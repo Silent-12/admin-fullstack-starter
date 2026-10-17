@@ -25,8 +25,6 @@ import { BaseResponse } from '@/types/common/response'
 /** 请求配置常量 */
 // 请求超时时间（毫秒）
 const REQUEST_TIMEOUT = 15000
-// 退出登录延迟（毫秒）
-const LOGOUT_DELAY = 500
 // 请求失败最大重试次数
 const MAX_RETRIES = 0
 // 重试间隔时间（毫秒）
@@ -37,6 +35,8 @@ const UNAUTHORIZED_DEBOUNCE_TIME = 3000
 /** 401防抖状态 */
 let isUnauthorizedErrorShown = false
 let unauthorizedTimer: NodeJS.Timeout | null = null
+// 请求配置由 Axios 原样传入响应；弱引用不延长已完成请求的生命周期
+const requestSessions = new WeakMap<InternalAxiosRequestConfig, number>()
 
 /** 扩展 AxiosRequestConfig */
 interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
@@ -70,7 +70,9 @@ const axiosInstance = axios.create({
 /** 请求拦截器 */
 axiosInstance.interceptors.request.use(
   (request: InternalAxiosRequestConfig) => {
-    const { accessToken } = useUserStore()
+    const userStore = useUserStore()
+    const { accessToken } = userStore
+    requestSessions.set(request, userStore.getSessionVersion())
     if (accessToken) request.headers.set('Authorization', `Bearer ${accessToken}`)
 
     if (request.data && !(request.data instanceof FormData) && !request.headers['Content-Type']) {
@@ -94,7 +96,11 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse<BaseResponse>) => response,
   (error) => {
-    if (error.response?.status === ApiStatus.unauthorized) {
+    if (
+      error.response?.status === ApiStatus.unauthorized &&
+      error.config &&
+      requestSessions.get(error.config) === useUserStore().getSessionVersion()
+    ) {
       handleUnauthorizedError(error.response?.data?.message)
     }
     return Promise.reject(handleError(error))
@@ -106,13 +112,18 @@ function createHttpError(message: string, code: number) {
   return new HttpError(message, code)
 }
 
-/** 处理401错误（带防抖） */
+/**
+ * @description 收到 401 时立即清理登录态并跳转登录页，仅对错误提示进行防抖。
+ * @param message 后端返回的未授权提示。
+ * @return 始终抛出 401 错误。
+ */
 function handleUnauthorizedError(message?: string): never {
   const error = createHttpError(message || $t('httpMsg.unauthorized'), ApiStatus.unauthorized)
+  const userStore = useUserStore()
+  if (userStore.isLogin) userStore.logOut()
 
   if (!isUnauthorizedErrorShown) {
     isUnauthorizedErrorShown = true
-    logOut()
 
     unauthorizedTimer = setTimeout(resetUnauthorizedError, UNAUTHORIZED_DEBOUNCE_TIME)
 
@@ -128,13 +139,6 @@ function resetUnauthorizedError() {
   isUnauthorizedErrorShown = false
   if (unauthorizedTimer) clearTimeout(unauthorizedTimer)
   unauthorizedTimer = null
-}
-
-/** 退出登录函数 */
-function logOut() {
-  setTimeout(() => {
-    useUserStore().logOut()
-  }, LOGOUT_DELAY)
 }
 
 /** 是否需要重试 */

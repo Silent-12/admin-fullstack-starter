@@ -2,7 +2,6 @@
  * 路由全局前置守卫。
  */
 import type { NavigationGuardReturn, RouteLocationNormalized, Router } from 'vue-router'
-import { nextTick } from 'vue'
 import NProgress from 'nprogress'
 import { useUserStore } from '@/store/modules/user'
 import { useMenuStore } from '@/store/modules/menu'
@@ -27,6 +26,8 @@ let pendingLoading = false
 let routeInitFailed = false
 // 路由初始化进行中标记，防止并发请求
 let routeInitInProgress = false
+// 每次重置使此前的异步初始化失效，包括同一会话内主动清理路由
+let routeInitVersion = 0
 
 /**
  * @description 获取路由初始化期间的加载状态。
@@ -49,6 +50,7 @@ export function resetPendingLoading(): void {
  * @return 无返回值。
  */
 export function resetRouteInitState(): void {
+  routeInitVersion++
   routeInitFailed = false
   routeInitInProgress = false
 }
@@ -103,24 +105,41 @@ async function handleRouteGuard(
 }
 
 /**
- * @description 初始化用户信息、业务系统路由与当前菜单状态。
+ * @description 初始化用户信息与业务路由，用户信息获取失败或未授权时退出登录。
  * @param to 初始化时的目标路由。
  * @param router Vue Router 实例。
- * @return 恢复目标地址的导航处理结果。
+ * @return 恢复目标地址、进入异常页或取消原导航并跳转登录页的处理结果。
  */
 async function initializeApplicationRoutes(
   to: RouteLocationNormalized,
   router: Router
 ): Promise<NavigationGuardReturn> {
+  const userStore = useUserStore()
+  const sessionVersion = userStore.getSessionVersion()
+  const initializationVersion = routeInitVersion
   // 标记初始化进行中
   routeInitInProgress = true
   // 显示 loading
   pendingLoading = true
   loadingService.showLoading()
 
+  let userInfoLoaded = false
   try {
-    await fetchUserInfo()
+    const info = await fetchGetUserInfo()
+    if (
+      sessionVersion !== userStore.getSessionVersion() ||
+      initializationVersion !== routeInitVersion
+    )
+      return false
+    userStore.setUserInfo(info)
+    userStore.checkAndClearWorktabs()
+    userInfoLoaded = true
     const routes = await menuRouteService.getRoutes()
+    if (
+      sessionVersion !== userStore.getSessionVersion() ||
+      initializationVersion !== routeInitVersion
+    )
+      return false
     if (!routes.length) throw new Error('未获取到业务系统路由')
 
     routeRegistry?.register(routes)
@@ -131,27 +150,25 @@ async function initializeApplicationRoutes(
 
     return { path: to.path, query: to.query, hash: to.hash, replace: true }
   } catch (error) {
+    if (
+      sessionVersion !== userStore.getSessionVersion() ||
+      initializationVersion !== routeInitVersion
+    )
+      return false
     console.error('[RouteGuard] 业务系统路由初始化失败:', error)
     // 关闭 loading
     closeLoading()
     routeInitInProgress = false
 
-    if (isUnauthorizedError(error)) return false
+    if (!userInfoLoaded || isUnauthorizedError(error)) {
+      if (userStore.isLogin) userStore.logOut()
+      return false
+    }
 
     // 标记初始化失败，防止死循环
     routeInitFailed = true
     return { name: 'Exception500', replace: true }
   }
-}
-
-/**
- * @description 获取并保存登录用户信息。
- * @return 无返回值。
- */
-async function fetchUserInfo(): Promise<void> {
-  const userStore = useUserStore()
-  userStore.setUserInfo(await fetchGetUserInfo())
-  userStore.checkAndClearWorktabs()
 }
 
 /**
@@ -178,21 +195,17 @@ function isUnauthorizedError(error: unknown): boolean {
  */
 function closeLoading(): void {
   if (!pendingLoading) return
-  nextTick(() => {
-    loadingService.hideLoading()
-    pendingLoading = false
-  })
+  loadingService.hideLoading()
+  pendingLoading = false
 }
 
 /**
- * @description 延迟清理业务系统动态路由与菜单状态。
- * @param delay 清理前的延迟时间，单位为毫秒。
+ * @description 立即清理业务系统动态路由、菜单与初始化状态，避免影响后续登录。
  * @return 无返回值。
  */
-export function resetRouterState(delay: number): void {
-  setTimeout(() => {
-    routeRegistry?.unregister()
-    useMenuStore().clearApplications()
-    resetRouteInitState()
-  }, delay)
+export function resetRouterState(): void {
+  closeLoading()
+  routeRegistry?.unregister()
+  useMenuStore().clearApplications()
+  resetRouteInitState()
 }

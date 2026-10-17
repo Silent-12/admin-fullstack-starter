@@ -20,7 +20,7 @@
     <template #default>
       <div class="user-menu">
         <ul class="list">
-          <li class="item" @click="showDevTip">
+          <li class="item" @click="showProfile">
             <AoSvgIcon icon="ri:user-3-line" />
             <span>个人资料</span>
           </li>
@@ -29,14 +29,17 @@
       </div>
     </template>
   </ElPopover>
+
+  <UserProfileDialog v-model:visible="profileVisible" />
 </template>
 
 <script setup lang="ts">
   import { computed, ref } from 'vue'
   import { storeToRefs } from 'pinia'
-  import { ElMessage, ElMessageBox, ElPopover } from 'element-plus'
+  import { ElMessageBox, ElPopover } from 'element-plus'
   import { AoSvgIcon } from '@ao/admin-components'
   import AoImage from '@/components/media/AoImage.vue'
+  import UserProfileDialog from './UserProfileDialog.vue'
   import { useUserStore } from '@/store/modules/user'
   import defaultAvatar from '@imgs/avatar/avatar.svg'
   import { fetchLogout } from '@/api/auth'
@@ -53,14 +56,17 @@
 
   // 用户菜单弹出层实例
   const popoverRef = ref()
+  // 个人资料弹窗显示状态
+  const profileVisible = ref(false)
   // 登出进行中标记，避免确认框与撤销请求期间重复提交
   const loggingOut = ref(false)
 
   /**
-   * @description 展示个人资料占位提示
+   * @description 收起用户菜单并展示当前用户的只读资料
    */
-  const showDevTip = (): void => {
-    ElMessage.info('正在开发中')
+  const showProfile = (): void => {
+    popoverRef.value?.hide()
+    profileVisible.value = true
   }
 
   /**

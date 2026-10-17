@@ -191,12 +191,12 @@
         ...appliedFilters.value,
         startTime: appliedFilters.value.startTime ?? null,
         endTime: appliedFilters.value.endTime ?? null,
-        current: pagination.currentPage,
-        size: pagination.pageSize
+        page: pagination.currentPage,
+        pageSize: pagination.pageSize
       }
       const res = await fetchGetRoleList(params)
-      tableData.value = res.records
-      pagination.total = res.total
+      tableData.value = res.list
+      pagination.total = res.pagination.total
     } finally {
       loading.value = false
     }

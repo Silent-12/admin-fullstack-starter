@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryColumn, BeforeInsert, BeforeUpdate } from 'typeorm'
 import dayjs from 'dayjs'
+import { TEMPLATE_ITEM_STATUS, TEMPLATE_ITEM_STATUS_VALUES } from '../constants/template-item.constant.js'
 
 /**
  * 模板条目实体
@@ -35,9 +36,10 @@ export class TemplateItem {
   description!: string
 
   /**
-   * 状态（active | inactive | archived）
+   * 状态
+   * @description 合法取值与默认值均来自 TEMPLATE_ITEM_STATUS，与 DTO 校验共用同一真源。
    */
-  @Column({ length: 50, default: 'active', comment: '状态（active | inactive | archived）' })
+  @Column({ length: 50, default: TEMPLATE_ITEM_STATUS.ACTIVE, comment: `状态（${TEMPLATE_ITEM_STATUS_VALUES.join(' | ')}）` })
   status!: string
 
   /**

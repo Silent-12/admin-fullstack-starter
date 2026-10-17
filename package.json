@@ -2,7 +2,7 @@
   "name": "admin-fullstack-starter",
   "version": "1.0.0",
   "private": true,
-  "description": "Vue 3 + NestJS 后台管理系统全栈基础模板（类 Monorepo：frontend / backend 独立依赖，根目录统一编排）",
+  "description": "Vue 3 + NestJS 后台管理系统全栈基础模板（类 Monorepo：web / backend 独立依赖，根目录统一编排）",
   "engines": {
     "node": ">=20.19.0"
   },
@@ -10,33 +10,33 @@
   "scripts": {
     "prepare": "husky",
 
-    "install:all": "pnpm run install:frontend && pnpm run install:backend",
-    "install:frontend": "pnpm --dir frontend install",
-    "install:backend": "cd backend && npm install",
+    "install:all": "pnpm run install:web && pnpm run install:backend",
+    "install:web": "pnpm --dir web install",
+    "install:backend": "pnpm --dir backend install",
 
-    "dev": "concurrently -n frontend,backend -c cyan,magenta \"pnpm run dev:frontend\" \"pnpm run dev:backend\"",
-    "dev:frontend": "pnpm --dir frontend run dev",
-    "dev:backend": "npm --prefix backend run start:dev",
+    "dev": "concurrently -n web,backend -c cyan,magenta \"pnpm run dev:web\" \"pnpm run dev:backend\"",
+    "dev:web": "pnpm --dir web run dev",
+    "dev:backend": "pnpm --dir backend run start:dev",
 
-    "build": "pnpm run build:frontend && pnpm run build:backend",
-    "build:frontend": "pnpm --dir frontend run build",
-    "build:backend": "npm --prefix backend run build",
+    "build": "pnpm run build:web && pnpm run build:backend",
+    "build:web": "pnpm --dir web run build",
+    "build:backend": "pnpm --dir backend run build",
 
-    "lint": "pnpm run lint:frontend && pnpm run lint:backend",
-    "lint:frontend": "pnpm --dir frontend run lint",
-    "lint:backend": "npm --prefix backend run lint",
-    "lint:check": "pnpm run lint:check:frontend && pnpm run lint:check:backend",
-    "lint:check:frontend": "pnpm --dir frontend run lint:check",
-    "lint:check:backend": "npm --prefix backend run lint:check",
+    "lint": "pnpm run lint:web && pnpm run lint:backend",
+    "lint:web": "pnpm --dir web run lint",
+    "lint:backend": "pnpm --dir backend run lint",
+    "lint:check": "pnpm run lint:check:web && pnpm run lint:check:backend",
+    "lint:check:web": "pnpm --dir web run lint:check",
+    "lint:check:backend": "pnpm --dir backend run lint:check",
 
-    "format": "pnpm run format:frontend && pnpm run format:backend",
-    "format:frontend": "pnpm --dir frontend run format",
-    "format:backend": "npm --prefix backend run format",
-    "format:check": "pnpm run format:check:frontend && pnpm run format:check:backend",
-    "format:check:frontend": "pnpm --dir frontend run format:check",
-    "format:check:backend": "npm --prefix backend run format:check",
+    "format": "pnpm run format:web && pnpm run format:backend",
+    "format:web": "pnpm --dir web run format",
+    "format:backend": "pnpm --dir backend run format",
+    "format:check": "pnpm run format:check:web && pnpm run format:check:backend",
+    "format:check:web": "pnpm --dir web run format:check",
+    "format:check:backend": "pnpm --dir backend run format:check",
 
-    "start:backend": "npm --prefix backend run start:prod"
+    "start:backend": "pnpm --dir backend run start:prod"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",

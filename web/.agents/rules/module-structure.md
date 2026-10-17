@@ -1,6 +1,6 @@
 # 目录、路由与组件
 
-[返回主索引](../../AGENTS.md)。本文中的源码路径均相对 `frontend/` 目录。
+[返回主索引](../../AGENTS.md)。本文中的源码路径均相对 `web/` 目录。
 
 - 组件目录分层规则（布局与 Ao 表格/表单组件已抽离至 `@ao/admin-layout` / `@ao/admin-components` 包，模板内不得重建同名组件）：
   - 通用基础组件放在 `src/components/` 下，按类别（`base/`、`banners/`、`layouts/`、`media/`、`text-effect/`、`theme/` 等）分子目录；

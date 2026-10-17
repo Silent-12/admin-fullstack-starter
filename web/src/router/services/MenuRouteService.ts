@@ -2,7 +2,7 @@
  * 业务系统菜单路由来源与规范化服务。
  */
 import type { AppRouteRecord } from '@/types/router'
-import { fetchGetMenuList } from '@/api/system-manage'
+import { fetchGetUserMenus } from '@/api/system-manage'
 import { getFirstMenuPath } from '@/utils/navigation/route'
 import { getRouteSource } from '@/router/constants'
 import { applicationRoutes } from '@/router/routes/applications'
@@ -13,7 +13,7 @@ export class MenuRouteService {
    * @return 完整的一级业务系统路由列表。
    */
   async getRoutes(): Promise<AppRouteRecord[]> {
-    const routes = getRouteSource() === 'dynamic' ? await fetchGetMenuList() : applicationRoutes
+    const routes = getRouteSource() === 'dynamic' ? await fetchGetUserMenus() : applicationRoutes
 
     return this.normalizeRoutes(routes)
   }

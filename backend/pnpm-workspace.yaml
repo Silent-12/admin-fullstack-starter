@@ -1,0 +1,6 @@
+# 本文件只承载 pnpm 设置，不声明 packages，因此不会形成 workspace。
+# pnpm 11 把“被忽略的依赖构建脚本”视为致命错误（ERR_PNPM_IGNORED_BUILDS），
+# 必须为每个带构建脚本的依赖显式给出 true/false，install 才能通过。
+# @scarf/scarf 来自 swagger-ui-dist，其 postinstall 只上报遥测数据，故禁止执行。
+allowBuilds:
+  '@scarf/scarf': false

@@ -5,15 +5,16 @@ import { CreateTemplateItemDto } from './dto/create-template-item.dto.js'
 import { UpdateTemplateItemDto } from './dto/update-template-item.dto.js'
 import { QueryTemplateItemDto } from './dto/query-template-item.dto.js'
 import { ApiResponseDto } from '../../common/dto/api-response.dto.js'
-import { PaginationMetaDto } from './dto/pagination-meta.dto.js'
 import { TemplateItemResponseDto } from './dto/template-item-response.dto.js'
+import type { PaginatedData } from '../../common/types/response.js'
 
 /**
  * 模板 API 控制器
- * @description 提供模板条目的 RESTful 接口，演示 POST / GET / PUT / DELETE 标准用法，统一使用 ApiResponseDto 返回结构
+ * @description 提供模板条目的 RESTful 接口，演示 POST / GET / PUT / DELETE 标准用法，统一使用 ApiResponseDto 返回结构。
+ * 路径遵循后台管理端约定：`v1/admin/{资源}`。
  */
 @ApiTags('模板 API')
-@Controller('v1/template-api')
+@Controller('v1/admin/template-api')
 export class TemplateApiController {
   constructor(private readonly templateApiService: TemplateApiService) {}
 
@@ -40,9 +41,7 @@ export class TemplateApiController {
   @Get()
   @ApiOperation({ summary: '分页查询模板条目列表' })
   @ApiResponse({ status: 200, description: '查询成功', type: ApiResponseDto })
-  async findAll(
-    @Query() query: QueryTemplateItemDto,
-  ): Promise<ApiResponseDto<{ list: TemplateItemResponseDto[]; pagination: PaginationMetaDto }>> {
+  async findAll(@Query() query: QueryTemplateItemDto): Promise<ApiResponseDto<PaginatedData<TemplateItemResponseDto>>> {
     return this.templateApiService.findAll(query)
   }
 

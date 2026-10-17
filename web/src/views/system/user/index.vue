@@ -220,12 +220,12 @@
     try {
       const params: UserSearchParams = {
         ...appliedFilters.value,
-        current: pagination.currentPage,
-        size: pagination.pageSize
+        page: pagination.currentPage,
+        pageSize: pagination.pageSize
       }
       const res = await fetchGetUserList(params)
-      tableData.value = res.records
-      pagination.total = res.total
+      tableData.value = res.list
+      pagination.total = res.pagination.total
     } finally {
       loading.value = false
     }

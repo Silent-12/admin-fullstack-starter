@@ -81,7 +81,7 @@
   import { useTableColumns } from '@ao/admin-components'
   import type { AppRouteRecord } from '@/types/router'
   import MenuDialog from './components/MenuDialog.vue'
-  import { fetchGetMenuList } from '@/api/system-manage'
+  import { fetchGetMenuTree } from '@/api/system-manage'
   import { ElTag, ElMessageBox } from 'element-plus'
   import type { MenuDialogFormData, AuthEditData } from './types'
 
@@ -135,7 +135,7 @@
     loading.value = true
 
     try {
-      const list = await fetchGetMenuList()
+      const list = await fetchGetMenuTree()
       tableData.value = list
     } catch (error) {
       throw error instanceof Error ? error : new Error('获取菜单失败')

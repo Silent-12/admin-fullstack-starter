@@ -74,6 +74,17 @@ export interface RoleListItem {
 }
 
 /**
+ * 角色下拉选项
+ * @description 供用户表单选择角色使用的精简结构，不含分页与审计字段，对应后端 `/v1/admin/roles/options`。
+ */
+export interface RoleOption {
+  /** 角色编码 */
+  roleCode: string
+  /** 角色名称 */
+  roleName: string
+}
+
+/**
  * 角色搜索参数
  * @description 定义系统管理角色列表的筛选和分页参数。
  */

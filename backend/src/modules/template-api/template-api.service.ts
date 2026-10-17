@@ -6,8 +6,10 @@ import { CreateTemplateItemDto } from './dto/create-template-item.dto.js'
 import { UpdateTemplateItemDto } from './dto/update-template-item.dto.js'
 import { QueryTemplateItemDto } from './dto/query-template-item.dto.js'
 import { ApiResponseDto } from '../../common/dto/api-response.dto.js'
-import { PaginationMetaDto } from './dto/pagination-meta.dto.js'
+import { PaginationMetaDto } from '../../common/dto/pagination-meta.dto.js'
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '../../common/constants/pagination.constant.js'
 import { TemplateItemResponseDto } from './dto/template-item-response.dto.js'
+import type { PaginatedData } from '../../common/types/response.js'
 
 /**
  * 模板 API 服务
@@ -40,9 +42,9 @@ export class TemplateApiService {
    * @param query 查询参数（分页 + 筛选）
    * @returns 统一响应包装的分页数据（包含数据列表和分页元信息）
    */
-  async findAll(query: QueryTemplateItemDto): Promise<ApiResponseDto<{ list: TemplateItemResponseDto[]; pagination: PaginationMetaDto }>> {
-    const page = query.page ?? 1
-    const pageSize = query.pageSize ?? 10
+  async findAll(query: QueryTemplateItemDto): Promise<ApiResponseDto<PaginatedData<TemplateItemResponseDto>>> {
+    const page = query.page ?? DEFAULT_PAGE
+    const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
     const skip = (page - 1) * pageSize
 
     const where: Record<string, unknown> = {}

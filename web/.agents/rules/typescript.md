@@ -1,6 +1,6 @@
 # 类型定义
 
-[返回主索引](../../AGENTS.md)。本文中的源码路径均相对 `frontend/` 目录。
+[返回主索引](../../AGENTS.md)。本文中的源码路径均相对 `web/` 目录。
 
 - 所有的 TS 类型定义统一放在 `src/types/` 下，按域分目录。当前已存在目录包括：`api/`、`common/`、`config/`、`directive/`、`generated/`、`router/`、`store/`。新增类型前先复用现有目录与文件命名方式；API 类型当前按业务模块拆分在 `src/types/api/*.d.ts`，通用响应类型定义在 `src/types/common/response.ts`。
 

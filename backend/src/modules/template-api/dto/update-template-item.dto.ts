@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
 import { IsString, IsInt, IsBoolean, IsOptional, IsIn, Min, Max, MaxLength } from 'class-validator'
 import { Type } from 'class-transformer'
+import { TEMPLATE_ITEM_STATUS_VALUES } from '../constants/template-item.constant.js'
 
 /**
  * 更新模板条目请求体
@@ -19,10 +20,10 @@ export class UpdateTemplateItemDto {
   @MaxLength(500, { message: '描述最多 500 个字符' })
   description?: string
 
-  @ApiPropertyOptional({ description: '状态', enum: ['active', 'inactive'] })
+  @ApiPropertyOptional({ description: '状态', enum: TEMPLATE_ITEM_STATUS_VALUES })
   @IsOptional()
   @IsString({ message: '状态必须是字符串' })
-  @IsIn(['active', 'inactive'], { message: '状态只能是 active 或 inactive' })
+  @IsIn(TEMPLATE_ITEM_STATUS_VALUES, { message: `状态只能是 ${TEMPLATE_ITEM_STATUS_VALUES.join('、')}` })
   status?: string
 
   @ApiPropertyOptional({ description: '优先级' })

@@ -38,9 +38,6 @@ backend/
 │   │   ├── database.config.ts    # 数据库配置
 │   │   ├── database-naming-strategy.ts  # 数据库命名策略
 │   │   └── redis.config.ts       # Redis 配置
-│   ├── database/                 # 数据库相关
-│   │   ├── migrations/           # 数据库迁移文件
-│   │   └── run-migrations.ts     # SQL 迁移执行器
 │   ├── health/                   # 健康检查模块
 │   ├── modules/                  # 业务模块目录
 │   │   ├── access-log/           # 访问日志模块
@@ -159,7 +156,7 @@ DB_PASSWORD=root
 DB_DATABASE=nestjs_demo
 
 # 开发配置
-DB_SYNCHRONIZE=false    # 自动同步表结构（生产环境禁止开启）
+DB_SYNCHRONIZE=true     # 按实体自动同步表结构（仅 development / test 允许开启）
 DB_LOGGING=false        # SQL 执行日志
 ```
 
@@ -193,18 +190,19 @@ REDIS_DB=0
 
 项目提供了一个完整的示例模块 `template-api`，演示了标准的 RESTful API 开发模式。
 
-> **路径前缀说明**：`template-api` 属基础模板示例模块，按 [AGENTS.md](AGENTS.md) 的归属豁免规则保留在 `src/modules/` 根目录，因此路径为 `/backend/v1/template-api`，而非 `/backend/v1/admin/...`。新增业务模块仍须遵循「后台接口用 `admin` 前缀、用户端用 `user` 分层」的约定。
+> **路径前缀说明**：`template-api` 是基础模板示例模块，目录保留在 `src/modules/` 根目录，但接口路径遵循后台管理端约定，为 `/backend/v1/admin/template-api`。新增业务模块同样遵循「后台接口用 `admin` 前缀、用户端用 `user` 分层」的约定
 
 ### 模块结构 🏗️
 
 ```
 src/modules/template-api/
+├── constants/
+│   └── template-item.constant.ts   # 模板条目状态唯一真源
 ├── dto/
-│   ├── pagination-meta.dto.ts      # 分页元信息
 │   ├── template-item-response.dto.ts # 列表与详情的响应体（显式字段映射）
 │   ├── create-template-item.dto.ts # 创建请求体
 │   ├── update-template-item.dto.ts # 更新请求体
-│   └── query-template-item.dto.ts  # 查询参数
+│   └── query-template-item.dto.ts  # 查询参数（继承公共分页 DTO）
 ├── entities/
 │   └── template-item.entity.ts     # 数据库实体
 ├── template-api.controller.ts      # 控制器
@@ -212,14 +210,14 @@ src/modules/template-api/
 └── template-api.module.ts          # 模块定义
 ```
 
-> 统一响应包装 `ApiResponseDto` 为全局公共 DTO，位于 `src/common/dto/api-response.dto.ts`，**不在本模块的 `dto/` 目录内**。
+> 统一响应包装 `ApiResponseDto`（`src/common/dto/api-response.dto.ts`）、分页查询参数 `PaginationQueryDto`（`src/common/dto/pagination-query.dto.ts`）与分页元信息 `PaginationMetaDto`（`src/common/dto/pagination-meta.dto.ts`）均为全局公共 DTO，**不在本模块的 `dto/` 目录内**，新模块直接复用。
 
 ### API 接口 🔌
 
 #### 1. 创建模板条目
 
 ```http
-POST /backend/v1/template-api
+POST /backend/v1/admin/template-api
 Content-Type: application/json
 
 {
@@ -242,7 +240,7 @@ Content-Type: application/json
 #### 2. 分页查询模板列表
 
 ```http
-GET /backend/v1/template-api?page=1&pageSize=10&name=示例
+GET /backend/v1/admin/template-api?page=1&pageSize=10&name=示例
 ```
 
 **响应**：
@@ -278,7 +276,7 @@ GET /backend/v1/template-api?page=1&pageSize=10&name=示例
 #### 3. 查询单条模板
 
 ```http
-GET /backend/v1/template-api/1
+GET /backend/v1/admin/template-api/1
 ```
 
 **响应**：
@@ -304,7 +302,7 @@ GET /backend/v1/template-api/1
 #### 4. 更新模板条目
 
 ```http
-PUT /backend/v1/template-api/1
+PUT /backend/v1/admin/template-api/1
 Content-Type: application/json
 
 {
@@ -327,7 +325,7 @@ Content-Type: application/json
 #### 5. 删除模板条目
 
 ```http
-DELETE /backend/v1/template-api/1
+DELETE /backend/v1/admin/template-api/1
 ```
 
 **响应**：
@@ -365,7 +363,7 @@ DELETE /backend/v1/template-api/1
 ### 1. 安装依赖 📥
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. 配置环境变量 ⚙️
@@ -380,41 +378,32 @@ cp .env.example .env
 
 应用启动时会对已启用的 MySQL 与 Redis 执行 `ping`。开发和测试环境的 `/backend/v1/health` 会返回最近一次 MySQL 与 Redis 连通性状态；生产环境仅返回服务存活状态。
 
-新建数据库时按顺序执行 `src/database/migrations/` 下的 `.sql` 文件（当前为 `V1__access_logs.sql`、`V2__template_items.sql`），也可直接运行：
-
-```bash
-npm run migration:run
-```
-
-该命令按文件名升序执行尚未应用的迁移，并把已执行的文件记录在 `schema_migrations` 表中，可重复执行。后续迁移文件按 `V{序号}__{描述}.sql` 顺序命名，规则详见 [AGENTS.md](AGENTS.md)。
-
 ### 3. 启动开发服务器 ▶️
 
 ```bash
-npm run start:dev
+pnpm run start:dev
 ```
 
 ### 4. 构建生产版本 🏗️
 
 ```bash
-npm run build
-npm run start:prod
+pnpm run build
+pnpm run start:prod
 ```
 
 ## 开发脚本 🛠️
 
 | 命令                    | 说明                                 |
 | ----------------------- | ------------------------------------ |
-| `npm run start`         | 启动应用                             |
-| `npm run start:dev`     | 开发模式启动（热重载）               |
-| `npm run start:debug`   | 调试模式启动                         |
-| `npm run start:prod`    | 生产模式启动                         |
-| `npm run build`         | 构建生产版本                         |
-| `npm run migration:run` | 执行未应用的 SQL 迁移（先构建）      |
-| `npm run format`        | 使用 Prettier 格式化 `src/**/*.ts`   |
-| `npm run format:check`  | 校验格式，不修改文件（适用于 CI）    |
-| `npm run lint`          | ESLint 检查并自动修复                |
-| `npm run lint:check`    | ESLint 检查，不修改文件（适用于 CI） |
+| `pnpm run start`        | 启动应用                             |
+| `pnpm run start:dev`    | 开发模式启动（热重载）               |
+| `pnpm run start:debug`  | 调试模式启动                         |
+| `pnpm run start:prod`   | 生产模式启动                         |
+| `pnpm run build`        | 构建生产版本                         |
+| `pnpm run format`       | 使用 Prettier 格式化 `src/**/*.ts`   |
+| `pnpm run format:check` | 校验格式，不修改文件（适用于 CI）    |
+| `pnpm run lint`         | ESLint 检查并自动修复                |
+| `pnpm run lint:check`   | ESLint 检查，不修改文件（适用于 CI） |
 
 ## 技术栈 💻
 

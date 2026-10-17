@@ -27,8 +27,8 @@ npm install -g pnpm@11.21.0
 
 ```powershell
 # 在仓库根目录执行
-pnpm run install:frontend   # 等价于在 frontend/ 执行 pnpm install
-pnpm run dev:frontend       # 或 pnpm dev 同时启动前后端
+pnpm run install:web   # 等价于在 web/ 执行 pnpm install
+pnpm run dev:web       # 或 pnpm dev 同时启动前后端
 ```
 
 默认访问 http://localhost:3006，实际地址以终端输出为准。本目录已提供环境配置文件，首次运行无需另外复制 `.env`。单独在本目录内执行 `pnpm dev` 亦可。
@@ -37,7 +37,7 @@ pnpm run dev:frontend       # 或 pnpm dev 同时启动前后端
 
 登录页默认填入 `Super / 123456`，也可以在页面中选择其他演示账号。
 
-登录与用户信息通过 [src/api/auth.ts](src/api/auth.ts) 调用后端 `POST /backend/v1/auth/login` 与 `GET /backend/v1/user/info`。本地 Mock 已移除，后端认证模块尚未提供，接口就绪前登录与用户信息获取不可用。
+登录与用户信息通过 [src/api/auth.ts](src/api/auth.ts) 调用后端 `POST /backend/v1/auth/login` 与 `GET /backend/v1/auth/profile`。本地 Mock 已移除，后端认证模块尚未提供，接口就绪前登录与用户信息获取不可用。
 
 ## 🛠️ 技术栈
 
@@ -102,7 +102,7 @@ import '@ao/admin-layout/styles.css'
 ## 📁 目录结构
 
 ```text
-frontend/
+web/
 ├── .agents/                 # 前端专项规则、技能与参考资料（跨端共用技能见仓库根 .agents/）
 ├── public/                  # 无需构建处理的静态资源
 ├── src/
@@ -156,17 +156,21 @@ Vite 先加载 [`.env`](.env)，再按运行模式加载 [`.env.development`](.e
 
 本地 Mock 已移除，登录页、路由守卫的用户信息获取，以及用户、角色、菜单管理示例页面均直接调用后端接口。请求路径由 `VITE_API_URL`（`/backend`）与 [src/api](src/api) 中的 `/v1/...` 拼接而成：
 
-| 调用方   | 请求路径                              |
-| -------- | ------------------------------------- |
-| 登录页   | `POST /backend/v1/auth/login`         |
-| 路由守卫 | `GET /backend/v1/user/info`           |
-| 用户管理 | `GET /backend/v1/user/list`           |
-| 角色管理 | `GET /backend/v1/role/list`           |
-| 菜单管理 | `GET /backend/v1/system/menus/simple` |
+| 调用方   | 请求路径                                |
+| -------- | --------------------------------------- |
+| 登录页   | `POST /backend/v1/auth/login`           |
+| 路由守卫 | `GET /backend/v1/auth/profile`          |
+| 用户管理 | `GET /backend/v1/admin/users`           |
+| 角色管理 | `GET /backend/v1/admin/roles`           |
+| 角色下拉 | `GET /backend/v1/admin/roles/options`   |
+| 菜单管理 | `GET /backend/v1/admin/menus/tree`      |
+| 动态路由 | `GET /backend/v1/auth/menus`            |
+
+路径与分页口径（请求 `page` / `pageSize`，响应 `{ list, pagination }`）已与后端约定冻结，见根 [README](../README.md) 的「前后端联调约定」；分页类型定义在 [src/types/api/common.d.ts](src/types/api/common.d.ts)。
 
 上述接口的后端实现尚未提供，后端补齐前这些页面无法正常加载数据；新增、修改、删除等写操作也需按业务接入 [src/api](src/api)。
 
-`VITE_ROUTE_SOURCE` 只控制菜单路由来源。动态菜单由 [MenuRouteService](src/router/services/MenuRouteService.ts) 调用 `/backend/v1/system/menus/simple`。
+`VITE_ROUTE_SOURCE` 只控制菜单路由来源。动态菜单由 [MenuRouteService](src/router/services/MenuRouteService.ts) 调用 `/backend/v1/auth/menus`（当前用户可访问的菜单），菜单管理页则调用 `/backend/v1/admin/menus/tree`（完整菜单树），两者语义不同，不得混用。
 
 所有 HTTP 请求统一通过 [src/utils/http/index.ts](src/utils/http/index.ts) 的默认 `request` 实例发起。后端响应遵循 [BaseResponse](src/types/common/response.ts)：
 

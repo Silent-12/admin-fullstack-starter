@@ -1,6 +1,6 @@
 /**
  * commitlint 配置（仓库级）
- * @description 统一 frontend/ 与 backend/ 的提交信息规范。类型枚举取两个子模板的并集，
+ * @description 统一 web/ 与 backend/ 的提交信息规范。类型枚举取两个子模板的并集，
  * 并保留更严格的格式约束，避免合并后出现两套校验口径。
  * 参考：https://commitlint.js.org/#/reference-rules
  */
@@ -8,7 +8,7 @@ module.exports = {
   // 继承 Conventional Commits 基础规则
   extends: ['@commitlint/config-conventional'],
   rules: {
-    // 提交类型枚举：合并 frontend（含 wip）与 backend 的合法类型
+    // 提交类型枚举：合并 web（含 wip）与 backend 的合法类型
     'type-enum': [
       2,
       'always',

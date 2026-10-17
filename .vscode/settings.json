@@ -28,13 +28,13 @@
   },
 
   // ==================== ESLint 工作目录 ====================
-  // 仓库为类 Monorepo：frontend 与 backend 各自持有 eslint.config.mjs 与依赖，
+  // 仓库为类 Monorepo：web 与 backend 各自持有 eslint.config.mjs 与依赖，
   // auto 模式按就近 package.json 解析配置，避免根目录误判。
   "eslint.workingDirectories": [{ "mode": "auto" }],
   "eslint.validate": ["javascript", "typescript", "vue"],
 
   // ==================== Stylelint ====================
-  // 仅 frontend 具备 Stylelint 配置，backend 不会命中
+  // 仅 web 具备 Stylelint 配置，backend 不会命中
   "stylelint.validate": ["css", "scss", "vue"],
 
   // ==================== 基础编辑器行为 ====================

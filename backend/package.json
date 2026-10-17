@@ -6,9 +6,9 @@
   "private": true,
   "type": "module",
   "license": "UNLICENSED",
+  "packageManager": "pnpm@11.21.0",
   "scripts": {
     "build": "nest build",
-    "migration:run": "nest build && node dist/database/run-migrations.js",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "start": "nest start",
@@ -36,6 +36,7 @@
     "@types/ioredis": "^4.28.10",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "dotenv": "^17.4.1",
     "express-basic-auth": "^1.2.1",
     "dayjs": "^1.11.20",
     "helmet": "^8.1.0",

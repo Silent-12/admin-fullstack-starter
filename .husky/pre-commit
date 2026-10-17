@@ -1,6 +1,6 @@
 #!/bin/sh
 # 仓库级 pre-commit 钩子
-# @description 按改动归属分别调用 frontend / backend 各自的 lint-staged，
+# @description 按改动归属分别调用 web / backend 各自的 lint-staged，
 # 保证两个子项目的检查工具链互不干扰。子项目依赖未安装时给出提示并跳过该项，
 # 避免刚克隆仓库尚未安装依赖时无法提交。
 #
@@ -8,12 +8,12 @@
 
 staged="$(git diff --cached --name-only --diff-filter=ACMR)"
 
-if printf '%s\n' "$staged" | grep -q '^frontend/'; then
-  if [ -d frontend/node_modules ]; then
-    echo "[pre-commit] frontend: lint-staged"
-    (cd frontend && pnpm run lint:lint-staged) || exit 1
+if printf '%s\n' "$staged" | grep -q '^web/'; then
+  if [ -d web/node_modules ]; then
+    echo "[pre-commit] web: lint-staged"
+    (cd web && pnpm run lint:lint-staged) || exit 1
   else
-    echo "[pre-commit] 已跳过 frontend 检查：frontend/node_modules 不存在，请先执行 pnpm run install:frontend"
+    echo "[pre-commit] 已跳过 web 检查：web/node_modules 不存在，请先执行 pnpm run install:web"
   fi
 fi
 

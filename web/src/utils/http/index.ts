@@ -9,7 +9,7 @@
  *
  * 内置能力：
  *   - 响应成败以 HTTP 状态码判定，非 2xx 统一转为 HttpError，业务代码无需判断响应体的 code
- *   - 自动注入 Authorization 请求头
+ *   - 自动注入 `Authorization: Bearer <token>` 请求头
  *   - 401 未授权防抖处理，自动触发退出登录
  *   - 对 408/500/502/503/504 状态码自动重试（最多 0 次，可通过 MAX_RETRIES 调整）
  *   - POST/PUT 未传 data 时自动将 params 降级为 data
@@ -71,7 +71,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (request: InternalAxiosRequestConfig) => {
     const { accessToken } = useUserStore()
-    if (accessToken) request.headers.set('Authorization', accessToken)
+    if (accessToken) request.headers.set('Authorization', `Bearer ${accessToken}`)
 
     if (request.data && !(request.data instanceof FormData) && !request.headers['Content-Type']) {
       request.headers.set('Content-Type', 'application/json')

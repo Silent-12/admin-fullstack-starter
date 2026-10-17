@@ -4,9 +4,11 @@
       <ThemeSvg :src="data.imgUrl" size="100%" class="exception-img" />
       <div class="exception-text">
         <p class="exception-desc">{{ data.desc }}</p>
-        <ElButton type="primary" size="large" @click="backHome" class="exception-btn">{{
-          data.btnText
-        }}</ElButton>
+        <div class="exception-btn">
+          <slot name="action">
+            <ElButton type="primary" size="large" @click="backHome">{{ data.btnText }}</ElButton>
+          </slot>
+        </div>
       </div>
     </div>
   </div>

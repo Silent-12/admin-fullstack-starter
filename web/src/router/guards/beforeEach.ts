@@ -102,7 +102,7 @@ async function handleRouteGuard(
 }
 
 /**
- * @description 初始化用户信息与业务路由，401清理会话，暂时失败保留凭证并提供重试
+ * @description 初始化用户信息与业务路由，401清理会话，其他失败保留凭证并进入异常页恢复
  * @param to 初始化时的目标路由。
  * @param router Vue Router 实例。
  * @return 恢复目标地址、进入异常页或取消原导航并跳转登录页的处理结果。
@@ -159,8 +159,9 @@ async function initializeApplicationRoutes(
       if (userStore.accessToken) userStore.clearSession()
       return false
     }
-    // 暂时失败保留凭证，在登录页允许重试整个初始化流程。
-    return { name: 'Login', query: { redirect: to.fullPath, retry: '1' }, replace: true }
+    // 保留凭证与原目标地址，由异常页提供初始化恢复入口。
+    resetRouterState()
+    return { name: 'Exception500', query: { redirect: to.fullPath }, replace: true }
   }
 }
 

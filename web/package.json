@@ -7,7 +7,7 @@
     "pnpm": ">=8.8.0"
   },
   "scripts": {
-    "test:auth": "node --test test/auth.test.mjs test/user-session.test.mjs",
+    "test:auth": "node --test test/auth.test.mjs test/user-session.test.mjs test/auth-recovery.test.mjs",
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "serve": "vite preview",

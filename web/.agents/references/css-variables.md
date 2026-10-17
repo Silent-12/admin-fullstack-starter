@@ -82,7 +82,7 @@
 | `--main-color`                 | 指向 `var(--el-color-primary)`，主题色别名    |
 | `--el-component-custom-height` | 组件统一高度（固定 `36px`）                   |
 | `--el-component-size`          | Element Plus 组件尺寸（跟随上面）             |
-| `--custom-radius`              | 全局圆角基数（固定 `0.75rem`）                |
+| `--custom-radius`              | 全局圆角基数（固定 `12px`）                   |
 | `--el-border-radius-base`      | Element 基础圆角（由 `--custom-radius` 计算） |
 | `--el-border-radius-small`     | Element 小圆角（由 `--custom-radius` 计算）   |
 

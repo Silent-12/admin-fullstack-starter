@@ -113,31 +113,31 @@
   // 头像与用户名共同触发弹层，外侧间距由布局包统一提供
   .user-menu-trigger {
     display: flex;
-    gap: 0.5rem;
+    gap: 8px;
     align-items: center;
     cursor: pointer;
 
     .trigger-avatar {
       flex-shrink: 0;
-      width: 2.125rem;
-      height: 2.125rem;
+      width: 34px;
+      height: 34px;
       border-radius: 9999px;
 
       @media (width <= 39.99rem) {
-        width: 1.625rem;
-        height: 1.625rem;
+        width: 26px;
+        height: 26px;
       }
     }
 
     .name {
-      max-width: 8rem;
+      max-width: 128px;
       font-size: 0.875rem;
       line-height: 1.25rem;
       color: var(--ao-gray-700);
       @include ellipsis;
 
       @media (width <= 39.99rem) {
-        max-width: 5rem;
+        max-width: 80px;
       }
     }
   }
@@ -146,10 +146,10 @@
   .user-menu {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 8px;
 
     .list {
-      padding: 0 0 0.5rem;
+      padding: 0 0 8px;
       margin: 0;
       list-style: none;
       border-bottom: 1px solid color-mix(in srgb, var(--ao-gray-300) 80%, transparent);
@@ -159,10 +159,10 @@
     .item {
       display: flex;
       align-items: center;
-      padding: 0.5rem;
+      padding: 8px;
       cursor: pointer;
       user-select: none;
-      border-radius: 0.375rem;
+      border-radius: 6px;
 
       span {
         font-size: 0.875rem;
@@ -170,9 +170,9 @@
       }
 
       :deep(.ao-svg-icon) {
-        margin-right: 0.5rem;
-        font-size: 1rem;
-        line-height: 1.5rem;
+        margin-right: 8px;
+        font-size: 16px;
+        line-height: 24px;
       }
 
       &:hover {
@@ -182,14 +182,14 @@
 
     // 退出登录按钮
     .log-out {
-      padding-top: 0.375rem;
-      padding-bottom: 0.375rem;
+      padding-top: 6px;
+      padding-bottom: 6px;
       font-size: 0.75rem;
       line-height: 1rem;
       text-align: center;
       cursor: pointer;
       border: 1px solid var(--ao-gray-400);
-      border-radius: 0.375rem;
+      border-radius: 6px;
       transition-duration: 200ms;
       transition-property: all;
 

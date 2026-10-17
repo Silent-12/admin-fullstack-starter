@@ -13,7 +13,7 @@
   --el-component-custom-height: 36px !important;
   --el-component-size: var(--el-component-custom-height) !important;
   // Element Plus 组件圆角（固定值，替代之前可配置的 --custom-radius 变量）
-  --custom-radius: 0.75rem;
+  --custom-radius: 12px;
   --el-border-radius-base: calc(var(--custom-radius) / 3 + 2px) !important;
   --el-border-radius-small: calc(var(--custom-radius)/3 + 4px) !important;
   --el-messagebox-border-radius: calc(var(--custom-radius)/3 + 4px) !important;

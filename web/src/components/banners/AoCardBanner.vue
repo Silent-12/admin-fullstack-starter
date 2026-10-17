@@ -76,7 +76,7 @@
 
   // 定义组件属性默认值
   withDefaults(defineProps<CardBannerProps>(), {
-    height: '24rem',
+    height: '384px',
     image: defaultIcon,
     title: '',
     description: '',
@@ -119,21 +119,21 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-bottom: 1.5rem;
+    padding-bottom: 24px;
   }
 
   // 内部布局容器
   .card-banner-inner {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 16px;
     align-items: center;
     text-align: center;
   }
 
   // 图片容器
   .banner-image-wrap {
-    width: 11.25rem;
+    width: 180px;
   }
 
   // 图片元素
@@ -146,13 +146,13 @@
   // 文本区域
   .banner-text {
     box-sizing: border-box;
-    padding-right: 1rem;
-    padding-left: 1rem;
+    padding-right: 16px;
+    padding-left: 16px;
   }
 
   // 标题文本
   .banner-title {
-    margin-bottom: 0.5rem;
+    margin-bottom: 8px;
     font-size: 1.125rem;
     font-weight: 600;
     line-height: 1.75rem;
@@ -170,21 +170,21 @@
   // 操作按钮容器
   .banner-actions {
     display: flex;
-    gap: 0.75rem;
+    gap: 12px;
     align-items: center;
   }
 
   // 按钮通用样式
   .banner-btn {
     display: inline-block;
-    height: 2.25rem;
-    padding-right: 0.75rem;
-    padding-left: 0.75rem;
+    height: 36px;
+    padding-right: 12px;
+    padding-left: 12px;
     font-size: 0.875rem;
-    line-height: 2.25rem;
+    line-height: 36px;
     cursor: pointer;
     user-select: none;
-    border-radius: 0.375rem;
+    border-radius: 6px;
   }
 
   // 取消按钮（带边框）

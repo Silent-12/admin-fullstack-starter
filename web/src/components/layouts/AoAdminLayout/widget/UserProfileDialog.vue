@@ -77,8 +77,8 @@
     width: 100%;
 
     .avatar {
-      width: 4rem;
-      height: 4rem;
+      width: 64px;
+      height: 64px;
       border-radius: 9999px;
     }
   }

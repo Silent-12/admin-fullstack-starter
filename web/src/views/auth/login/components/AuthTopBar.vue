@@ -97,7 +97,7 @@
 <style scoped lang="scss">
   .auth-top-bar {
     position: absolute;
-    top: 1.125rem;
+    top: 18px;
     z-index: 10;
     display: flex;
     align-items: center;
@@ -112,29 +112,29 @@
     display: none !important;
     align-items: center;
     justify-content: center;
-    margin-left: 0.5rem;
+    margin-left: 8px;
     @media (width <= 1180px) {
       display: flex !important;
     }
     @media (width <= 39.99rem) {
-      margin-left: 1.5rem;
+      margin-left: 24px;
     }
   }
 
   .logo-title {
-    margin-left: 0.5rem;
+    margin-left: 8px;
     font-size: 1.25rem;
     line-height: 1.75rem;
   }
 
   .actions {
     display: flex;
-    gap: 0.375rem;
+    gap: 6px;
     align-items: center;
     justify-content: center;
-    margin-right: 0.5rem;
+    margin-right: 8px;
     @media (width <= 39.99rem) {
-      margin-right: 1.25rem;
+      margin-right: 20px;
     }
   }
 
@@ -152,9 +152,9 @@
     top: 0;
     right: 0;
     display: flex;
-    gap: 0.5rem;
+    gap: 8px;
     align-items: center;
-    padding: 0.5rem 2.25rem 0.5rem 0.625rem;
+    padding: 8px 36px 8px 10px;
     pointer-events: none;
     backdrop-filter: blur(10px);
     border-radius: 9999px;
@@ -171,8 +171,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 20px;
+    height: 20px;
     cursor: pointer;
     border-radius: 9999px;
     box-shadow: 0 2px 4px var(--ao-shadow-15);
@@ -213,8 +213,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
-    height: 2rem;
+    width: 32px;
+    height: 32px;
     cursor: pointer;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 300ms;
@@ -226,8 +226,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
-    height: 2rem;
+    width: 32px;
+    height: 32px;
     cursor: pointer;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 300ms;
@@ -239,8 +239,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
-    height: 2rem;
+    width: 32px;
+    height: 32px;
     cursor: pointer;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 300ms;
@@ -249,8 +249,8 @@
 
   // 调色板图标
   .palette-icon {
-    font-size: 1.25rem;
-    line-height: 1.75rem;
+    font-size: 20px;
+    line-height: 28px;
     color: var(--ao-gray-800);
     transition-duration: 300ms;
     transition-property:
@@ -268,14 +268,14 @@
 
   // 语言勾选图标
   .lang-check-icon {
-    font-size: 1rem;
-    line-height: 1.5rem;
+    font-size: 16px;
+    line-height: 24px;
   }
 
   // 主题切换图标
   .theme-icon {
-    font-size: 1.25rem;
-    line-height: 1.75rem;
+    font-size: 20px;
+    line-height: 28px;
     color: var(--ao-gray-800);
     transition-duration: 300ms;
     transition-property:

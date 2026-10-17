@@ -5,7 +5,7 @@
     <AoBasicBanner
       class="banner-showcase__basic"
       box-style="banner-showcase__basic-box"
-      height="12rem"
+      height="192px"
       title="欢迎使用 Ao Design Pro"
       subtitle="一款兼具设计美学与高效开发的后台管理系统模板"
       :meteor-config="{ enabled: true, count: 12 }"
@@ -84,8 +84,8 @@
   .banner-showcase {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
-    margin-bottom: 1.25rem;
+    gap: 20px;
+    margin-bottom: 20px;
   }
 
   // 基础横幅主题渐变背景（boxStyle 类名透传到子组件根节点，需用 :deep 穿透）
@@ -100,6 +100,6 @@
   // 卡片横幅自适应高度修正
   :deep(.banner-showcase__card) {
     height: auto !important;
-    padding-top: 1.5rem;
+    padding-top: 24px;
   }
 </style>

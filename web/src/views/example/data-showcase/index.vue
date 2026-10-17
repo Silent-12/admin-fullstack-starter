@@ -775,7 +775,7 @@
   .form-output {
     max-height: 220px;
     padding: 10px 12px;
-    margin: 0 1rem 1rem;
+    margin: 0 16px 16px;
     overflow: auto;
     font-size: 12px;
     line-height: 1.6;
@@ -791,13 +791,13 @@
   }
 
   :deep(.member-avatar) {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 0.375rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
   }
 
   :deep(.member-info) {
-    margin-left: 0.5rem;
+    margin-left: 8px;
   }
 
   :deep(.member-name),

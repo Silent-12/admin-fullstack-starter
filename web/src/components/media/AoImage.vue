@@ -62,8 +62,8 @@
       justify-content: center;
       width: 100%;
       height: 100%;
-      min-height: 2.5rem;
-      padding: 0.5rem;
+      min-height: 40px;
+      padding: 8px;
       color: var(--ao-gray-600);
       background-color: var(--ao-gray-200);
     }
@@ -73,7 +73,7 @@
     }
 
     &__status-icon {
-      font-size: 1.25rem;
+      font-size: 20px;
     }
 
     &__loading {

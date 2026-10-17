@@ -365,7 +365,7 @@
 
   // 帮助图标
   .help-icon {
-    margin-left: 0.125rem;
+    margin-left: 2px;
     cursor: help;
   }
 </style>

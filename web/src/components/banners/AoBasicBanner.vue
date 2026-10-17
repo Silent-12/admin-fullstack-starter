@@ -145,7 +145,7 @@
 
   // 组件属性默认值设置
   const props = withDefaults(defineProps<Props>(), {
-    height: '11rem',
+    height: '176px',
     titleColor: 'white',
     subtitleColor: 'white',
     boxStyle: '!bg-theme/60',
@@ -158,7 +158,7 @@
       radius: '6px'
     }),
     meteorConfig: () => ({ enabled: false, count: 10 }),
-    imageConfig: () => ({ src: '', width: '12rem', bottom: '-3rem', right: '0' })
+    imageConfig: () => ({ src: '', width: '192px', bottom: '-48px', right: '0' })
   })
 
   // 定义组件事件
@@ -210,7 +210,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 0 2rem;
+    padding: 0 32px;
     overflow: hidden;
     color: var(--ao-white);
     border-radius: calc(var(--custom-radius) + 2px) !important;
@@ -219,14 +219,14 @@
       z-index: 1;
     }
     &__title {
-      margin: 0 0 0.5rem;
+      margin: 0 0 8px;
       font-size: 1.5rem;
       font-weight: 600;
     }
     &__subtitle {
       position: relative;
       z-index: 10;
-      margin: 0 0 1.5rem;
+      margin: 0 0 24px;
       font-size: 0.9rem;
       opacity: 0.9;
     }
@@ -249,9 +249,9 @@
     &__background-image {
       position: absolute;
       right: 0;
-      bottom: -3rem;
+      bottom: -48px;
       z-index: 0;
-      width: 12rem;
+      width: 192px;
     }
     &.has-decoration::after {
       position: absolute;

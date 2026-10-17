@@ -79,15 +79,15 @@
   }
 
   .exception-img {
-    width: 25rem !important;
+    width: 400px !important;
   }
 
   .exception-text {
-    width: 18.75rem;
-    margin-left: 3.75rem;
+    width: 300px;
+    margin-left: 60px;
     @media (width <= 47.99rem) {
       width: 100%;
-      margin-top: 2.5rem;
+      margin-top: 40px;
       margin-right: auto;
       margin-left: auto;
       text-align: center;
@@ -105,6 +105,6 @@
   }
 
   .exception-btn {
-    margin-top: 1.25rem;
+    margin-top: 20px;
   }
 </style>

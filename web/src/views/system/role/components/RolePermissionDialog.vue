@@ -228,7 +228,7 @@
 
 <style scoped lang="scss">
   .permission-footer-button {
-    margin-left: 0.5rem;
+    margin-left: 8px;
   }
 
   // 树节点内容容器

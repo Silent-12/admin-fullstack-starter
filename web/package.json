@@ -7,6 +7,8 @@
     "pnpm": ">=8.8.0"
   },
   "scripts": {
+    "test": "pnpm run test:rbac && pnpm run test:auth",
+    "test:rbac": "node --test test/rbac.test.mjs",
     "test:auth": "node --test test/auth.test.mjs test/user-session.test.mjs test/auth-recovery.test.mjs",
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
@@ -43,7 +45,7 @@
     ]
   },
   "dependencies": {
-    "@ao/admin-components": "git+https://github.com/Silent-12/admin-components.git#v4",
+    "@ao/admin-components": "git+https://github.com/Silent-12/admin-components.git#v5",
     "@ao/admin-layout": "git+https://github.com/Silent-12/admin-layout.git#v5",
     "@element-plus/icons-vue": "^2.3.2",
     "@iconify/vue": "^5.0.0",

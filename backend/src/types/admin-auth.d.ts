@@ -1,5 +1,17 @@
 import type { Request } from 'express'
 import type { AdminUser } from '../modules/auth/admin/entities/admin-user.entity.js'
+import type { AdminAuthorization, AdminMenuRoute } from './rbac.js'
+
+/**
+ * 当前用户授权响应
+ * @description 独立返回按钮权限与可访问菜单，不包含用户资料或内部接口权限
+ */
+export interface AdminUserAuthorization {
+  // 当前用户的有效按钮权限标识
+  auth: string[]
+  // 当前可访问路由树
+  menu: AdminMenuRoute[]
+}
 
 /**
  * 后台 JWT 声明
@@ -27,4 +39,6 @@ export interface AdminAuthRequest extends Request {
   adminUser: AdminUser
   // 已验证的声明
   adminClaims: AdminTokenClaims
+  // 当前请求从数据库读取的授权快照，仅在该请求内复用
+  adminAuthorization: AdminAuthorization
 }

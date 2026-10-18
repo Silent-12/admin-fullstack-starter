@@ -5,9 +5,10 @@
       <div class="exception-text">
         <p class="exception-desc">{{ data.desc }}</p>
         <div class="exception-btn">
-          <slot name="action">
+          <slot name="action" :back-home="backHome" :home-path="homePath">
             <ElButton type="primary" size="large" @click="backHome">{{ data.btnText }}</ElButton>
           </slot>
+          <slot name="extra" />
         </div>
       </div>
     </div>
@@ -41,9 +42,20 @@
     {}
   )
 
+  defineSlots<{
+    // 自定义主操作按钮，透传返回首页行为
+    action?: (props: { backHome: () => void; homePath: string }) => unknown
+    // 次要操作
+    extra?: () => unknown
+  }>()
+
   const { homePath } = useCommon()
 
-  const backHome = () => {
+  /**
+   * @description 返回首页，未登录时跳转登录页并保留目标地址
+   * @return 无返回值。
+   */
+  const backHome = (): void => {
     const targetHomePath = homePath.value || '/'
 
     if (!userStore.isLogin) {

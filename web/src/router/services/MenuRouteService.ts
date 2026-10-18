@@ -2,20 +2,21 @@
  * 业务系统菜单路由来源与规范化服务
  */
 import type { AppRouteRecord } from '@/types/router'
-import { fetchGetUserMenus } from '@/api/system-manage'
 import { getFirstMenuPath } from '@/utils/navigation/route'
 import { getRouteSource } from '@/router/constants'
 import { applicationRoutes } from '@/router/routes/applications'
 
 export class MenuRouteService {
   /**
-   * @description 按环境配置获取并规范化业务系统路由
+   * @description 按配置选择独立授权响应中的菜单或本地调试路由，并统一规范化
+   * @param menu 后端独立授权接口返回的菜单
    * @return 完整的一级业务系统路由列表。
    */
-  async getRoutes(): Promise<AppRouteRecord[]> {
-    const routes = getRouteSource() === 'dynamic' ? await fetchGetUserMenus() : applicationRoutes
+  getRoutes(menu: AppRouteRecord[]): AppRouteRecord[] {
+    // 静态调试模式只使用本地路由，不请求、不合并后端菜单
+    if (getRouteSource() === 'static') return this.normalizeRoutes(applicationRoutes)
 
-    return this.normalizeRoutes(routes)
+    return this.normalizeRoutes(menu)
   }
 
   /**

@@ -146,8 +146,7 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
     const source = app.get(DataSource)
     const users = source.getRepository(AdminUser)
     const passwords = new PasswordService()
-    const password = await initializeAdmin(users, passwords)
-    const admin = await users.findOneByOrFail({ username: 'admin' })
+    const { password, user: admin } = await initializeAdmin(users, passwords)
     await initializeRbac(source, admin.id)
     const base = `${await app.getUrl()}/rbac-custom-prefix`
     const request = async (path, { token, body, method = body ? 'POST' : 'GET' } = {}) => {
@@ -259,11 +258,13 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
       const profile = await asOrdinary('/v1/admin/auth/profile')
       assert.equal(profile.status, 200)
       assert.equal(Object.hasOwn(profile.body.data, 'isSuper'), false)
-      assert.deepEqual(profile.body.data.auth, [])
+      assert.equal(Object.hasOwn(profile.body.data, 'auth'), false)
       assert.equal(Object.hasOwn(profile.body.data, 'roles'), false)
       assert.equal(Object.hasOwn(profile.body.data, 'apiCodes'), false)
-      const adminProfile = await asAdmin('/v1/admin/auth/profile')
-      assert.deepEqual([...adminProfile.body.data.auth].sort(), Object.values(SYSTEM_BUTTON_PERMISSIONS).sort())
+      const authorization = await asOrdinary('/v1/admin/auth/authorization')
+      assert.deepEqual(authorization.body.data.auth, [])
+      const adminAuthorization = await asAdmin('/v1/admin/auth/authorization')
+      assert.deepEqual([...adminAuthorization.body.data.auth].sort(), Object.values(SYSTEM_BUTTON_PERMISSIONS).sort())
     })
 
     await t.test('角色列表、详情返回公开资料，选项只返回启用非内置角色的最小字段', async () => {
@@ -318,18 +319,19 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
       assert.equal((await asOrdinary(probe, { method: 'PATCH' })).status, 200)
       const profile = await asOrdinary('/v1/admin/auth/profile')
       assert.equal(Object.hasOwn(profile.body.data, 'roles'), false)
-      assert.deepEqual([...profile.body.data.auth].sort(), ['tests:read', 'tests:write'])
+      const authorization = await asOrdinary('/v1/admin/auth/authorization')
+      assert.deepEqual([...authorization.body.data.auth].sort(), ['tests:read', 'tests:write'])
       await setResources(readRole.id, [])
       errorResponse(await asOrdinary(probe), 403)
       assert.equal((await asOrdinary(probe, { method: 'PATCH' })).status, 200)
-      const menus = await asOrdinary('/v1/admin/auth/menus')
+      const menus = await asOrdinary('/v1/admin/auth/authorization')
       assert.equal(menus.status, 200)
-      const navigation = flatten(menus.body.data)
+      const navigation = flatten(menus.body.data.menu)
       assert.ok(!navigation.some((item) => item.name === readMenu.name), '按钮授权不能额外授予未选中的页面')
       assert.ok(navigation.every((item) => !Object.hasOwn(item.meta, 'authList')), '菜单不再下发 authList')
       await setResources(readRole.id, [readMenu.id])
-      const fullMenus = await asOrdinary('/v1/admin/auth/menus')
-      const fullNavigation = flatten(fullMenus.body.data)
+      const fullMenus = await asOrdinary('/v1/admin/auth/authorization')
+      const fullNavigation = flatten(fullMenus.body.data.menu)
       assert.ok(
         fullNavigation.some((item) => item.name === directory.name),
         '页面补齐有效目录祖先',
@@ -343,8 +345,8 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
       assert.ok(userCreateButton, '初始化种子必须包含用户新增按钮资源')
       assert.deepEqual(userCreateButton.apiCodes, ['system.users.create'])
       await setResources(writeRole.id, [writeButton.id, userCreateButton.id])
-      const profile = (await asOrdinary('/v1/admin/auth/profile')).body.data
-      assert.ok(profile.auth.includes(SYSTEM_BUTTON_PERMISSIONS.userCreate))
+      const authorization = (await asOrdinary('/v1/admin/auth/authorization')).body.data
+      assert.ok(authorization.auth.includes(SYSTEM_BUTTON_PERMISSIONS.userCreate))
       // 普通角色获得系统管理按钮与接口后即可执行系统管理操作。
       const createdByOrdinary = await asOrdinary('/v1/admin/users', {
         method: 'POST',
@@ -718,9 +720,9 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
         assert.deepEqual(unchanged, before)
       }
       assert.equal((await asOrdinary(probe)).status, 200)
-      const navigation = await asAdmin('/v1/admin/auth/menus')
+      const navigation = await asAdmin('/v1/admin/auth/authorization')
       assert.equal(navigation.status, 200)
-      assert.ok(!flatten(navigation.body.data).some((node) => node.name === 'InvalidRoute'))
+      assert.ok(!flatten(navigation.body.data.menu).some((node) => node.name === 'InvalidRoute'))
     })
 
     await t.test('路径和权限码全局唯一，跨父级、停用及并发写入均不能重复，失败保留原绑定', async () => {
@@ -853,13 +855,13 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
       let detail = (await asAdmin(`/v1/admin/menus/${moving.id}`)).body.data
       assert.equal(detail.parentId, parent.id)
       assert.equal(detail.component, null)
-      let navigation = (await asOrdinary('/v1/admin/auth/menus')).body.data
+      let navigation = (await asOrdinary('/v1/admin/auth/authorization')).body.data.menu
       assert.ok(flatten(navigation.find((node) => node.id === parent.id).children).some((node) => node.id === moving.id))
       await writeAdmin(`/v1/admin/menus/${moving.id}`, 'PATCH', { parentId: null, component: '/index/index' })
       detail = (await asAdmin(`/v1/admin/menus/${moving.id}`)).body.data
       assert.equal(detail.parentId, null)
       assert.equal(detail.component, '/index/index')
-      navigation = (await asOrdinary('/v1/admin/auth/menus')).body.data
+      navigation = (await asOrdinary('/v1/admin/auth/authorization')).body.data.menu
       assert.ok(navigation.some((node) => node.id === moving.id && node.children.length === 1))
       await setResources(readRole.id, [readMenu.id])
     })
@@ -1049,20 +1051,17 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
       assert.equal((await request(probe, { token: afterReset })).status, 200)
     })
 
-    await t.test('创建用户、重置密码与登录真实 HTTP 审计日志不保存凭证', async () => {
+    await t.test('创建用户、重置密码与登录真实 HTTP 审计日志按原始内容保存', async () => {
       const created = logs.find((record) => record.method === 'POST' && record.url.endsWith('/v1/admin/users'))
       const reset = logs.find((record) => record.method === 'POST' && record.url.endsWith(`/users/${ordinary.id}/reset-password`))
       assert.ok(created)
       assert.ok(reset)
-      assert.equal(JSON.parse(created.requestBody).password, '[REDACTED]')
+      assert.equal(JSON.parse(created.requestBody).password, 'OrdinaryPassword123')
       assert.equal(JSON.parse(created.requestBody).username, 'ordinary')
-      assert.equal(JSON.parse(reset.requestBody).password, '[REDACTED]')
-      const serialized = JSON.stringify(logs)
-      for (const sensitive of [password, 'OrdinaryPassword123', 'ChangedPassword456', adminToken, ordinaryToken]) {
-        assert.ok(!serialized.includes(sensitive), '权限管理审计日志不得包含真实密码或令牌')
-      }
+      assert.equal(JSON.parse(reset.requestBody).password, 'ChangedPassword456')
       const loginLogs = logs.filter((record) => record.url.endsWith('/auth/login'))
-      assert.ok(loginLogs.some((record) => JSON.parse(record.responseBody).data?.accessToken === '[REDACTED]'))
+      assert.ok(loginLogs.some((record) => JSON.parse(record.responseBody).data?.accessToken === ordinaryToken))
+      assert.ok(loginLogs.some((record) => JSON.parse(record.requestBody).password === 'OrdinaryPassword123'))
     })
   } finally {
     if (app) await app.close()

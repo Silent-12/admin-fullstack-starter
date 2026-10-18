@@ -91,10 +91,10 @@ export interface EnvConfig {
   VITE_BASE_URL: string
   // API 地址
   VITE_API_URL: string
-  // 路由来源
-  VITE_ROUTE_SOURCE: 'static' | 'dynamic'
   // 跨域请求是否携带 Cookie
   VITE_WITH_CREDENTIALS: string
+  // 菜单路由来源：本地调试或后端授权
+  VITE_ROUTE_SOURCE: 'static' | 'dynamic'
 }
 
 // 应用配置

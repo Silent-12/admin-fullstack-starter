@@ -14,7 +14,7 @@ export class RouteComponentLoader {
    * @return 无返回值。
    */
   constructor() {
-    this.modules = import.meta.glob('../../views/**/*.vue') as Record<string, AsyncComponentLoader>
+    this.modules = import.meta.glob<Component>('../../views/**/*.vue', { import: 'default' })
   }
 
   /**

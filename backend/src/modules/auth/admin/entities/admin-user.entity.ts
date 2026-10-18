@@ -1,4 +1,5 @@
 import { Column, Entity, Index, PrimaryColumn } from 'typeorm'
+import { TINYINT_BOOLEAN_TRANSFORMER } from '../../../../common/entities/tinyint-boolean.transformer.js'
 
 /**
  * 后台用户实体
@@ -11,8 +12,8 @@ export class AdminUser {
   @PrimaryColumn({ type: 'varchar', length: 36, comment: '用户 UUID' })
   id!: string
 
-  /** 唯一登录名，仅小写英文字母，创建后不可修改 */
-  @Column({ type: 'varchar', length: 64, update: false, comment: '唯一登录名，仅小写英文字母，创建后不可修改' })
+  /** 唯一登录名，小写字母开头并可带数字后缀，创建后不可修改 */
+  @Column({ type: 'varchar', length: 64, update: false, comment: '唯一登录名，小写字母开头并可带数字后缀，创建后不可修改' })
   username!: string
 
   /** 带参数和随机盐的密码哈希，默认不参与查询 */
@@ -35,17 +36,28 @@ export class AdminUser {
   @Column({ type: 'varchar', length: 2048, nullable: true, comment: '头像地址' })
   avatar!: string | null
 
+  /** 是否启用，停用后所有请求立即失效 */
+  @Column({
+    name: 'is_enabled',
+    type: 'tinyint',
+    unsigned: true,
+    default: 1,
+    transformer: TINYINT_BOOLEAN_TRANSFORMER,
+    comment: '是否启用：0否，1是',
+  })
+  enabled!: boolean
+
   /** 软删除标记：0 未删除，1 已删除 */
   @Column({ type: 'tinyint', unsigned: true, default: 0, comment: '是否删除：0否，1是' })
   isDeleted!: number
 
-  /** 是否允许删除：0 否，1 是；内置 `admin` 固定为 0 */
-  @Column({ type: 'tinyint', unsigned: true, default: 1, comment: '是否允许删除：0否，1是；内置 admin 固定为0' })
-  isDeletable!: number
-
-  /** 创建人 UUID，系统初始化为 `system` */
+  /** 创建人 UUID，系统初始化为 `system`；固定为 system 的记录即内置管理员 */
   @Column({ type: 'varchar', length: 36, default: 'system', update: false, comment: '创建人 UUID，系统初始化为 system' })
   createdBy!: string
+
+  /** 最后操作人 UUID，系统初始化为 `system` */
+  @Column({ name: 'updated_by', type: 'varchar', length: 36, default: 'system', comment: '最后操作人 UUID，系统初始化为 system' })
+  updatedBy!: string
 
   /** 创建时间，Unix 秒 */
   @Column({ type: 'int', comment: '创建时间，Unix 秒' })

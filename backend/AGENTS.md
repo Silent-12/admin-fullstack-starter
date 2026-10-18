@@ -22,7 +22,7 @@
 - 删除内部实现可直接清理；变更或删除对外接口、DTO、响应字段时，按根级版本策略直接修改，并同步更新受影响的调用方。
 - 全局 API 前缀由本目录 `.env` 的 `API_PREFIX` 决定，`backend` 仅为默认值，不得在业务路径中写死；业务 Controller 必须显式使用 `v1/...`，非业务协议端点可按协议例外处理。
 - 业务 Controller 必须使用 `@ApiTags` 和 `@ApiOperation`；方法 JSDoc 标题与 `@ApiOperation` 的业务动作保持一致。协议适配、内部回调等非业务端点按实际用途处理。
-- 后台或管理端所有接口必须在版本号后使用 `admin` 路径前缀，例如 `v1/admin/users`；后台认证接口（登录、登出、刷新令牌、当前用户信息与授权菜单）统一使用 `v1/admin/auth/*`。对外用户端接口不得包含 `admin` 前缀，并使用 `user` 目录分层。模块按使用方拆分为 `src/modules/<module>/admin` 与 `src/modules/<module>/user`，Controller、DTO、Service 等分别归入对应目录；跨端复用的领域能力放入明确的 `shared` 目录。未明确属于后台或用户端的基础模板模块可保留在模块根目录。
+- 后台或管理端所有接口必须在版本号后使用 `admin` 路径前缀，例如 `v1/admin/users`；后台认证接口（登录、登出、刷新令牌、当前用户资料与独立授权）统一使用 `v1/admin/auth/*`。对外用户端接口不得包含 `admin` 前缀，并使用 `user` 目录分层。模块按使用方拆分为 `src/modules/<module>/admin` 与 `src/modules/<module>/user`，Controller、DTO、Service 等分别归入对应目录；跨端复用的领域能力放入明确的 `shared` 目录。未明确属于后台或用户端的基础模板模块可保留在模块根目录。
 - 数据库表结构以 `src/**/entities` 下的 TypeORM 实体为唯一来源，不维护 SQL 迁移文件；新增或修改表结构直接改实体，并同步更新受影响的响应 DTO。新增实体必须通过所属模块注册到 `src/app.module.ts` 的条件化导入中；删除实体不会自动删表，需要时人工清理遗留表。
 - `DB_SYNCHRONIZE` 仅允许在 development / test 环境开启；共享或生产环境建表、改表必须使用人工 SQL，并在 [数据库结构策略](README.md#数据库结构策略) 中记录执行顺序与核验方式。
 - 首次部署到共享或生产环境前，必须从实体导出含索引与外键的基线 SQL，纳入版本管理并由人工按环境执行；不得以本地自动建表替代。

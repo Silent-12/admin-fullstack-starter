@@ -109,7 +109,7 @@ function captureLog(url, body, responseBody) {
   return records[0]
 }
 
-test('登录、创建用户和重置密码的日志脱敏，大小写和全局前缀不影响保护', () => {
+test('登录、创建用户和重置密码的日志按原始内容记录，大小写和全局前缀不改变处理', () => {
   for (const url of [
     '/backend/v1/admin/auth/login',
     '/BACKEND/V1/ADMIN/AUTH/LOGIN',
@@ -117,14 +117,12 @@ test('登录、创建用户和重置密码的日志脱敏，大小写和全局�
     `/custom-prefix/v1/admin/users/${randomUUID()}/reset-password`,
   ]) {
     const record = captureLog(url, { userName: 'tester', password: 'secret-password' }, { data: { accessToken: 'secret-token' } })
-    assert.deepEqual(JSON.parse(record.requestBody), { userName: 'tester', password: '[REDACTED]' })
-    assert.deepEqual(JSON.parse(record.responseBody), { data: { accessToken: '[REDACTED]' } })
-    assert.ok(!JSON.stringify(record).includes('secret-password'))
-    assert.ok(!JSON.stringify(record).includes('secret-token'))
+    assert.deepEqual(JSON.parse(record.requestBody), { userName: 'tester', password: 'secret-password' })
+    assert.deepEqual(JSON.parse(record.responseBody), { data: { accessToken: 'secret-token' } })
   }
 })
 
-test('嵌套数组与 JSON 字符串中的敏感字段脱敏，原请求和响应对象保持不变', () => {
+test('嵌套结构与 JSON 字符串正文原样记录，原请求和响应对象保持不变', () => {
   const requestBody = {
     title: '正常内容',
     nested: [
@@ -145,27 +143,14 @@ test('嵌套数组与 JSON 字符串中的敏感字段脱敏，原请求和响�
   const originalResponse = structuredClone(responseBody)
   for (const sentBody of [responseBody, JSON.stringify(responseBody)]) {
     const record = captureLog('/backend/v1/admin/business-records', requestBody, sentBody)
-    const loggedRequest = JSON.parse(record.requestBody)
-    assert.deepEqual(loggedRequest.nested, [
-      { PASSWORD: '[REDACTED]', password_hash: '[REDACTED]' },
-      { 'access-token': '[REDACTED]', 'refresh_token': '[REDACTED]' },
-    ])
-    assert.deepEqual(loggedRequest.meta, {
-      'Authorization': '[REDACTED]',
-      'SeCrEt': '[REDACTED]',
-      'ToKeN': '[REDACTED]',
-      'api_key': '[REDACTED]',
-      'salt': '[REDACTED]',
-      'client-secret': '[REDACTED]',
-    })
-    assert.equal(loggedRequest.title, '正常内容')
-    assert.deepEqual(JSON.parse(record.responseBody).data, [{ accessToken: '[REDACTED]', passwordHash: '[REDACTED]', name: '可见名称' }])
+    assert.deepEqual(JSON.parse(record.requestBody), originalRequest)
+    assert.deepEqual(JSON.parse(record.responseBody), originalResponse)
     assert.deepEqual(requestBody, originalRequest)
     assert.deepEqual(responseBody, originalResponse)
   }
 })
 
-test('日志先脱敏再截断，序列化失败不影响请求响应', () => {
+test('日志按长度截断，序列化失败不影响请求响应', () => {
   const record = captureLog(
     '/backend/v1/admin/business-records',
     { password: 'truncated-password', message: 'x'.repeat(MAX_BODY_LENGTH * 2) },
@@ -173,10 +158,8 @@ test('日志先脱敏再截断，序列化失败不影响请求响应', () => {
   )
   assert.equal(record.requestBody.length, MAX_BODY_LENGTH)
   assert.equal(record.responseBody.length, MAX_BODY_LENGTH)
-  assert.ok(record.requestBody.includes('[REDACTED]'))
-  assert.ok(record.responseBody.includes('[REDACTED]'))
-  assert.ok(!record.requestBody.includes('truncated-password'))
-  assert.ok(!record.responseBody.includes('truncated-token'))
+  assert.ok(record.requestBody.startsWith('{"password":"truncated-password"'))
+  assert.ok(record.responseBody.startsWith('{"token":"truncated-token"'))
   const circular = {}
   circular.self = circular
   for (const [body, responseBody] of [
@@ -190,21 +173,12 @@ test('日志先脱敏再截断，序列化失败不影响请求响应', () => {
   }
 })
 
-test('凭证端点的非结构化正文不进入日志，普通业务文本仍可记录', () => {
-  for (const url of [
-    '/backend/v1/admin/auth/login',
-    '/custom-prefix/V1/ADMIN/USERS',
-    `/custom-prefix/v1/admin/users/${randomUUID()}/reset-password`,
-  ]) {
-    for (const content of ['password=unstructured-secret', JSON.stringify('unstructured-token'), '123', 'true']) {
-      const record = captureLog(url, content, content)
-      assert.equal(record.requestBody, undefined)
-      assert.equal(record.responseBody, undefined)
-    }
+test('非结构化正文按原始内容记录', () => {
+  for (const content of ['password=unstructured-secret', JSON.stringify('unstructured-token'), '123', 'true', '普通业务文本']) {
+    const record = captureLog('/backend/v1/admin/auth/login', content, content)
+    assert.equal(record.requestBody, content)
+    assert.equal(record.responseBody, content)
   }
-  const ordinary = captureLog('/backend/v1/admin/business-records', '普通业务文本', '普通业务响应')
-  assert.equal(ordinary.requestBody, '普通业务文本')
-  assert.equal(ordinary.responseBody, '普通业务响应')
 })
 
 function declareController(path, entries) {

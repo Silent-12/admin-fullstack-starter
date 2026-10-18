@@ -2,6 +2,7 @@
  * 业务菜单路由到 Vue Router 路由的转换服务
  */
 import type { RouteRecordRaw } from 'vue-router'
+import { defineComponent, h } from 'vue'
 import type { AppRouteRecord } from '@/types/router'
 import { RoutePath } from '@/router/constants'
 import { RouteComponentLoader } from './RouteComponentLoader'
@@ -27,10 +28,21 @@ export class RouteTransformer {
       converted.component = this.componentLoader.loadIframe()
     } else if (component === RoutePath.LayoutComponent) {
       converted.component = this.componentLoader.loadLayout()
-    } else if (typeof component === 'string') {
-      converted.component = this.componentLoader.load(component)
     } else if (component) {
-      converted.component = component
+      const load = typeof component === 'string' ? this.componentLoader.load(component) : component
+      // 布局按路由名排除缓存；每条路由使用独立具名包装，避免依赖业务组件的 defineOptions 名称。
+      converted.component = async () => {
+        const loaded = await load()
+        const page = loaded.default ?? loaded
+        return defineComponent({
+          name: String(route.name),
+          inheritAttrs: false,
+          setup:
+            (_props, { attrs, slots }) =>
+            () =>
+              h(page, attrs, slots)
+        })
+      }
     }
 
     if (children?.length) {

@@ -19,8 +19,9 @@ import { THROTTLE_POLICY } from './common/constants/throttle.constant.js'
 import { getIpThrottleTracker } from './common/utils/throttle-tracker.util.js'
 import { generateUserApiThrottleKey, shouldSkipUserApiThrottle } from './common/utils/throttle-request.util.js'
 import { AccessLogModule } from './modules/access-log/access-log.module.js'
-import { TemplateApiModule } from './modules/template-api/template-api.module.js'
 import { AdminAuthModule } from './modules/auth/admin/admin-auth.module.js'
+import { ApiResourceModule } from './modules/api-resource/admin/api-resource.module.js'
+import { RbacModule } from './modules/rbac/admin/rbac.module.js'
 import { HealthController } from './health/health.controller.js'
 import { DatabaseConfig } from './common/types/database.js'
 
@@ -120,11 +121,15 @@ const typeOrmRootModule = isMysqlEnabled
            */
           AccessLogModule,
           /**
-           * 模板 API 模块
-           * 提供标准 CRUD 模板，后续新增业务模块可复制此目录改名为新模块使用
-           * 后续新增的数据库业务模块应添加在此数组内
+           * 接口清单模块
+           * 从实际路由登记接口策略并保存展示配置
            */
-          TemplateApiModule,
+          ApiResourceModule,
+          /**
+           * 后台角色权限模块
+           * 注册角色、菜单按钮与关联实体，提供账号管理及实时授权查询
+           */
+          RbacModule,
           /**
            * 后台认证模块
            * 注册后台认证控制器、服务与全局认证守卫，提供登录、当前用户信息与登出的 JWT 认证能力

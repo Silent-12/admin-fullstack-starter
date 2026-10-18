@@ -9,13 +9,14 @@
   - 业务页面放在 `src/views/` 下，按业务模块分子目录（如 `system/user/`、`system/role/`、`system/menu/`）；页面内的弹窗、抽屉等子模块放在对应模块的 `components/` 子目录中。
 
 - 路由相关：
-  - 公共路由定义在 `src/router/routes/public.ts`；本地业务系统路由定义在 `src/router/routes/applications/` 下。
+  - 公共路由定义在 `src/router/routes/public.ts`；业务系统路由通过 `.env` 的 `VITE_ROUTE_SOURCE` 切换：`dynamic` 请求独立授权接口并使用后端菜单与按钮权限，`static` 使用 `src/router/routes/applications/` 的本地路由供前端调试，不请求后端授权、不合并后端菜单且不执行按钮权限展示过滤。两种模式均保留登录认证与后端接口权限校验。
   - 路由核心能力放在 `src/router/services/` 下，扩展时优先复用既有 `RouteRegistry`、`MenuRouteService`、`RouteTransformer`、`RouteComponentLoader`、`RouteConfigValidator` 等能力。
   - 路由守卫在 `src/router/guards/`，禁止在业务页面内手写路由拦截。
 
 - 自定义指令统一放在 `src/directives/` 根目录（`auth`、`highlight`），通过 `src/directives/index.ts` 统一注册。
+- 页面按钮显隐统一使用 `v-auth="'模块.资源.动作'"`，授权数据来自独立 `auth/authorization` 接口的 `auth`，与用户资料分开保存；权限变化后由用户刷新页面更新显示。`useAuth().hasAuth` 可用于操作入口校验，接口权限由后端拦截。
 
-- 复用逻辑优先抽成 Composable。公共 Composable（如 `useTable`、`useAuth`、`useTheme`）由 `@ao/admin-layout` 与 `@ao/admin-components` 提供，禁止在本目录重复实现；本地 `src/hooks/` 目录当前为空，仅在确有宿主专属逻辑时新增，命名以 `use` 开头。
+- 复用逻辑优先抽成 Composable。公共 Composable（如 `useTable`、`useAuth`、`useTheme`）由 `@ao/admin-layout` 与 `@ao/admin-components` 提供，禁止在本目录重复实现；本地 `src/hooks/` 只存放宿主专属骨架（如 `usePagedList` 分页列表、`useDialogForm` 弹窗表单）与宿主策略适配，命名以 `use` 开头。页面按钮入口使用 `src/hooks/useAuth.ts`：静态模式放行，动态模式委托公共组件包 `useAuth`，不得复制包内权限逻辑；业务页面优先复用已有 Hook 以避免重复实现搜索、分页与弹窗加载逻辑。
 
 ## 业务表格与搜索
 

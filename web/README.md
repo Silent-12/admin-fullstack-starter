@@ -2,7 +2,7 @@
 
 本目录是 `admin-fullstack-starter` 的前端子项目，基于 Vue 3、TypeScript 和 Element Plus，`package.json` 中的项目名为 `ao-design-pro`。后端服务位于同仓库的 `../backend/`；仓库级安装、启动与构建命令见根 [README](../README.md)。
 
-项目提供登录、工作台、用户/角色/菜单管理示例、表格表单示例，以及菜单、标签页和主题等后台基础能力。接口统一通过 `src/api/` 调用后端，默认使用静态路由；本目录不包含后端服务、数据库或消息队列。
+项目提供登录、工作台、用户、角色、菜单与接口权限管理、表格表单示例，以及菜单、标签页和主题等后台基础能力。接口统一通过 `src/api/` 调用后端，业务路由默认来自后端授权菜单，也支持本地路由调试；本目录不包含后端服务、数据库或消息队列。
 
 ## 🚀 快速开始
 
@@ -78,7 +78,7 @@ Vite 先加载 [`.env`](.env)，再按运行模式加载 [`.env.development`](.e
 
 ## 🗺️ 页面与路由开发
 
-- 公共路由定义在 [src/router/routes/public.ts](src/router/routes/public.ts)，业务路由定义在 [src/router/routes/applications/](src/router/routes/applications/)。
+- 公共路由定义在 [src/router/routes/public.ts](src/router/routes/public.ts)，业务路由通过 [MenuRouteService](src/router/services/MenuRouteService.ts) 装配。可通过 [`.env`](.env) 的路由来源开关切换后端授权菜单与 [本地调试菜单](src/router/routes/applications/index.ts)，修改后需重启开发服务；本地模式不请求后端授权、不执行按钮权限展示过滤，仍需登录且后端继续校验接口权限。
 - 页面放在 `src/views/`；路由 `component: '/system/user'` 对应 `src/views/system/user/index.vue`，也支持对应路径下的单文件 `.vue` 页面。
 - 业务表格使用 `AoTable`，搜索栏通过其 `search-items` 集成；页面示例见 [用户管理](src/views/system/user/index.vue) 与 [组件示例](src/views/example/data-showcase/index.vue)。
 - 页面私有组件放在页面的 `components/` 下；不要在宿主内重建已抽离到公共包的同名组件。

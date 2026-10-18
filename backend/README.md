@@ -9,7 +9,6 @@
 - 通过 `MYSQL_ENABLED` / `REDIS_ENABLED` 条件化装载依赖模块，未启用时应用仍可启动。
 - 统一响应包装、全局异常过滤器、Winston 访问日志、限流与健康检查。
 - 后台认证：内置 admin 初始化、JWT 登录、profile 与全端登出。
-- `template-api` 示例模块演示标准 CRUD、分页与显式响应 DTO。
 
 ## 🚀 快速开始
 
@@ -51,7 +50,7 @@ pnpm run start:dev
 pnpm run admin:init
 ```
 
-该命令先构建再运行，仅写入缺失的账号，不自动修改表结构，也不会覆盖已有密码；创建成功后终端仅显示一次随机密码。详见「后台认证」。
+该命令先构建再运行，创建缺失的 `admin` 账号并绑定内置管理员角色、恢复内置权限种子；不自动修改表结构，也不会覆盖已有密码；创建成功后终端仅显示一次随机密码。执行前需已准备后台权限相关表（本地先启动一次应用自动建表，或先执行生产基线 SQL）。详见「后台认证」。
 
 ### 5. 构建生产版本
 
@@ -68,7 +67,7 @@ backend/
 ├── src/
 │   ├── common/         # 公共过滤器、日志、Redis、限流、健康检查与工具
 │   ├── config/         # app / database / redis 配置与命名策略
-│   ├── modules/        # 业务模块（auth/admin、template-api、access-log）
+│   ├── modules/        # 业务模块（auth/admin、api-resource/admin、rbac/admin、access-log）
 │   ├── types/          # 模块类型定义
 │   ├── app.module.ts   # 应用主模块（条件化导入）
 │   └── main.ts         # 应用入口
@@ -79,11 +78,11 @@ backend/
 └── package.json        # 依赖与脚本
 ```
 
-模块分层、公共 DTO 与新增模块流程见 [AGENTS.md](AGENTS.md)；示例模块见 [template-api 模块说明](src/modules/template-api/README.md)。
+模块分层、公共 DTO 与新增模块流程见 [AGENTS.md](AGENTS.md)。
 
 ## 🗄️ 数据库与 Redis
 
-MySQL 与 Redis 均由环境变量开关控制；未启用 MySQL 时，所有依赖 TypeORM 的模块（含认证、`template-api`、`access-log`）都不会被加载，这是 `app.module.ts` 条件化导入的预期行为。连接参数与开关以 [.env.example](.env.example) 为准，Redis 用于缓存与认证相关状态。
+MySQL 与 Redis 均由环境变量开关控制；未启用 MySQL 时，所有依赖 TypeORM 的模块（含认证、接口清单、RBAC、`access-log`）都不会被加载，这是 `app.module.ts` 条件化导入的预期行为。连接参数与开关以 [.env.example](.env.example) 为准，Redis 用于缓存与认证相关状态。
 
 ### 数据库结构策略
 
@@ -104,14 +103,10 @@ MySQL 与 Redis 均由环境变量开关控制；未启用 MySQL 时，所有依
 
 认证模块为后台用户提供登录、当前用户信息、全端登出与内置 admin 初始化，位于 `src/modules/auth/admin/`，随 MySQL 条件化导入。
 
-- `pnpm run admin:init` 初始化 `admin` 账号：先构建再运行，仅写入缺失账号，重复/并发执行不覆盖密码，终端仅显示一次随机密码，且不修改表结构。
+- `pnpm run admin:init` 初始化 `admin` 账号并绑定内置管理员角色：先构建再运行，重复/并发执行不覆盖密码，终端仅显示一次随机密码，不修改表结构；命令会写入内置角色、菜单按钮与接口授权种子，要求对应表已存在。
 - 启用 MySQL 时必须同时启用 Redis，并配置非空 `JWT_SECRET`；MySQL 关闭时不加载认证模块。相关变量见 [.env.example](.env.example)。
 - 认证接口为 `v1/admin/auth/login`、`profile`、`logout`（位于全局前缀之后）；请求与响应字段、错误语义以 Knife4j 文档和根 [AGENTS.md](../AGENTS.md#跨端接口约定) 为准。
 - 回归：`pnpm run test` 运行 `test/` 下单元测试；`pnpm run test:integration` 运行 `test-integration/` 下集成测试，需要可创建测试库的 MySQL 与 Redis。
-
-## 🧩 示例模块 template-api
-
-`template-api` 演示标准 RESTful 开发模式：Controller / Service / DTO / Entity 分层、分页查询与显式响应 DTO。接口路径为 `/{API_PREFIX}/v1/admin/template-api`，请求与响应示例见 Knife4j 文档；模块结构与复制步骤见 [模块说明](src/modules/template-api/README.md)。新增业务模块按 [AGENTS.md](AGENTS.md) 的后台 / 用户端分层约定组织。
 
 ## ✅ 测试与检查
 

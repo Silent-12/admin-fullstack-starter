@@ -1,4 +1,4 @@
-/** 用户会话与偏好：只持久化令牌、到期时间和偏好，资料每次启动重新获取 */
+/** 用户会话与偏好：只持久化令牌、到期时间和偏好，资料与授权每次启动重新获取 */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { LanguageEnum } from '@/enums'
@@ -24,6 +24,8 @@ export const useUserStore = defineStore(
     const accessToken = ref('')
     const expiresAt = ref(0)
     const info = ref<Partial<UserInfo>>({})
+    // 独立授权接口返回的运行时按钮权限
+    const auth = ref<string[]>([])
     let sessionVersion = 0
 
     /**
@@ -49,6 +51,7 @@ export const useUserStore = defineStore(
     const invalidateSession = (): void => {
       sessionVersion++
       info.value = {}
+      auth.value = []
       resetRouterState()
     }
 
@@ -90,6 +93,14 @@ export const useUserStore = defineStore(
     }
 
     /**
+     * @description 保存当前会话独立获取的按钮权限
+     * @param value 后端返回的有效按钮权限标识
+     */
+    const setAuth = (value: string[]): void => {
+      auth.value = value
+    }
+
+    /**
      * @description 设置语言偏好
      */
     const setLanguage = (lang: LanguageEnum): void => {
@@ -126,6 +137,7 @@ export const useUserStore = defineStore(
       accessToken,
       expiresAt,
       info,
+      auth,
       isLogin,
       getUserInfo,
       getSettingState,
@@ -137,6 +149,7 @@ export const useUserStore = defineStore(
       resetCredentials,
       clearSession,
       setUserInfo,
+      setAuth,
       setLanguage,
       setSearchHistory,
       checkAndClearWorktabs

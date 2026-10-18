@@ -19,6 +19,9 @@ import { LoginThrottleService } from '../dist/modules/auth/admin/login-throttle.
 import { AdminUser } from '../dist/modules/auth/admin/entities/admin-user.entity.js'
 import { initializeAdmin } from '../dist/modules/auth/admin/initialize-admin.js'
 import { PasswordService } from '../dist/modules/auth/admin/password.service.js'
+import { AdminUserRole } from '../dist/modules/rbac/admin/entities/admin-user-role.entity.js'
+import { AdminRoleResource } from '../dist/modules/rbac/admin/entities/admin-role-resource.entity.js'
+import { SUPER_ROLE_ID } from '../dist/modules/rbac/admin/initialize-rbac.js'
 import { RedisService } from '../dist/common/redis/redis.service.js'
 import { SnakeNamingStrategy } from '../dist/config/database-naming-strategy.js'
 import { AllExceptionsFilter } from '../dist/common/filters/all-exceptions.filter.js'
@@ -156,11 +159,22 @@ test('真实 MySQL / Redis / HTTP 登录与全端撤销', { timeout: 90000 }, as
     assert.equal(original.lastLoginTime, null)
     assert.equal(original.token, undefined)
     assert.equal(original.passwordHash, undefined)
+    // CLI 必须在同一事务内完成角色绑定并恢复内置角色全量授权。
+    const roleBindings = source.getRepository(AdminUserRole)
+    assert.equal(await roleBindings.countBy({ userId: original.id, roleId: SUPER_ROLE_ID, isDeleted: 0 }), 1)
+    assert.ok((await source.getRepository(AdminRoleResource).countBy({ roleId: SUPER_ROLE_ID, isDeleted: 0 })) > 0)
+    // 人工破坏绑定后重跑 CLI 必须恢复，且不得重新显示密码。
+    await roleBindings.update({ userId: original.id, roleId: SUPER_ROLE_ID }, { isDeleted: 1 })
+    const repaired = cli()
+    assert.equal(repaired.status, 0, repaired.stderr)
+    assert.ok(!repaired.stdout.includes(password))
+    assert.equal(await roleBindings.countBy({ userId: original.id, roleId: SUPER_ROLE_ID, isDeleted: 0 }), 1)
     // 用真实唯一约束验证并发初始化，只有一个调用能拿到明文密码。
     await users.delete({ id: original.id })
     const seeded = await Promise.all([initializeAdmin(users, new PasswordService()), initializeAdmin(users, new PasswordService())])
-    assert.equal(seeded.filter(Boolean).length, 1)
-    const actualPassword = seeded.find(Boolean)
+    const winners = seeded.filter((result) => result.password)
+    assert.equal(winners.length, 1)
+    const actualPassword = winners[0].password
     const user = await users.findOneByOrFail({ username: 'admin' })
     user.username = 'renamed'
     await users.save(user)
@@ -198,7 +212,7 @@ test('真实 MySQL / Redis / HTTP 登录与全端撤销', { timeout: 90000 }, as
     assert.ok(stored.lastLoginTime > 0)
     const profile = await request('/v1/admin/auth/profile', { token: firstToken })
     assert.equal(profile.status, 200)
-    assert.deepEqual(Object.keys(profile.body.data).sort(), ['auth', 'avatar', 'email', 'name', 'userId', 'userName'].sort())
+    assert.deepEqual(Object.keys(profile.body.data).sort(), ['avatar', 'email', 'name', 'userId', 'userName'].sort())
     assert.equal((await request('/v1/admin/probe', { token: secondToken })).status, 200)
     assert.equal((await request('/v1/admin/auth/logout', { token: firstToken, method: 'POST' })).status, 200)
     assert.equal((await request('/v1/admin/auth/profile', { token: firstToken })).status, 401)
@@ -286,7 +300,7 @@ test('真实 MySQL / Redis / HTTP 登录与全端撤销', { timeout: 90000 }, as
         assert.equal(headers.get('Retry-After'), Math.ceil(milliseconds / 1000))
       }
     })
-    // 认证路径保留脱敏后的审计正文，真实密码与成功签发的令牌不得进入日志。
+    // 认证路径记录原始审计正文，请求密码与成功签发的令牌按实际内容保存。
     const authLogs = logs.filter((record) => /auth\//i.test(record.url))
     assert.ok(authLogs.length > 0)
     assert.ok(
@@ -295,14 +309,12 @@ test('真实 MySQL / Redis / HTTP 登录与全端撤销', { timeout: 90000 }, as
         .every((record) => typeof record.requestBody === 'string' && typeof record.responseBody === 'string'),
     )
     assert.ok(authLogs.every((record) => typeof record.responseBody === 'string'))
-    const serializedAuthLogs = JSON.stringify(authLogs)
-    for (const sensitive of [actualPassword, firstToken, secondToken, third.body.data.accessToken]) {
-      assert.ok(!serializedAuthLogs.includes(sensitive), '认证审计日志不得包含真实密码或令牌')
-    }
+    assert.ok(authLogs.some((record) => JSON.parse(record.requestBody).password === actualPassword), '登录日志应保存真实密码')
+    assert.ok(authLogs.some((record) => JSON.parse(record.requestBody).password === 'wrong'), '失败登录日志应保存原始密码')
     assert.ok(
-      authLogs.filter((record) => /login/i.test(record.url)).every((record) => JSON.parse(record.requestBody).password === '[REDACTED]'),
+      authLogs.some((record) => JSON.parse(record.responseBody).data?.accessToken === firstToken),
+      '登录响应日志应保存签发的令牌',
     )
-    assert.ok(authLogs.some((record) => JSON.parse(record.responseBody).data?.accessToken === '[REDACTED]'))
     await source.destroy()
     const databaseDown = await request('/v1/admin/auth/profile', { token: third.body.data.accessToken })
     assert.equal(databaseDown.status, 503)

@@ -8,7 +8,7 @@ import { getApiRelativePath, stripRouteVersionPrefix } from '../utils/throttle-r
 
 /**
  * 请求日志中间件
- * @description 记录所有 HTTP 请求的基本信息，异步写入数据库，不打印控制台日志；按设计捕获请求与响应体（超长截断），供审计排查
+ * @description 记录 HTTP 请求的基本信息，异步保存截断后的请求与响应体，正文按原始内容写入访问日志
  */
 @Injectable()
 export class LoggingMiddleware implements NestMiddleware {
@@ -31,14 +31,15 @@ export class LoggingMiddleware implements NestMiddleware {
 
     const userAgent = headers['user-agent'] || null
     const referer = headers['referer'] || null
-    const requestBody = this.serializeBody(req.body)
+    const serializeBody = this.serializeBody.bind(this)
+    const requestBody = serializeBody(req.body)
 
     // 拦截 res.send 以捕获响应体，供访问日志记录。
     const originalSend = res.send
     let responseBody: string | undefined
     res.send = function (this: Response, body: unknown): Response {
       if (body !== undefined && body !== null) {
-        responseBody = typeof body === 'string' ? body : JSON.stringify(body)
+        responseBody = serializeBody(body)
       }
       return originalSend.call(this, body)
     }
@@ -60,7 +61,7 @@ export class LoggingMiddleware implements NestMiddleware {
       }
       if (userAgent) logData.userAgent = userAgent
       if (referer) logData.referer = referer
-      if (requestBody) logData.requestBody = requestBody
+      if (requestBody) logData.requestBody = requestBody.slice(0, MAX_BODY_LENGTH)
       if (responseBody) logData.responseBody = responseBody.slice(0, MAX_BODY_LENGTH)
       void this.accessLogService.create(logData)
     })
@@ -82,16 +83,16 @@ export class LoggingMiddleware implements NestMiddleware {
   }
 
   /**
-   * 序列化请求体为字符串
-   * @description 将请求体序列化为 JSON 字符串，超长内容截断，失败返回 undefined
-   * @param body 请求体原始数据
+   * 序列化日志内容
+   * @description 按原始内容序列化请求或响应正文，二进制内容不记录
+   * @param body 请求或响应原始数据
    * @returns 序列化后的字符串或 undefined
    */
   private serializeBody(body: unknown): string | undefined {
     if (body === undefined || body === null) return undefined
+    if (Buffer.isBuffer(body)) return undefined
     try {
-      const str = typeof body === 'string' ? body : JSON.stringify(body)
-      return str.length > MAX_BODY_LENGTH ? str.slice(0, MAX_BODY_LENGTH) : str
+      return typeof body === 'string' ? body : JSON.stringify(body)
     } catch {
       return undefined
     }

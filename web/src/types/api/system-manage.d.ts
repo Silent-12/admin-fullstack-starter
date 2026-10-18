@@ -1,108 +1,245 @@
-import type { CommonSearchParams, PaginatedResponse } from './common'
+import type { PaginatedResponse } from './common'
 
 /**
- * 用户列表
- * @description 定义系统管理用户分页列表响应
+ * 后台分页筛选
+ * @description 后台权限管理使用的后台分页筛选
  */
-export type UserList = PaginatedResponse<UserListItem>
-
-/**
- * 用户列表项
- * @description 定义系统管理用户列表中的用户信息
- */
-export interface UserListItem {
-  // 用户 ID
-  id: number
-  // 用户头像
-  avatar: string
-  // 用户状态
-  status: string
-  // 用户名
-  userName: string
-  // 用户性别
-  userGender: string
-  // 用户昵称
-  nickName: string
-  // 用户手机号
-  userPhone: string
-  // 用户邮箱
-  userEmail: string
-  // 用户角色
-  userRoles: string[]
-  // 创建人
-  createBy: string
-  // 创建时间
-  createTime: string
-  // 更新人
-  updateBy: string
-  // 更新时间
-  updateTime: string
+export interface ManagementQuery {
+  // 可选页码
+  page?: number
+  // 可选每页条数
+  pageSize?: number
+  // 可选检索关键字
+  keyword?: string
+  // 可选启用状态
+  enabled?: boolean
 }
 
 /**
- * 用户搜索参数
- * @description 定义系统管理用户列表的筛选和分页参数
+ * 角色资料
+ * @description 后台权限管理使用的角色资料
  */
-export type UserSearchParams = Partial<
-  Pick<UserListItem, 'id' | 'userName' | 'userGender' | 'userPhone' | 'userEmail' | 'status'> &
-    CommonSearchParams
->
-
-/**
- * 角色列表
- * @description 定义系统管理角色分页列表响应
- */
-export type RoleList = PaginatedResponse<RoleListItem>
-
-/**
- * 角色列表项
- * @description 定义系统管理角色列表中的角色信息
- */
-export interface RoleListItem {
-  /** 角色 ID */
-  roleId: number
-  /** 角色名称 */
-  roleName: string
-  /** 角色编码 */
-  roleCode: string
-  /** 角色描述 */
+export interface Role {
+  // 角色 UUID
+  id: string
+  // 角色编码
+  code: string
+  // 角色名称
+  name: string
+  // 描述
   description: string
-  /** 是否启用 */
+  // 是否启用
   enabled: boolean
-  /** 创建时间 */
-  createTime: string
+  // 内置角色禁止修改或删除
+  isBuiltin: boolean
 }
 
 /**
- * 角色下拉选项
- * @description 供用户表单选择角色使用的精简结构，不含分页与审计字段，对应后端 `/v1/admin/roles/options`
+ * 角色写入
+ * @description 后台权限管理使用的角色写入
+ */
+export interface RoleInput {
+  // 角色编码
+  code: string
+  // 角色名称
+  name: string
+  // 描述
+  description: string
+  // 是否启用
+  enabled: boolean
+}
+
+/**
+ * 角色选项
+ * @description 后端仅返回启用、非内置且不超出当前操作者授权范围的角色选项
  */
 export interface RoleOption {
-  /** 角色编码 */
-  roleCode: string
-  /** 角色名称 */
-  roleName: string
+  // 角色 UUID
+  id: string
+  // 角色编码
+  code: string
+  // 角色名称
+  name: string
 }
 
 /**
- * 角色搜索参数
- * @description 定义系统管理角色列表的筛选和分页参数
+ * 用户资料
+ * @description 后台权限管理使用的用户资料
  */
-export type RoleSearchParams = Partial<
-  Pick<RoleListItem, 'roleId' | 'roleName' | 'roleCode' | 'description' | 'enabled'> &
-    CommonSearchParams & {
-      // 开始时间
-      startTime: string | null
-      // 结束时间
-      endTime: string | null
-    }
->
+export interface ManagedUser {
+  // 用户 UUID
+  id: string
+  // 登录名
+  username: string
+  // 姓名
+  name: string
+  // 手机号
+  phone: string | null
+  // 邮箱
+  email: string | null
+  // 头像地址
+  avatar: string | null
+  // 是否启用
+  enabled: boolean
+  // 角色主键
+  roleIds: string[]
+  // 角色编码
+  roleCodes: string[]
+  // 是否内置账号，内置账号由系统创建且禁止删除
+  isBuiltin: boolean
+  // 创建时间 Unix 秒
+  createTime: number
+  // 最近登录时间 Unix 秒
+  lastLoginTime: number | null
+}
 
 /**
- * 角色搜索表单参数
- * @description 在角色查询参数基础上补充表单日期区间，提交查询时拆分为起止时间
+ * 用户写入
+ * @description 后台权限管理使用的用户写入
  */
-export type RoleSearchFormParams = RoleSearchParams & {
-  // 可选的创建日期区间
-  daterange?: string[]
+export interface UserInput {
+  // 登录名
+  username: string
+  // 姓名
+  name: string
+  // 新建时必填密码
+  password?: string
+  // 手机号
+  phone: string | null
+  // 邮箱
+  email: string | null
+  // 头像地址
+  avatar: string | null
+  // 是否启用
+  enabled: boolean
+  // 原子保存的角色主键
+  roleIds: string[]
 }
+
+/**
+ * 权限资源写入
+ * @description 后台权限管理使用的权限资源写入
+ */
+export interface ResourceInput {
+  // 父节点 UUID，根节点为 null
+  parentId: string | null
+  // 资源类型
+  type: 'directory' | 'menu' | 'button'
+  // 显示名称
+  title: string
+  // 路由名称
+  name: string | null
+  // 路由路径
+  path: string | null
+  // 页面组件
+  component: string | null
+  // 图标
+  icon: string | null
+  // 前端操作权限编码
+  permission: string | null
+  // 是否启用
+  enabled: boolean
+  // 排序
+  sort: number
+  // 是否隐藏
+  hidden: boolean
+  // 是否缓存
+  keepAlive: boolean
+  // 原子保存的接口编码
+  apiCodes: string[]
+}
+
+/**
+ * 权限资源树
+ * @description 后台权限管理使用的权限资源树
+ */
+export interface Resource extends ResourceInput {
+  // 内置资源身份和位置受保护
+  isBuiltin: boolean
+  // 资源 UUID
+  id: string
+  // 可选子资源
+  children?: Resource[]
+}
+
+/**
+ * 真实接口目录
+ * @description 后台权限管理使用的真实接口目录
+ */
+export interface ApiResource {
+  // 稳定接口编码
+  code: string
+  // 模块标签
+  module: string
+  // 功能标签
+  feature: string
+  // 动作标签
+  action: string
+  // HTTP 方法
+  method: string
+  // 注册路径
+  path: string
+  // 访问级别
+  access: 'public' | 'authenticated' | 'permission'
+  // 搜索别名
+  aliases: string[]
+  // 排序
+  sort: number
+}
+
+/**
+ * 可绑定接口树
+ * @description 后台权限管理使用的可绑定接口树
+ */
+export interface ApiTreeNode {
+  // 分支键或接口编码
+  key: string
+  // 节点名称
+  label: string
+  // 节点类型
+  kind: 'module' | 'feature' | 'api'
+  // 是否允许绑定
+  selectable: boolean
+  // 可选子节点
+  children?: ApiTreeNode[]
+  // 可选 HTTP 方法
+  method?: string
+  // 可选注册路径
+  path?: string
+}
+
+/**
+ * RoleList
+ * @description 后台管理响应与写入类型
+ */
+export type RoleList = PaginatedResponse<Role>
+
+/**
+ * UserList
+ * @description 后台管理响应与写入类型
+ */
+export type UserList = PaginatedResponse<ManagedUser>
+
+/**
+ * ApiResourceList
+ * @description 后台管理响应与写入类型
+ */
+export type ApiResourceList = PaginatedResponse<ApiResource>
+
+/**
+ * ApiLabelsInput
+ * @description 后台管理响应与写入类型
+ */
+export type ApiLabelsInput = Pick<ApiResource, 'module' | 'feature' | 'action' | 'aliases' | 'sort'>
+
+/**
+ * 用户资料更新
+ * @description 用户名与密码不得通过资料接口修改
+ */
+export type UpdateUserInput = Omit<UserInput, 'username' | 'password'>
+
+/**
+ * 角色资料更新
+ * @description 角色编码创建后不可变
+ */
+export type UpdateRoleInput = Omit<RoleInput, 'code'>

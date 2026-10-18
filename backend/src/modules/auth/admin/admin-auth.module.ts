@@ -9,6 +9,9 @@ import { AdminAuthService } from './admin-auth.service.js'
 import { AdminAuthGuard } from './admin-auth.guard.js'
 import { LoginThrottleService } from './login-throttle.service.js'
 import { PasswordService } from './password.service.js'
+import { ApiResourceModule } from '../../api-resource/admin/api-resource.module.js'
+import { RbacModule } from '../../rbac/admin/rbac.module.js'
+import { AdminRbacBootstrapService } from './admin-rbac-bootstrap.service.js'
 
 /**
  * 后台认证模块
@@ -16,6 +19,8 @@ import { PasswordService } from './password.service.js'
  */
 @Module({
   imports: [
+    ApiResourceModule,
+    RbacModule,
     TypeOrmModule.forFeature([AdminUser]),
     // 签名与校验算法固定为 HS256，密钥取自环境变量 `JWT_SECRET`
     JwtModule.registerAsync({
@@ -28,6 +33,12 @@ import { PasswordService } from './password.service.js'
     }),
   ],
   controllers: [AdminAuthController],
-  providers: [AdminAuthService, PasswordService, LoginThrottleService, { provide: APP_GUARD, useClass: AdminAuthGuard }],
+  providers: [
+    AdminAuthService,
+    PasswordService,
+    LoginThrottleService,
+    AdminRbacBootstrapService,
+    { provide: APP_GUARD, useClass: AdminAuthGuard },
+  ],
 })
 export class AdminAuthModule {}

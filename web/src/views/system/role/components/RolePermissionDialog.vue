@@ -1,239 +1,97 @@
 <template>
   <ElDialog
     v-model="visible"
-    title="菜单权限"
-    width="520px"
-    align-center
-    class="el-dialog-border"
-    @close="handleClose"
+    title="资源授权"
+    width="640px"
+    :close-on-click-modal="false"
+    :close-on-press-escape="!busy"
   >
-    <ElScrollbar height="70vh">
+    <ElAlert
+      title="目录、菜单与按钮独立授权，勾选父节点不会自动授权子节点"
+      type="info"
+      :closable="false"
+    />
+    <ElScrollbar height="420px" v-loading="loading">
       <ElTree
-        ref="treeRef"
-        :data="processedMenuList"
+        ref="tree"
+        :data="resources"
+        node-key="id"
         show-checkbox
-        node-key="name"
-        :default-expand-all="isExpandAll"
-        :default-checked-keys="[1, 2, 3]"
-        :props="defaultProps"
-        @check="handleTreeCheck"
-      >
-        <template #default="{ data }">
-          <div class="tree-node-content">
-            <span v-if="data.isAuth">
-              {{ data.label }}
-            </span>
-            <span v-else>{{ defaultProps.label(data) }}</span>
-          </div>
-        </template>
-      </ElTree>
+        check-strictly
+        default-expand-all
+        :props="{ label: 'title', children: 'children', disabled: () => busy }"
+      />
     </ElScrollbar>
     <template #footer>
-      <ElButton @click="outputSelectedData" class="permission-footer-button">获取选中数据</ElButton>
-
-      <ElButton @click="toggleExpandAll">{{ isExpandAll ? '全部收起' : '全部展开' }}</ElButton>
-      <ElButton @click="toggleSelectAll" class="permission-footer-button">{{
-        isSelectAll ? '取消全选' : '全部选择'
-      }}</ElButton>
-      <ElButton type="primary" @click="savePermission">保存</ElButton>
+      <ElButton :disabled="busy" @click="visible = false">取消</ElButton>
+      <ElButton type="primary" :loading="busy" :disabled="loading || !ready" @click="save">
+        保存
+      </ElButton>
     </template>
   </ElDialog>
 </template>
 
 <script setup lang="ts">
-  import { computed, ref, watch } from 'vue'
-  import { storeToRefs } from 'pinia'
-  import { ElButton, ElDialog, ElMessage, ElScrollbar, ElTree } from 'element-plus'
-  import { useMenuStore } from '@/store/modules/menu'
-  import { formatMenuTitle } from '@/utils/router'
-  import type { RolePermissionDialogProps, RolePermissionDialogEmits, MenuNode } from '../types'
+  import { nextTick, ref } from 'vue'
+  import { ElAlert, ElButton, ElDialog, ElScrollbar, ElTree } from 'element-plus'
+  import { fetchGetMenuTree, fetchRoleResources, updateRoleResources } from '@/api/system-manage'
+  import type { Resource } from '@/types/api/system-manage'
+  import { useDialogForm } from '@/hooks/useDialogForm'
 
-  const props = withDefaults(defineProps<RolePermissionDialogProps>(), {
-    modelValue: false,
-    roleData: undefined
+  const props = defineProps<{ modelValue: boolean; roleId?: string }>()
+  const emit = defineEmits<{ 'update:modelValue': [boolean]; success: [] }>()
+
+  /** 完整资源树与树实例引用 */
+  const resources = ref<Resource[]>([])
+  const tree = ref<InstanceType<typeof ElTree>>()
+
+  /** 授权弹窗状态与提交生命周期 */
+  const { visible, loading, ready, busy, save } = useDialogForm({
+    open: () => props.modelValue,
+    close: () => emit('update:modelValue', false),
+    /**
+     * @description 创建空白授权模型
+     * @return 授权表单初值
+     */
+    createForm: () => ({ resourceIds: [] as string[] }),
+    /**
+     * @description 重置弹窗时清空上一次加载的资源树
+     */
+    reset: () => {
+      resources.value = []
+    },
+    /**
+     * @description 从完整资源树及角色关系恢复勾选，关闭时使请求失效
+     * @param model 当前授权模型
+     * @param isCurrent 当前请求是否仍属于最新一次打开
+     * @return 详情加载完成时无返回值，请求失效或不允许编辑时返回 false
+     */
+    load: async (model, isCurrent) => {
+      if (!props.roleId) return false
+      const [nodes, grants] = await Promise.all([
+        fetchGetMenuTree(),
+        fetchRoleResources(props.roleId)
+      ])
+      if (!isCurrent()) return false
+      resources.value = nodes
+      model.value = { resourceIds: [...grants.resourceIds] }
+      await nextTick()
+      if (!isCurrent()) return false
+      tree.value?.setCheckedKeys(model.value.resourceIds)
+    },
+    /**
+     * @description 提交前确认已选中角色
+     * @return 是否允许提交
+     */
+    validate: () => Boolean(props.roleId),
+    /**
+     * @description 保存独立勾选的资源 UUID
+     */
+    submit: async () => {
+      await updateRoleResources(props.roleId!, (tree.value?.getCheckedKeys() || []).map(String))
+    },
+    successMessage: '授权保存成功',
+    /** @description 保存成功后通知角色列表刷新 */
+    success: () => emit('success')
   })
-
-  const emit = defineEmits<RolePermissionDialogEmits>()
-
-  const { menuList } = storeToRefs(useMenuStore())
-  const treeRef = ref()
-  const isExpandAll = ref(true)
-  const isSelectAll = ref(false)
-
-  /**
-   * @description 弹窗显示状态双向绑定
-   */
-  const visible = computed({
-    get: () => props.modelValue,
-    set: (value) => emit('update:modelValue', value)
-  })
-
-  /**
-   * @description 处理菜单数据，将 authList 转换为树形子节点
-   * 递归处理菜单树，将权限列表展开为可选择的子节点
-   */
-  const processedMenuList = computed(() => {
-    const processNode = (node: MenuNode): MenuNode => {
-      const processed = { ...node }
-
-      // 如果有 authList，将其转换为子节点
-      if (node.meta?.authList?.length) {
-        const authNodes = node.meta.authList.map((auth) => ({
-          id: `${node.id}_${auth.authMark}`,
-          name: `${node.name}_${auth.authMark}`,
-          label: auth.title,
-          authMark: auth.authMark,
-          isAuth: true,
-          checked: auth.checked || false
-        }))
-
-        processed.children = processed.children ? [...processed.children, ...authNodes] : authNodes
-      }
-
-      // 递归处理子节点
-      if (processed.children) {
-        processed.children = processed.children.map(processNode)
-      }
-
-      return processed
-    }
-
-    return (menuList.value as MenuNode[]).map(processNode)
-  })
-
-  /**
-   * @description 树形组件配置
-   */
-  const defaultProps = {
-    children: 'children',
-    label: (data: MenuNode) => formatMenuTitle(data.meta?.title || '') || data.label || ''
-  }
-
-  /**
-   * @description 监听弹窗打开，初始化权限数据
-   */
-  watch(
-    () => props.modelValue,
-    (newVal) => {
-      if (newVal && props.roleData) {
-        // TODO: 根据角色加载对应的权限数据
-        console.log('设置权限:', props.roleData)
-      }
-    }
-  )
-
-  /**
-   * @description 关闭弹窗并清空选中状态
-   */
-  const handleClose = (): void => {
-    visible.value = false
-    treeRef.value?.setCheckedKeys([])
-  }
-
-  /**
-   * @description 保存权限配置
-   */
-  const savePermission = (): void => {
-    // TODO: 调用保存权限接口
-    ElMessage.success('权限保存成功')
-    emit('success')
-    handleClose()
-  }
-
-  /**
-   * @description 切换全部展开/收起状态
-   */
-  const toggleExpandAll = (): void => {
-    const tree = treeRef.value
-    if (!tree) return
-
-    const nodes = tree.store.nodesMap
-    // Element Plus 的内部节点类型较复杂，保留 any
-    Object.values(nodes).forEach((node: any) => {
-      node.expanded = !isExpandAll.value
-    })
-
-    isExpandAll.value = !isExpandAll.value
-  }
-
-  /**
-   * @description 切换全选/取消全选状态
-   */
-  const toggleSelectAll = (): void => {
-    const tree = treeRef.value
-    if (!tree) return
-
-    if (!isSelectAll.value) {
-      const allKeys = getAllNodeKeys(processedMenuList.value)
-      tree.setCheckedKeys(allKeys)
-    } else {
-      tree.setCheckedKeys([])
-    }
-
-    isSelectAll.value = !isSelectAll.value
-  }
-
-  /**
-   * @description 递归获取所有节点的 key
-   * @param nodes 节点列表
-   * @returns 所有节点的 key 数组
-   */
-  const getAllNodeKeys = (nodes: MenuNode[]): string[] => {
-    const keys: string[] = []
-    const traverse = (nodeList: MenuNode[]): void => {
-      nodeList.forEach((node) => {
-        if (node.name) keys.push(node.name)
-        if (node.children?.length) traverse(node.children)
-      })
-    }
-    traverse(nodes)
-    return keys
-  }
-
-  /**
-   * @description 处理树节点选中状态变化
-   * 同步更新全选按钮状态
-   */
-  const handleTreeCheck = (): void => {
-    const tree = treeRef.value
-    if (!tree) return
-
-    const checkedKeys = tree.getCheckedKeys()
-    const allKeys = getAllNodeKeys(processedMenuList.value)
-
-    isSelectAll.value = checkedKeys.length === allKeys.length && allKeys.length > 0
-  }
-
-  /**
-   * @description 输出选中的权限数据到控制台
-   * 用于调试和查看当前选中的权限配置
-   */
-  const outputSelectedData = (): void => {
-    const tree = treeRef.value
-    if (!tree) return
-
-    const selectedData = {
-      checkedKeys: tree.getCheckedKeys(),
-      halfCheckedKeys: tree.getHalfCheckedKeys(),
-      checkedNodes: tree.getCheckedNodes(),
-      halfCheckedNodes: tree.getHalfCheckedNodes(),
-      totalChecked: tree.getCheckedKeys().length,
-      totalHalfChecked: tree.getHalfCheckedKeys().length
-    }
-
-    console.log('=== 选中的权限数据 ===', selectedData)
-    ElMessage.success(`已输出选中数据到控制台，共选中 ${selectedData.totalChecked} 个节点`)
-  }
 </script>
-
-<style scoped lang="scss">
-  .permission-footer-button {
-    margin-left: 8px;
-  }
-
-  // 树节点内容容器
-  .tree-node-content {
-    display: flex;
-    align-items: center;
-  }
-</style>

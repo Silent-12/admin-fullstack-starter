@@ -1,157 +1,205 @@
 <template>
-  <ElDialog
-    v-model="dialogVisible"
-    :title="dialogType === 'add' ? '添加用户' : '编辑用户'"
-    width="30%"
-    align-center
+  <AoForm
+    ref="formRef"
+    v-model="form"
+    v-model:visible="visible"
+    :title="userId ? '编辑用户' : '新增用户'"
+    width="600px"
+    :items="items"
+    :rules="rules"
+    :validate-on-rule-change="false"
+    :disabled="busy || loading"
+    :disabled-submit="busy || loading || !ready"
+    @submit="save"
   >
-    <ElForm ref="formRef" :model="formData" :rules="rules" label-width="80px">
-      <ElFormItem label="用户名" prop="username">
-        <ElInput v-model="formData.username" placeholder="请输入用户名" />
-      </ElFormItem>
-      <ElFormItem label="手机号" prop="phone">
-        <ElInput v-model="formData.phone" placeholder="请输入手机号" />
-      </ElFormItem>
-      <ElFormItem label="性别" prop="gender">
-        <ElSelect v-model="formData.gender">
-          <ElOption label="男" value="男" />
-          <ElOption label="女" value="女" />
-        </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="角色" prop="role">
-        <ElSelect v-model="formData.role" multiple>
-          <ElOption
-            v-for="role in roleList"
-            :key="role.roleCode"
-            :value="role.roleCode"
-            :label="role.roleName"
-          />
-        </ElSelect>
-      </ElFormItem>
-    </ElForm>
     <template #footer>
-      <div class="dialog-footer">
-        <ElButton @click="dialogVisible = false">取消</ElButton>
-        <ElButton type="primary" @click="handleSubmit">提交</ElButton>
-      </div>
+      <ElButton :disabled="busy" @click="visible = false">取消</ElButton>
+      <ElButton
+        type="primary"
+        :loading="busy"
+        :disabled="loading || !ready"
+        @click="formRef?.submit()"
+      >
+        保存
+      </ElButton>
     </template>
-  </ElDialog>
+  </AoForm>
 </template>
 
 <script setup lang="ts">
-  import { computed, nextTick, reactive, ref, watch } from 'vue'
-  import {
-    ElButton,
-    ElDialog,
-    ElForm,
-    ElFormItem,
-    ElInput,
-    ElMessage,
-    ElOption,
-    ElSelect
-  } from 'element-plus'
-  import { fetchGetRoleOptions } from '@/api/system-manage'
+  import { computed, h, ref } from 'vue'
+  import { AoForm } from '@ao/admin-components'
+  import type { FormItem } from '@ao/admin-components'
+  import { ElAlert, ElButton } from 'element-plus'
+  import { createUser, fetchGetRoleOptions, fetchGetUser, updateUser } from '@/api/system-manage'
   import type { RoleOption } from '@/types/api/system-manage'
-  import type { FormInstance, FormRules } from 'element-plus'
-  import type { UserDialogProps, UserDialogEmits } from '../types'
+  import { useDialogForm } from '@/hooks/useDialogForm'
 
-  const props = withDefaults(defineProps<UserDialogProps>(), {
-    modelValue: false
-  })
-  const emit = defineEmits<UserDialogEmits>()
+  const props = defineProps<{ modelValue: boolean; userId?: string }>()
+  const emit = defineEmits<{ 'update:modelValue': [boolean]; success: [] }>()
 
-  // 角色下拉选项
-  const roleList = ref<RoleOption[]>([])
+  /** 表单引用、可分配角色与内置账号标记 */
+  const formRef = ref<InstanceType<typeof AoForm>>()
+  const roles = ref<RoleOption[]>([])
+  const builtinUser = ref(false)
 
-  /**
-   * @description 对话框显示控制双向绑定
-   */
-  const dialogVisible = computed({
-    get: () => props.modelValue,
-    set: (value) => emit('update:modelValue', value)
-  })
+  /** 弹窗表单状态与提交生命周期 */
 
-  const dialogType = computed(() => props.type)
-
-  // 表单实例
-  const formRef = ref<FormInstance>()
-
-  // 表单数据
-  const formData = reactive({
-    username: '',
-    phone: '',
-    gender: '男',
-    role: [] as string[]
-  })
-
-  // 表单验证规则
-  const rules: FormRules = {
-    username: [
-      { required: true, message: '请输入用户名', trigger: 'blur' },
-      { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
-    ],
-    phone: [
-      { required: true, message: '请输入手机号', trigger: 'blur' },
-      { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式', trigger: 'blur' }
-    ],
-    gender: [{ required: true, message: '请选择性别', trigger: 'blur' }],
-    role: [{ required: true, message: '请选择角色', trigger: 'blur' }]
-  }
-
-  /**
-   * @description 加载角色下拉选项
-   */
-  const fetchRoleOptions = async (): Promise<void> => {
-    roleList.value = await fetchGetRoleOptions()
-  }
-
-  /**
-   * @description 初始化表单数据
-   * 根据对话框类型（新增/编辑）填充表单
-   */
-  const initFormData = (): void => {
-    const isEdit = props.type === 'edit' && props.userData
-    const row = props.userData
-
-    Object.assign(formData, {
-      username: isEdit && row ? row.userName || '' : '',
-      phone: isEdit && row ? row.userPhone || '' : '',
-      gender: isEdit && row ? row.userGender || '男' : '男',
-      role: isEdit && row ? (Array.isArray(row.userRoles) ? row.userRoles : []) : []
-    })
-  }
-
-  /**
-   * @description 监听对话框状态变化
-   * 当对话框打开时初始化表单数据、加载角色选项并清除验证状态
-   */
-  watch(
-    () => [props.modelValue, props.type, props.userData],
-    ([visible]) => {
-      if (visible) {
-        initFormData()
-        fetchRoleOptions()
-        nextTick(() => {
-          formRef.value?.clearValidate()
-        })
+  const { form, visible, loading, ready, busy, save } = useDialogForm({
+    open: () => props.modelValue,
+    close: () => emit('update:modelValue', false),
+    /**
+     * @description 创建空白用户表单
+     * @return 用户表单初值
+     */
+    createForm: () => ({
+      username: '',
+      name: '',
+      password: '',
+      phone: '',
+      email: '',
+      avatar: '',
+      enabled: true,
+      roleIds: [] as string[]
+    }),
+    formRef,
+    /**
+     * @description 清理上一次打开残留的角色选项与内置账号标记
+     */
+    reset: () => {
+      roles.value = []
+      builtinUser.value = false
+    },
+    /**
+     * @description 打开时加载用户资料与可分配角色，忽略已失效的响应
+     * @param model 当前表单模型
+     * @param isCurrent 当前请求是否仍属于最新一次打开
+     * @return 资料加载完成时无返回值，请求失效时返回 false
+     */
+    load: async (model, isCurrent) => {
+      const [options, user] = await Promise.all([
+        fetchGetRoleOptions(),
+        props.userId ? fetchGetUser(props.userId) : Promise.resolve(null)
+      ])
+      if (!isCurrent()) return false
+      roles.value = options
+      if (!user) return
+      builtinUser.value = user.isBuiltin
+      model.value = {
+        username: user.username,
+        name: user.name,
+        password: '',
+        phone: user.phone || '',
+        email: user.email || '',
+        avatar: user.avatar || '',
+        enabled: user.enabled,
+        roleIds: [...user.roleIds]
       }
     },
-    { immediate: true }
-  )
-
-  /**
-   * @description 提交表单
-   * 验证通过后触发提交事件
-   */
-  const handleSubmit = async (): Promise<void> => {
-    if (!formRef.value) return
-
-    await formRef.value.validate((valid) => {
-      if (valid) {
-        ElMessage.success(dialogType.value === 'add' ? '添加成功' : '更新成功')
-        dialogVisible.value = false
-        emit('submit')
+    /**
+     * @description 提交前校验用户名、姓名与新建密码
+     * @param value 当前表单模型
+     * @return 是否允许提交
+     */
+    validate: (value) => {
+      if (!value.username.trim() || !value.name.trim()) return false
+      return Boolean(props.userId || value.password)
+    },
+    /**
+     * @description 保存基础资料及角色绑定，失败保留所有输入
+     * @param value 当前表单模型
+     */
+    submit: async (value) => {
+      const data = {
+        name: value.name.trim(),
+        phone: value.phone.trim() || null,
+        email: value.email.trim() || null,
+        avatar: value.avatar.trim() || null,
+        enabled: value.enabled,
+        roleIds: [...value.roleIds]
       }
-    })
-  }
+      if (props.userId) await updateUser(props.userId, data)
+      else await createUser({ ...data, username: value.username.trim(), password: value.password })
+    },
+    /** @description 保存成功后通知列表刷新 */
+    success: () => emit('success')
+  })
+
+  // 为已绑定但不在可分配选项中的角色补齐展示文案，避免下拉框直接显示 UUID
+  const roleOptions = computed(() => {
+    const options = roles.value.map((role) => ({ label: role.name, value: role.id }))
+    const known = new Set(roles.value.map((role) => role.id))
+    const missing = form.value.roleIds.filter((roleId) => !known.has(roleId))
+    return [
+      ...options,
+      ...missing.map((roleId) => ({ label: '已停用或不可用角色', value: roleId }))
+    ]
+  })
+
+  /** 表单项配置 */
+  const items = computed<FormItem[]>(() => [
+    {
+      key: 'username',
+      label: '用户名',
+      type: 'input',
+      props: {
+        maxlength: 64,
+        disabled: Boolean(props.userId),
+        placeholder: '仅小写字母，同名时自动追加数字后缀'
+      }
+    },
+    { key: 'name', label: '姓名', type: 'input', props: { maxlength: 64 } },
+    ...(!props.userId
+      ? [
+          {
+            key: 'password',
+            label: '初始密码',
+            type: 'input' as const,
+            props: { type: 'password', showPassword: true, autocomplete: 'new-password' }
+          }
+        ]
+      : []),
+    { key: 'phone', label: '手机号', type: 'input' },
+    { key: 'email', label: '邮箱', type: 'input' },
+    { key: 'avatar', label: '头像地址', type: 'input' },
+    // 内置账号的角色绑定与启用开关固定，仅允许维护基础资料
+    {
+      key: 'roleIds',
+      label: '角色',
+      type: 'select',
+      props: {
+        multiple: true,
+        disabled: builtinUser.value,
+        options: roleOptions.value
+      }
+    },
+    ...(builtinUser.value
+      ? [
+          {
+            key: 'roleHint',
+            label: '',
+            span: 24,
+            render: () =>
+              h(ElAlert, {
+                title: '内置管理员权限固定，不可修改',
+                type: 'info',
+                closable: false
+              })
+          }
+        ]
+      : []),
+    { key: 'enabled', label: '启用', type: 'switch', props: { disabled: builtinUser.value } }
+  ])
+
+  /** 表单校验规则 */
+  const rules = computed(() => ({
+    username: [
+      { required: true, pattern: /^[a-z]{1,64}$/, message: '用户名仅可使用 1 至 64 位小写字母' }
+    ],
+    name: [{ required: true, message: '请输入姓名' }],
+    password: [
+      { required: !props.userId, min: 12, max: 128, message: '密码长度为 12 至 128 个字符' }
+    ],
+    email: [{ type: 'email' as const, message: '请输入有效邮箱' }]
+  }))
 </script>

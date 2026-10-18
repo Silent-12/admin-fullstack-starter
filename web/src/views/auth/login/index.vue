@@ -85,7 +85,11 @@
   const rules: FormRules = {
     username: [
       { required: true, message: '请输入账号', trigger: 'blur' },
-      { pattern: /^[a-zA-Z]{1,64}$/, message: '账号仅允许1至64位英文字母', trigger: 'blur' }
+      {
+        pattern: /^[a-zA-Z][a-zA-Z0-9]{0,63}$/,
+        message: '账号须以字母开头，仅含字母或数字',
+        trigger: 'blur'
+      }
     ],
     password: [
       { required: true, message: '请输入密码', trigger: 'blur' },

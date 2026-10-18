@@ -4,14 +4,16 @@ import type { Request, Response } from 'express'
 import { ApiResponseDto } from '../../../common/dto/api-response.dto.js'
 import { getClientIp } from '../../../common/utils/client-ip.util.js'
 import { getDefaultErrorMessage } from '../../../common/utils/error-message.util.js'
-import type { AdminAuthRequest } from '../../../types/admin-auth.js'
+import type { AdminAuthRequest, AdminUserAuthorization } from '../../../types/admin-auth.js'
 import { AdminAuthService } from './admin-auth.service.js'
 import { LoginThrottleService } from './login-throttle.service.js'
 import { LoginDto } from './dto/login.dto.js'
+import { AdminApi } from '../../../common/auth/admin-api.decorator.js'
+import { RbacService } from '../../rbac/admin/rbac.service.js'
 
 /**
  * 后台认证控制器
- * @description 提供后台登录、当前用户信息与全端登出接口，路径统一为 `v1/admin/auth`；
+ * @description 提供后台登录、当前用户资料、授权与全端登出接口，路径统一为 `v1/admin/auth`；
  * 响应只包含当前流程所需的最小业务字段，不暴露实体或内部认证字段
  */
 @ApiTags('后台认证')
@@ -20,6 +22,7 @@ export class AdminAuthController {
   constructor(
     private readonly auth: AdminAuthService,
     private readonly throttle: LoginThrottleService,
+    private readonly rbac: RbacService,
   ) {}
 
   /**
@@ -32,6 +35,7 @@ export class AdminAuthController {
    * @returns 登录结果，`data` 为访问令牌与过期时间（Unix 秒）
    */
   @Post('login')
+  @AdminApi({ code: 'auth.login', module: '后台认证', feature: '会话', action: '登录', access: 'public' })
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
   @ApiOperation({ summary: '用户登录' })
@@ -52,11 +56,12 @@ export class AdminAuthController {
 
   /**
    * 获取当前用户信息
-   * @description 返回认证守卫写入请求上下文的当前用户最小展示资料，`userId` 为 UUID；`auth` 与 `roles` 当前为空数组
+   * @description 只返回当前用户最小展示资料，按钮权限与可访问菜单通过独立授权接口获取
    * @param request 已通过认证的请求，包含当前用户与令牌声明
-   * @returns 当前用户展示资料，包含 `userId`、`userName`、`name`、`email`、`avatar`、`auth` 与 `roles`
+   * @returns 当前用户展示资料
    */
   @Get('profile')
+  @AdminApi({ code: 'auth.profile', module: '后台认证', feature: '会话', action: '当前用户', access: 'authenticated' })
   @Header('Cache-Control', 'no-store')
   @ApiBearerAuth()
   @ApiOperation({ summary: '获取当前用户信息' })
@@ -69,8 +74,6 @@ export class AdminAuthController {
     name: string
     email: string | null
     avatar: string | null
-    auth: string[]
-    roles: string[]
   }> {
     const user = request.adminUser
     return ApiResponseDto.success({
@@ -79,8 +82,27 @@ export class AdminAuthController {
       name: user.name,
       email: user.email,
       avatar: user.avatar,
-      auth: [],
-      roles: [],
+    })
+  }
+
+  /**
+   * 获取当前用户授权
+   * @description 复用守卫已写入的授权快照返回按钮权限与导航树，不重复计算完整授权
+   * @param request 已通过身份验证的请求
+   * @returns 当前用户的按钮权限标识与可注册的业务路由树
+   */
+  @Get('authorization')
+  @AdminApi({ code: 'auth.authorization', module: '后台认证', feature: '会话', action: '当前授权', access: 'authenticated' })
+  @Header('Cache-Control', 'no-store')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '获取当前用户授权' })
+  @ApiResponse({ status: 200, description: '当前用户授权，data 为 { auth, menu }', type: ApiResponseDto })
+  @ApiResponse({ status: 401, description: '未登录或令牌已失效' })
+  @ApiResponse({ status: 503, description: getDefaultErrorMessage(HttpStatus.SERVICE_UNAVAILABLE) })
+  async authorization(@Req() request: AdminAuthRequest): Promise<ApiResponseDto<AdminUserAuthorization>> {
+    return ApiResponseDto.success({
+      auth: request.adminAuthorization.permissions,
+      menu: await this.rbac.getUserMenus(request.adminAuthorization),
     })
   }
 
@@ -91,6 +113,7 @@ export class AdminAuthController {
    * @returns 空数据响应，`data` 为 null
    */
   @Post('logout')
+  @AdminApi({ code: 'auth.logout', module: '后台认证', feature: '会话', action: '登出', access: 'authenticated' })
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
   @ApiBearerAuth()

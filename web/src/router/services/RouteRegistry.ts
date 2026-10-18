@@ -39,10 +39,15 @@ export class RouteRegistry {
     const result = this.validator.validate(routes, reservedRouteNames)
     if (!result.valid) throw new Error(`路由配置验证失败: ${result.errors.join(', ')}`)
 
-    this.removeRouteFns = routes.map((route) =>
-      this.router.addRoute(this.transformer.transform(route))
-    )
-    this.registered = true
+    try {
+      for (const route of routes) {
+        this.removeRouteFns.push(this.router.addRoute(this.transformer.transform(route)))
+      }
+      this.registered = true
+    } catch (error) {
+      this.unregister()
+      throw error
+    }
   }
 
   /**

@@ -556,19 +556,28 @@ test('具名路由包装使关闭缓存、启用缓存和关闭标签清理均�
   })
   globalThis.rbacRouteModules = { '../../views/system/user/index.vue': async () => page }
   const transformer = new RouteTransformer(new RouteComponentLoader())
+  let lazyLoads = 0
   const pages = await Promise.all(
     ['SystemUser', 'AnotherUser'].map(async (name) => {
       const route = transformer.transform({
         name,
         path: `/${name}`,
-        component: '/system/user',
+        component:
+          name === 'SystemUser'
+            ? '/system/user'
+            : async () => {
+                lazyLoads++
+                return { default: page }
+              },
         meta: { title: name }
       })
+      assert.equal(lazyLoads, 0, '转换路由时不执行页面懒加载')
       return route.component()
     })
   )
   assert.equal(pages[0].name, 'SystemUser')
   assert.equal(pages[1].name, 'AnotherUser')
+  assert.equal(lazyLoads, 1, '访问本地路由时才加载页面模块')
   assert.equal(page.name, 'User', '不修改共享页面组件的名称')
   const host = {
     createElement: () => ({ children: [] }),

@@ -1,160 +1,134 @@
 <template>
-  <ElDialog
-    v-model="visible"
-    :title="dialogType === 'add' ? '新增角色' : '编辑角色'"
-    width="30%"
-    align-center
-    @close="handleClose"
+  <AoForm
+    ref="formRef"
+    v-model="form"
+    v-model:visible="visible"
+    :title="roleId ? '编辑角色' : '新增角色'"
+    width="520px"
+    :items="items"
+    :rules="rules"
+    :validate-on-rule-change="false"
+    :disabled-submit="busy || loading || !ready"
+    :disabled="busy || loading"
+    @submit="save"
   >
-    <ElForm ref="formRef" :model="form" :rules="rules" label-width="120px">
-      <ElFormItem label="角色名称" prop="roleName">
-        <ElInput v-model="form.roleName" placeholder="请输入角色名称" />
-      </ElFormItem>
-      <ElFormItem label="角色编码" prop="roleCode">
-        <ElInput v-model="form.roleCode" placeholder="请输入角色编码" />
-      </ElFormItem>
-      <ElFormItem label="描述" prop="description">
-        <ElInput
-          v-model="form.description"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入角色描述"
-        />
-      </ElFormItem>
-      <ElFormItem label="启用">
-        <ElSwitch v-model="form.enabled" />
-      </ElFormItem>
-    </ElForm>
     <template #footer>
-      <ElButton @click="handleClose">取消</ElButton>
-      <ElButton type="primary" @click="handleSubmit">提交</ElButton>
+      <ElButton :disabled="busy" @click="visible = false">取消</ElButton>
+      <ElButton
+        type="primary"
+        :loading="busy"
+        :disabled="loading || !ready"
+        @click="formRef?.submit()"
+      >
+        保存
+      </ElButton>
     </template>
-  </ElDialog>
+  </AoForm>
 </template>
 
 <script setup lang="ts">
-  import { computed, reactive, ref, watch } from 'vue'
-  import {
-    ElButton,
-    ElDialog,
-    ElForm,
-    ElFormItem,
-    ElInput,
-    ElMessage,
-    ElSwitch
-  } from 'element-plus'
-  import type { FormInstance, FormRules } from 'element-plus'
-  import type { RoleEditDialogProps, RoleEditDialogEmits, RoleListItem } from '../types'
+  import { computed, ref } from 'vue'
+  import { AoForm } from '@ao/admin-components'
+  import type { FormItem } from '@ao/admin-components'
+  import { ElButton, ElMessage } from 'element-plus'
+  import { createRole, fetchGetRole, updateRole } from '@/api/system-manage'
+  import { useDialogForm } from '@/hooks/useDialogForm'
 
-  const props = withDefaults(defineProps<RoleEditDialogProps>(), {
-    modelValue: false,
-    dialogType: 'add',
-    roleData: undefined
-  })
+  const props = defineProps<{ modelValue: boolean; roleId?: string }>()
+  const emit = defineEmits<{ 'update:modelValue': [boolean]; success: [] }>()
 
-  const emit = defineEmits<RoleEditDialogEmits>()
+  /** 表单引用 */
+  const formRef = ref<InstanceType<typeof AoForm>>()
 
-  const formRef = ref<FormInstance>()
+  /** 弹窗表单状态与提交生命周期 */
 
-  /**
-   * @description 弹窗显示状态双向绑定
-   */
-  const visible = computed({
-    get: () => props.modelValue,
-    set: (value) => emit('update:modelValue', value)
-  })
-
-  /**
-   * @description 表单验证规则
-   */
-  const rules = reactive<FormRules>({
-    roleName: [
-      { required: true, message: '请输入角色名称', trigger: 'blur' },
-      { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
-    ],
-    roleCode: [
-      { required: true, message: '请输入角色编码', trigger: 'blur' },
-      { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
-    ],
-    description: [{ required: true, message: '请输入角色描述', trigger: 'blur' }]
-  })
-
-  /**
-   * @description 表单数据
-   */
-  const form = reactive<RoleListItem>({
-    roleId: 0,
-    roleName: '',
-    roleCode: '',
-    description: '',
-    createTime: '',
-    enabled: true
-  })
-
-  /**
-   * @description 监听弹窗打开，初始化表单数据
-   */
-  watch(
-    () => props.modelValue,
-    (newVal) => {
-      if (newVal) initForm()
-    }
-  )
-
-  /**
-   * @description 监听角色数据变化，更新表单
-   */
-  watch(
-    () => props.roleData,
-    (newData) => {
-      if (newData && props.modelValue) initForm()
+  const { form, visible, loading, ready, busy, save } = useDialogForm({
+    open: () => props.modelValue,
+    close: () => emit('update:modelValue', false),
+    /**
+     * @description 创建空白角色表单
+     * @return 角色表单初值
+     */
+    createForm: () => ({ code: '', name: '', description: '', enabled: true }),
+    formRef,
+    /**
+     * @description 打开时重新读取角色详情，关闭使旧请求失效
+     * @param model 当前表单模型
+     * @param isCurrent 当前请求是否仍属于最新一次打开
+     * @return 详情加载完成时无返回值，请求失效或不允许编辑时返回 false
+     */
+    load: async (model, isCurrent) => {
+      if (!props.roleId) return
+      const role = await fetchGetRole(props.roleId)
+      if (!isCurrent()) return false
+      if (role.isBuiltin) {
+        ElMessage.warning('内置角色不可修改')
+        emit('update:modelValue', false)
+        return false
+      }
+      model.value = {
+        code: role.code,
+        name: role.name,
+        description: role.description || '',
+        enabled: role.enabled
+      }
     },
-    { deep: true }
-  )
+    /**
+     * @description 提交前校验角色编码与名称
+     * @param value 当前表单模型
+     * @return 是否允许提交
+     */
+    validate: (value) => Boolean(value.code.trim() && value.name.trim()),
+    /**
+     * @description 保存角色资料，编码创建后不可修改
+     * @param value 当前表单模型
+     */
+    submit: async (value) => {
+      const data = {
+        code: value.code.trim(),
+        name: value.name.trim(),
+        description: value.description.trim(),
+        enabled: value.enabled
+      }
+      if (props.roleId)
+        await updateRole(props.roleId, {
+          name: data.name,
+          description: data.description,
+          enabled: data.enabled
+        })
+      else await createRole(data)
+    },
+    /** @description 保存成功后通知列表刷新 */
+    success: () => emit('success')
+  })
 
-  /**
-   * @description 初始化表单数据
-   * 根据弹窗类型填充表单或重置表单
-   */
-  const initForm = (): void => {
-    if (props.dialogType === 'edit' && props.roleData) {
-      Object.assign(form, props.roleData)
-    } else {
-      Object.assign(form, {
-        roleId: 0,
-        roleName: '',
-        roleCode: '',
-        description: '',
-        createTime: '',
-        enabled: true
-      })
-    }
-  }
+  /** 表单项配置 */
+  const items = computed<FormItem[]>(() => [
+    {
+      key: 'code',
+      label: '角色编码',
+      type: 'input',
+      props: { maxlength: 64, disabled: Boolean(props.roleId) }
+    },
+    { key: 'name', label: '角色名称', type: 'input', props: { maxlength: 64 } },
+    {
+      key: 'description',
+      label: '描述',
+      type: 'input',
+      props: { type: 'textarea', maxlength: 255 }
+    },
+    { key: 'enabled', label: '启用', type: 'switch' }
+  ])
 
-  /**
-   * @description 关闭弹窗并重置表单
-   */
-  const handleClose = (): void => {
-    visible.value = false
-    formRef.value?.resetFields()
-  }
-
-  /**
-   * @description 提交表单
-   * 验证通过后调用接口保存数据
-   */
-  const handleSubmit = async (): Promise<void> => {
-    if (!formRef.value) return
-
-    try {
-      await formRef.value.validate()
-      // TODO: 调用新增/编辑接口
-      const message = props.dialogType === 'add' ? '新增成功' : '修改成功'
-      ElMessage.success(message)
-      emit('success')
-      handleClose()
-    } catch (error) {
-      console.log('表单验证失败:', error)
-    }
+  /** 表单校验规则 */
+  const rules = {
+    code: [
+      {
+        required: true,
+        pattern: /^[a-z][a-z0-9_]{1,63}$/,
+        message: '编码为 2 至 64 位小写字母、数字或下划线，以字母开头'
+      }
+    ],
+    name: [{ required: true, message: '请输入角色名称' }]
   }
 </script>

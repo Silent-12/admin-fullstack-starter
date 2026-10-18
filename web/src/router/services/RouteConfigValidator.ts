@@ -2,7 +2,30 @@
  * 业务系统路由配置校验服务
  */
 import type { AppRouteRecord } from '@/types/router'
-import { RoutePath } from '@/router/constants'
+import { BUSINESS_ROUTE_PATH_PATTERN, RoutePath } from '@/router/constants'
+import { publicRoutes } from '@/router/routes/public'
+
+const publicRouteNames = new Set(
+  publicRoutes.flatMap(function names(route): string[] {
+    return [String(route.name), ...(route.children || []).flatMap(names)]
+  })
+)
+
+/**
+ * @description 校验菜单表单与动态路由共用的名称和静态路径契约
+ * @param name 路由名称
+ * @param path 绝对或相对静态路径
+ * @return 校验失败的中文提示
+ */
+export function validateBusinessRouteIdentity(name: string, path: string): string[] {
+  const errors: string[] = []
+  if (!/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(name))
+    errors.push('路由名称须为字母开头的英文、数字或下划线，最长64位')
+  if (publicRouteNames.has(name)) errors.push('路由名称与系统公共路由冲突')
+  if (!BUSINESS_ROUTE_PATH_PATTERN.test(path))
+    errors.push('路由路径须为静态路径，仅支持英文、数字、下划线、连字符和单斜杠分隔')
+  return errors
+}
 
 export interface RouteValidationResult {
   valid: boolean
@@ -21,7 +44,7 @@ export class RouteConfigValidator {
     reservedRouteNames: Set<string> = new Set()
   ): RouteValidationResult {
     const errors: string[] = []
-    const routeNames = new Set(reservedRouteNames)
+    const routeNames = new Set([...publicRouteNames, ...reservedRouteNames])
 
     routes.forEach((route) => this.validateRoute(route, 0, routeNames, errors))
     return { valid: errors.length === 0, errors }
@@ -44,6 +67,7 @@ export class RouteConfigValidator {
     const routeLabel = String(route.name || route.path || 'unknown')
     if (!route.path) errors.push(`路由 ${routeLabel} 缺少 path`)
     if (!route.name) errors.push(`路由 ${routeLabel} 缺少 name`)
+    errors.push(...validateBusinessRouteIdentity(String(route.name || ''), route.path))
 
     if (route.name) {
       const name = String(route.name)
@@ -56,6 +80,7 @@ export class RouteConfigValidator {
     }
 
     if (depth === 0) {
+      if (!route.path.startsWith('/')) errors.push(`业务系统 ${routeLabel} 必须使用绝对路径`)
       if (route.component !== RoutePath.LayoutComponent) {
         errors.push(`业务系统 ${routeLabel} 必须使用 ${RoutePath.LayoutComponent} 作为布局组件`)
       }

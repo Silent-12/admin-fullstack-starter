@@ -68,7 +68,7 @@ app.use(language)
 // 公共组件包：注册 v-loading 指令、合并包语言包、注入权限与本地资源解析
 app.use(AdminComponents, {
   i18n: language,
-  getAuthList: () => useUserStore().info?.auth,
+  getAuthList: () => useUserStore().auth,
   resolveLocalSvg,
   assets: { logo: logoUrl }
 })

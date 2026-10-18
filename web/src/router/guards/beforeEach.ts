@@ -6,11 +6,11 @@ import NProgress from 'nprogress'
 import { useUserStore } from '@/store/modules/user'
 import { useMenuStore } from '@/store/modules/menu'
 import { useWorktabStore } from '@ao/admin-layout'
-import { fetchGetUserInfo } from '@/api/auth'
+import { fetchGetUserAuthorization, fetchGetUserInfo } from '@/api/auth'
 import { setWorktab } from '@/utils/navigation'
 import { setPageTitle } from '@/utils/router'
 import { loadingService } from '@/utils/ui'
-import { RoutePath } from '@/router/constants'
+import { getRouteSource, RoutePath } from '@/router/constants'
 import { MenuRouteService, RouteRegistry } from '@/router/services'
 import { ApiStatus } from '@/utils/http/status'
 import { isHttpError } from '@/utils/http/error'
@@ -90,7 +90,7 @@ async function handleRouteGuard(
 
   if (to.path === RoutePath.Root) {
     const homePath = useMenuStore().getHomePath()
-    return homePath ? { path: homePath, replace: true } : { name: 'Exception404', replace: true }
+    return homePath ? { path: homePath, replace: true } : { name: 'Exception403', replace: true }
   }
 
   if (!to.matched.length) return { name: 'Exception404', replace: true }
@@ -102,7 +102,7 @@ async function handleRouteGuard(
 }
 
 /**
- * @description 初始化用户信息与业务路由，401清理会话，其他失败保留凭证并进入异常页恢复
+ * @description 独立加载用户资料与授权后初始化业务路由，401清理会话，其他失败保留凭证并进入异常页恢复
  * @param to 初始化时的目标路由。
  * @param router Vue Router 实例。
  * @return 恢复目标地址、进入异常页或取消原导航并跳转登录页的处理结果。
@@ -127,22 +127,32 @@ async function initializeApplicationRoutes(
       initializationVersion !== routeInitVersion
     )
       return false
-    userStore.setUserInfo(info)
-    userStore.checkAndClearWorktabs()
-    const routes = await menuRouteService.getRoutes()
+    const authorization =
+      getRouteSource() === 'dynamic' ? await fetchGetUserAuthorization() : { auth: [], menu: [] }
     if (
       sessionVersion !== userStore.getSessionVersion() ||
       initializationVersion !== routeInitVersion
     )
       return false
-    if (!routes.length) throw new Error('未获取到业务系统路由')
+
+    userStore.setUserInfo(info)
+    userStore.setAuth(authorization.auth)
+    userStore.checkAndClearWorktabs()
+    const routes = menuRouteService.getRoutes(authorization.menu)
+
+    // 空授权菜单不注册路由，否则 registered 会被置为 true，后续无法重新初始化
+    if (!routes.length) {
+      useMenuStore().clearApplications()
+      closeLoading()
+      routeInitInProgress = false
+      return { name: 'Exception403', replace: true }
+    }
 
     routeRegistry?.register(routes)
     useMenuStore().setApplicationList(routes, to.path)
     useWorktabStore().validateWorktabs(router)
     // 初始化成功，重置进行中标记
     routeInitInProgress = false
-
     return { path: to.path, query: to.query, hash: to.hash, replace: true }
   } catch (error) {
     if (

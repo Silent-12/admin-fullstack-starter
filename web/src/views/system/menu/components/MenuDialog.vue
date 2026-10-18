@@ -1,371 +1,339 @@
 <template>
-  <!-- AoForm 默认弹窗表单模式：底部为 取消 / 确定，确定 = 校验 + submit；表单重置在 closed 回调中处理 -->
   <AoForm
     ref="formRef"
     v-model="form"
     v-model:visible="visible"
-    :title="dialogTitle"
-    width="860px"
-    align-center
-    :items="formItems"
+    :title="resourceId ? '编辑资源' : '新增资源'"
+    width="820px"
+    :items="items"
     :rules="rules"
-    :span="width > 640 ? 12 : 24"
-    :gutter="20"
-    label-width="100px"
-    @submit="handleSubmit"
-    @closed="handleClosed"
+    :validate-on-rule-change="false"
+    :span="12"
+    :disabled="busy || loading"
+    :disabled-submit="busy || loading || !ready || (form.type !== 'directory' && !apiReady)"
+    @submit="save"
   >
-    <template #menuType>
-      <ElRadioGroup v-model="form.menuType" :disabled="disableMenuType">
-        <ElRadioButton value="menu" label="menu">菜单</ElRadioButton>
-        <ElRadioButton value="button" label="button">按钮</ElRadioButton>
-      </ElRadioGroup>
+    <template #parentId>
+      <ElTreeSelect
+        v-model="form.parentId"
+        :data="parents"
+        node-key="id"
+        :props="{ label: 'title', children: 'children', disabled: 'disabled' }"
+        check-strictly
+        clearable
+        placeholder="不选择表示根节点"
+        :disabled="busy || loading || builtin"
+      />
+    </template>
+    <template #apiCodes>
+      <ApiTreeSelector
+        v-if="modelValue && ready && form.type !== 'directory'"
+        :key="resourceId || 'new'"
+        v-model="form.apiCodes"
+        :disabled="busy || builtin"
+        @ready="apiReady = $event"
+      />
+    </template>
+    <template #footer>
+      <ElButton :disabled="busy" @click="visible = false">取消</ElButton>
+      <ElButton
+        type="primary"
+        :loading="busy"
+        :disabled="loading || !ready || (form.type !== 'directory' && !apiReady)"
+        @click="formRef?.submit()"
+      >
+        保存
+      </ElButton>
     </template>
   </AoForm>
 </template>
 
 <script setup lang="ts">
-  import { computed, h, nextTick, reactive, ref, watch } from 'vue'
-  import { ElMessage, ElRadioButton, ElRadioGroup } from 'element-plus'
-  import type { FormRules } from 'element-plus'
-  import { ElIcon, ElTooltip } from 'element-plus'
-  import { QuestionFilled } from '@element-plus/icons-vue'
-  import { formatMenuTitle } from '@/utils/router'
-  import type { FormItem } from '@ao/admin-components'
+  import { computed, ref, watch, type Ref } from 'vue'
   import { AoForm } from '@ao/admin-components'
-  import { useWindowSize } from '@vueuse/core'
-  import type { MenuDialogProps, MenuDialogEmits, MenuDialogFormData } from '../types'
-  import type { AppRouteRecord } from '@/types/router'
-  import type { AuthEditData } from '../types'
+  import type { FormItem } from '@ao/admin-components'
+  import { ElButton, ElMessage, ElTreeSelect } from 'element-plus'
+  import { createMenu, fetchGetMenu, updateMenu } from '@/api/system-manage'
+  import type { Resource, ResourceInput } from '@/types/api/system-manage'
+  import { validateBusinessRouteIdentity } from '@/router/services/RouteConfigValidator'
+  import { useDialogForm } from '@/hooks/useDialogForm'
+  import ApiTreeSelector from './ApiTreeSelector.vue'
 
-  const { width } = useWindowSize()
+  const props = defineProps<{
+    modelValue: boolean
+    resourceId?: string
+    parentId?: string
+    resources: Resource[]
+  }>()
+  const emit = defineEmits<{ 'update:modelValue': [boolean]; success: [] }>()
+
+  /** 表单引用、接口检索就绪状态与内置资源标记 */
+  const formRef = ref<InstanceType<typeof AoForm>>()
+  const apiReady = ref(false)
+  const builtin = ref(false)
 
   /**
-   * @description 创建带 tooltip 的表单标签
-   * @param label 标签文本
-   * @param tooltip 提示文本
-   * @returns 渲染函数
+   * @description 在完整资源树中查找指定节点
+   * @param nodes 资源树节点
+   * @param id 目标资源 ID
+   * @return 命中的资源节点，未找到时返回 undefined
    */
-  const createLabelTooltip = (label: string, tooltip: string) => {
-    return () =>
-      h('span', { class: 'label-tooltip' }, [
-        h('span', label),
-        h(
-          ElTooltip,
-          {
-            content: tooltip,
-            placement: 'top'
-          },
-          () => h(ElIcon, { class: 'help-icon' }, () => h(QuestionFilled))
-        )
-      ])
+  const findResource = (nodes: Resource[], id?: string): Resource | undefined => {
+    for (const node of nodes) {
+      if (node.id === id) return node
+      const found = findResource(node.children || [], id)
+      if (found) return found
+    }
+    return undefined
   }
 
-  const props = withDefaults(defineProps<MenuDialogProps>(), {
-    modelValue: false,
-    type: 'menu',
-    lockType: false
-  })
-
-  const emit = defineEmits<MenuDialogEmits>()
-
-  const formRef = ref()
-
   /**
-   * @description 弹窗显示状态双向绑定
+   * @description 为新建资源创建完整初值，父节点类型决定子节点默认类型
+   * @return 新建资源表单初值
    */
-  const visible = computed({
-    get: () => props.modelValue,
-    set: (value) => emit('update:modelValue', value)
-  })
-  const isEdit = ref(false)
-
-  const form = reactive<MenuDialogFormData>({
-    menuType: 'menu',
-    id: 0,
+  const initial = (): ResourceInput => ({
+    parentId: props.parentId || null,
+    type: !props.parentId
+      ? 'directory'
+      : findResource(props.resources, props.parentId)?.type === 'menu'
+        ? 'button'
+        : 'menu',
+    title: '',
     name: '',
     path: '',
-    label: '',
-    component: '',
+    component: props.parentId ? '' : '/index/index',
     icon: '',
-    isEnable: true,
-    sort: 1,
-    isMenu: true,
-    keepAlive: true,
-    isHide: false,
-    isHideTab: false,
-    link: '',
-    isIframe: false,
-    showBadge: false,
-    showTextBadge: '',
-    fixedTab: false,
-    activePath: '',
-    roles: [],
-    isFullPage: false,
-    authName: '',
-    authLabel: '',
-    authIcon: '',
-    authSort: 1
-  })
-
-  const rules = reactive<FormRules>({
-    name: [
-      { required: true, message: '请输入菜单名称', trigger: 'blur' },
-      { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
-    ],
-    path: [{ required: true, message: '请输入路由地址', trigger: 'blur' }],
-    label: [{ required: true, message: '输入权限标识', trigger: 'blur' }],
-    authName: [{ required: true, message: '请输入权限名称', trigger: 'blur' }],
-    authLabel: [{ required: true, message: '请输入权限标识', trigger: 'blur' }]
+    permission: '',
+    enabled: true,
+    sort: 0,
+    hidden: false,
+    keepAlive: false,
+    apiCodes: []
   })
 
   /**
-   * @description 表单项配置
+   * @description 编辑时读取资源详情，仅将当前请求的响应写入表单
+   * @param model 当前表单模型
+   * @param isCurrent 当前请求是否仍属于最新一次打开
+   * @return 详情加载完成时无返回值，请求失效或不允许编辑时返回 false
    */
-  const formItems = computed<FormItem[]>(() => {
-    const baseItems: FormItem[] = [{ label: '菜单类型', key: 'menuType', span: 24 }]
-
-    // Switch 组件的格数（相对行基准）：小屏幕 12（半行），大屏幕 3（四分之一行）
-    const switchSpan = width.value < 640 ? 12 : 3
-
-    if (form.menuType === 'menu') {
-      return [
-        ...baseItems,
-        {
-          label: '菜单名称',
-          key: 'name',
-          type: 'input',
-          span: 6,
-          props: { placeholder: '菜单名称' }
-        },
-        {
-          label: createLabelTooltip(
-            '路由地址',
-            '一级菜单：以 / 开头的绝对路径（如 /dashboard）\n二级及以下：相对路径（如 console、user）'
-          ),
-          key: 'path',
-          type: 'input',
-          span: 6,
-          props: { placeholder: '如：/dashboard 或 console' }
-        },
-        {
-          label: '权限标识',
-          key: 'label',
-          type: 'input',
-          span: 6,
-          props: { placeholder: '如：User' }
-        },
-        {
-          label: createLabelTooltip(
-            '组件路径',
-            '一级父级菜单：填写 /index/index\n具体页面：填写组件路径（如 /system/user）\n目录菜单：留空'
-          ),
-          key: 'component',
-          type: 'input',
-          span: 6,
-          props: { placeholder: '如：/system/user 或留空' }
-        },
-        {
-          label: '图标',
-          key: 'icon',
-          type: 'input',
-          span: 6,
-          props: { placeholder: '如：ri:user-line' }
-        },
-        {
-          label: createLabelTooltip(
-            '角色权限',
-            '仅用于前端权限模式：配置角色标识（如 R_SUPER、R_ADMIN）\n后端权限模式：无需配置'
-          ),
-          key: 'roles',
-          type: 'inputtag',
-          span: 6,
-          props: { placeholder: '输入角色标识后按回车，如：R_SUPER' }
-        },
-        {
-          label: '菜单排序',
-          key: 'sort',
-          type: 'number',
-          span: 6,
-          props: { min: 1, controlsPosition: 'right', style: { width: '100%' } }
-        },
-        {
-          label: '外部链接',
-          key: 'link',
-          type: 'input',
-          span: 6,
-          props: { placeholder: '如：https://www.example.com' }
-        },
-        {
-          label: '文本徽章',
-          key: 'showTextBadge',
-          type: 'input',
-          span: 6,
-          props: { placeholder: '如：New、Hot' }
-        },
-        {
-          label: createLabelTooltip(
-            '激活路径',
-            '用于详情页等隐藏菜单，指定高亮显示的父级菜单路径\n例如：用户详情页高亮显示"用户管理"菜单'
-          ),
-          key: 'activePath',
-          type: 'input',
-          span: 6,
-          props: { placeholder: '如：/system/user' }
-        },
-        { label: '是否启用', key: 'isEnable', type: 'switch', span: switchSpan },
-        { label: '页面缓存', key: 'keepAlive', type: 'switch', span: switchSpan },
-        { label: '隐藏菜单', key: 'isHide', type: 'switch', span: switchSpan },
-        { label: '是否内嵌', key: 'isIframe', type: 'switch', span: switchSpan },
-        { label: '显示徽章', key: 'showBadge', type: 'switch', span: switchSpan },
-        { label: '固定标签', key: 'fixedTab', type: 'switch', span: switchSpan },
-        { label: '标签隐藏', key: 'isHideTab', type: 'switch', span: switchSpan },
-        { label: '全屏页面', key: 'isFullPage', type: 'switch', span: switchSpan }
-      ]
-    } else {
-      return [
-        ...baseItems,
-        {
-          label: '权限名称',
-          key: 'authName',
-          type: 'input',
-          span: 6,
-          props: { placeholder: '如：新增、编辑、删除' }
-        },
-        {
-          label: '权限标识',
-          key: 'authLabel',
-          type: 'input',
-          span: 6,
-          props: { placeholder: '如：add、edit、delete' }
-        },
-        {
-          label: '权限排序',
-          key: 'authSort',
-          type: 'number',
-          span: 6,
-          props: { min: 1, controlsPosition: 'right', style: { width: '100%' } }
-        }
-      ]
-    }
-  })
-
-  const dialogTitle = computed(() => {
-    const type = form.menuType === 'menu' ? '菜单' : '按钮'
-    return isEdit.value ? `编辑${type}` : `新建${type}`
-  })
-
-  /**
-   * @description 是否禁用菜单类型切换
-   */
-  const disableMenuType = computed(() => {
-    if (isEdit.value) return true
-    if (!isEdit.value && form.menuType === 'menu' && props.lockType) return true
-    return false
-  })
-
-  /**
-   * @description 重置表单数据
-   */
-  const resetForm = (): void => {
-    formRef.value?.reset()
-    form.menuType = 'menu'
-  }
-
-  /**
-   * @description 加载表单数据（编辑模式）
-   */
-  const loadFormData = (): void => {
-    if (!props.editData) return
-
-    isEdit.value = true
-
-    if (form.menuType === 'menu') {
-      const row = props.editData as AppRouteRecord
-      form.id = row.id || 0
-      form.name = formatMenuTitle(row.meta?.title || '')
-      form.path = row.path || ''
-      form.label = typeof row.name === 'string' ? row.name : ''
-      form.component = typeof row.component === 'string' ? row.component : ''
-      form.icon = row.meta?.icon || ''
-      form.sort = typeof row.meta?.sort === 'number' ? row.meta.sort : 1
-      form.isMenu = typeof row.meta?.isMenu === 'boolean' ? row.meta.isMenu : true
-      form.keepAlive = row.meta?.keepAlive ?? false
-      form.isHide = row.meta?.isHide ?? false
-      form.isHideTab = row.meta?.isHideTab ?? false
-      form.isEnable = typeof row.meta?.isEnable === 'boolean' ? row.meta.isEnable : true
-      form.link = row.meta?.link || ''
-      form.isIframe = row.meta?.isIframe ?? false
-      form.showBadge = row.meta?.showBadge ?? false
-      form.showTextBadge = row.meta?.showTextBadge || ''
-      form.fixedTab = row.meta?.fixedTab ?? false
-      form.activePath = row.meta?.activePath || ''
-      form.roles = row.meta?.roles || []
-      form.isFullPage = row.meta?.isFullPage ?? false
-    } else {
-      const row = props.editData as AuthEditData
-      form.authName = row.title || ''
-      form.authLabel = row.authMark || ''
+  const load = async (
+    model: Ref<ResourceInput>,
+    isCurrent: () => boolean
+  ): Promise<boolean | void> => {
+    if (!props.resourceId) return
+    const item = await fetchGetMenu(props.resourceId)
+    if (!isCurrent()) return false
+    builtin.value = item.isBuiltin
+    model.value = {
+      parentId: item.parentId,
+      type: item.type,
+      title: item.title,
+      name: item.name,
+      path: item.path,
+      component: item.component,
+      icon: item.icon,
+      permission: item.permission,
+      enabled: item.enabled,
+      sort: item.sort,
+      hidden: item.hidden,
+      keepAlive: item.keepAlive,
+      apiCodes: [...item.apiCodes]
     }
   }
 
+  /** 弹窗表单状态与提交生命周期 */
+
+  const { form, visible, loading, ready, busy, save } = useDialogForm<ResourceInput>({
+    open: () => props.modelValue,
+    close: () => emit('update:modelValue', false),
+    createForm: initial,
+    formRef,
+    /**
+     * @description 重置接口检索就绪状态与内置资源标记
+     */
+    reset: () => {
+      apiReady.value = false
+      builtin.value = false
+    },
+    load,
+    validate,
+    submit,
+    /** @description 保存成功后通知资源树刷新 */
+    success: () => emit('success')
+  })
+
   /**
-   * @description 提交表单（AoForm 弹窗模式在触发 submit 前已完成校验）
+   * @description 提交前校验资源层级与静态路由合法性
+   * @param value 当前表单模型
+   * @return 是否允许提交
    */
-  const handleSubmit = (): void => {
-    emit('submit', { ...form })
-    ElMessage.success(`${isEdit.value ? '编辑' : '新增'}成功`)
-    visible.value = false
+  function validate(value: ResourceInput): boolean {
+    if (value.type !== 'directory' && !apiReady.value) return false
+    if (!value.title.trim()) return false
+    if (value.type !== 'directory' && !value.parentId) return false
+    if (value.type !== 'button' && (!value.name?.trim() || !value.path?.trim())) return false
+    if (value.type !== 'button') {
+      const errors = validateBusinessRouteIdentity(value.name!.trim(), value.path!.trim())
+      if (!value.parentId && !value.path!.trim().startsWith('/'))
+        errors.push('根目录必须使用绝对路径')
+      if (errors.length) {
+        ElMessage.warning(errors[0])
+        return false
+      }
+    }
+    if (value.type === 'menu' && !value.component?.trim()) return false
+    if (value.type === 'directory' && !value.parentId && value.component !== '/index/index') {
+      ElMessage.warning('根目录组件必须为 /index/index')
+      return false
+    }
+    if (value.type === 'button' && !value.permission?.trim()) return false
+    return true
   }
 
   /**
-   * @description 对话框关闭后的回调
+   * @description 归一化各资源类型的可写字段后保存资源与全部接口绑定
+   * @param value 当前表单模型
    */
-  const handleClosed = (): void => {
-    resetForm()
-    isEdit.value = false
+  async function submit(value: ResourceInput): Promise<void> {
+    const data: ResourceInput = {
+      ...value,
+      title: value.title.trim(),
+      parentId: value.parentId || null,
+      name: value.type === 'button' ? null : value.name?.trim() || null,
+      path: value.type === 'button' ? null : value.path?.trim() || null,
+      component: value.type === 'button' ? null : value.component?.trim() || null,
+      icon: value.type === 'button' ? null : value.icon?.trim() || null,
+      permission: value.type === 'directory' ? null : value.permission?.trim() || null,
+      hidden: value.type === 'button' ? false : value.hidden,
+      keepAlive: value.type === 'menu' && value.keepAlive,
+      sort: Number(value.sort) || 0,
+      apiCodes: value.type === 'directory' ? [] : [...value.apiCodes]
+    }
+    if (props.resourceId) await updateMenu(props.resourceId, data)
+    else await createMenu(data)
   }
 
   /**
-   * @description 监听对话框显示状态
+   * @description 生成父资源候选树，禁用按钮节点、自身及其后代
+   * @param nodes 待处理的资源节点
+   * @param blocked 祖先链是否已命中禁用节点
+   * @return 带禁用状态的资源节点
    */
-  watch(
-    () => props.modelValue,
-    (newVal) => {
-      if (newVal) {
-        form.menuType = props.type
-        nextTick(() => {
-          if (props.editData) {
-            loadFormData()
+  const parentNodes = (nodes: Resource[], blocked = false): (Resource & { disabled: boolean })[] =>
+    nodes.map((node) => {
+      const descendant = blocked || node.id === props.resourceId
+      const disabled =
+        descendant ||
+        (form.value.type === 'button' ? node.type !== 'menu' : node.type !== 'directory')
+      return { ...node, disabled, children: parentNodes(node.children || [], descendant) }
+    })
+
+  const parents = computed(() => parentNodes(props.resources))
+
+  /** 表单项配置，按资源类型动态增减字段 */
+  const items = computed<FormItem[]>(() => [
+    {
+      key: 'type',
+      label: '资源类型',
+      type: 'select',
+      props: {
+        disabled: Boolean(props.resourceId),
+        options: [
+          { label: '目录', value: 'directory' },
+          { label: '菜单', value: 'menu' },
+          { label: '按钮', value: 'button' }
+        ]
+      }
+    },
+    { key: 'parentId', label: '父资源' },
+    { key: 'title', label: '显示名称', type: 'input', props: { maxlength: 64 } },
+    ...(form.value.type !== 'button'
+      ? [
+          {
+            key: 'name',
+            label: '路由名称',
+            type: 'input' as const,
+            props: { disabled: builtin.value, placeholder: '唯一英文路由名称' }
+          },
+          {
+            key: 'path',
+            label: '路由路径',
+            type: 'input' as const,
+            props: { disabled: builtin.value, placeholder: '根节点 /system，子节点 user' }
+          },
+          {
+            key: 'component',
+            label: '组件路径',
+            type: 'input' as const,
+            props: {
+              disabled: builtin.value || form.value.type === 'directory',
+              placeholder: '目录根节点 /index/index，页面 /system/user'
+            }
+          },
+          { key: 'icon', label: '图标', type: 'input' as const }
+        ]
+      : []),
+    ...(form.value.type !== 'directory'
+      ? [
+          {
+            key: 'permission',
+            label: '操作权限码',
+            type: 'input' as const,
+            props: { disabled: builtin.value, placeholder: '如 system.users.create' }
           }
-        })
-      }
-    }
-  )
+        ]
+      : []),
+    {
+      key: 'sort',
+      label: '排序',
+      type: 'number',
+      props: { min: 0, precision: 0, valueOnClear: 0 }
+    },
+    { key: 'enabled', label: '启用', type: 'switch', props: { disabled: builtin.value } },
+    ...(form.value.type !== 'button'
+      ? [
+          { key: 'hidden', label: '隐藏菜单', type: 'switch' as const },
+          { key: 'keepAlive', label: '缓存页面', type: 'switch' as const }
+        ]
+      : []),
+    ...(form.value.type !== 'directory' ? [{ key: 'apiCodes', label: '绑定接口', span: 24 }] : [])
+  ])
 
-  /**
-   * @description 监听菜单类型变化
-   */
-  watch(
-    () => props.type,
-    (newType) => {
-      if (props.modelValue) {
-        form.menuType = newType
+  /** 表单校验规则，必填项随资源类型变化 */
+  const rules = computed(() => ({
+    parentId: [
+      { required: form.value.type !== 'directory', message: '请选择页面所属目录或按钮所属菜单' }
+    ],
+    title: [{ required: true, message: '请输入显示名称' }],
+    name: [{ required: form.value.type !== 'button', message: '请输入路由名称' }],
+    path: [{ required: form.value.type !== 'button', message: '请输入路由路径' }],
+    component: [
+      {
+        required:
+          form.value.type === 'menu' || (form.value.type === 'directory' && !form.value.parentId),
+        message: '请输入页面组件，根目录使用 /index/index'
       }
+    ],
+    permission: [{ required: form.value.type === 'button', message: '请输入操作权限码' }],
+    sort: [{ type: 'integer' as const, min: 0, message: '排序须为非负整数' }]
+  }))
+
+  // 父节点变化时归一化目录布局；新建资源同时清理不适用的层级
+  watch(
+    () => [form.value.type, form.value.parentId],
+    () => {
+      if (!ready.value) return
+      if (!props.resourceId) {
+        const parent = findResource(props.resources, form.value.parentId || undefined)
+        const validParent =
+          form.value.type === 'button' ? parent?.type === 'menu' : parent?.type === 'directory'
+        if (parent && !validParent) form.value.parentId = null
+      }
+      if (form.value.type === 'directory')
+        form.value.component = form.value.parentId ? null : '/index/index'
+      else if (!props.resourceId && form.value.component === '/index/index')
+        form.value.component = null
     }
   )
 </script>
-
-<style scoped lang="scss">
-  // 带 tooltip 的表单标签容器
-  .label-tooltip {
-    display: flex;
-    align-items: center;
-  }
-
-  // 帮助图标
-  .help-icon {
-    margin-left: 2px;
-    cursor: help;
-  }
-</style>

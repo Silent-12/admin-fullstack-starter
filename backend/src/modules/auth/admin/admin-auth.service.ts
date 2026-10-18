@@ -37,7 +37,7 @@ export class AdminAuthService {
       this.users
         .createQueryBuilder('user')
         .addSelect('user.passwordHash')
-        .where('user.username = :username AND user.isDeleted = 0', { username: dto.userName })
+        .where('user.username = :username AND user.isDeleted = 0 AND user.enabled = :enabled', { username: dto.userName, enabled: true })
         .getOne(),
     )
     if (!(await this.passwords.verify(dto.password, user?.passwordHash)) || !user) {
@@ -51,10 +51,11 @@ export class AdminAuthService {
         .createQueryBuilder()
         .update(AdminUser)
         .set({ token: accessToken, lastLoginTime: now, lastLoginIp: ip, updateTime: now })
-        .where('id = :id AND token_version = :version AND password_hash = :hash AND is_deleted = 0', {
+        .where('id = :id AND token_version = :version AND password_hash = :hash AND is_deleted = 0 AND is_enabled = :enabled', {
           id: user.id,
           version: user.tokenVersion,
           hash: user.passwordHash,
+          enabled: true,
         })
         .execute(),
     )
@@ -86,7 +87,9 @@ export class AdminAuthService {
     } catch {
       throw new UnauthorizedException('登录已失效，请重新登录')
     }
-    const user = await this.database(() => this.users.findOne({ where: { id: claims.sub, isDeleted: 0, tokenVersion: claims.ver } }))
+    const user = await this.database(() =>
+      this.users.findOne({ where: { id: claims.sub, isDeleted: 0, enabled: true, tokenVersion: claims.ver } }),
+    )
     if (!user) throw new UnauthorizedException('登录已失效，请重新登录')
     return { user, claims }
   }

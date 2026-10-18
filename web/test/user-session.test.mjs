@@ -92,7 +92,7 @@ function memoryStorage() {
 
 globalThis.localStorage = memoryStorage()
 const { useUserStore, useWorktabStore, router, setupUserSession } = await loadStore()
-const profile = (id) => ({ userId: id, userName: id, name: id, roles: [], auth: [] })
+const profile = (id) => ({ userId: id, userName: id, name: id, auth: [] })
 
 /** 安装真实 Pinia 持久化插件，重建实例即模拟页面重载 */
 function startPage() {

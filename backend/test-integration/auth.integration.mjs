@@ -24,6 +24,7 @@ import { SnakeNamingStrategy } from '../dist/config/database-naming-strategy.js'
 import { AllExceptionsFilter } from '../dist/common/filters/all-exceptions.filter.js'
 import { DefaultHttpStatusInterceptor } from '../dist/common/interceptors/default-http-status.interceptor.js'
 import { LoggingMiddleware } from '../dist/common/middleware/logging.middleware.js'
+import { AdminApi } from '../dist/common/auth/admin-api.decorator.js'
 
 // 显式运行该脚本才连接基础设施；只在新建的随机测试库与带随机前缀的 Redis key 上写入。
 config({ quiet: true })
@@ -70,6 +71,11 @@ test('真实 MySQL / Redis / HTTP 登录与全端撤销', { timeout: 90000 }, as
     }
     Controller('v1/admin/probe')(ProbeController)
     Get()(ProbeController.prototype, 'get', Object.getOwnPropertyDescriptor(ProbeController.prototype, 'get'))
+    AdminApi({ code: 'test.probe.read', module: '测试模块', feature: '探针', action: '读取', access: 'authenticated' })(
+      ProbeController.prototype,
+      'get',
+      Object.getOwnPropertyDescriptor(ProbeController.prototype, 'get'),
+    )
     // 根模块只装配测试数据库、Redis 替身与真实认证模块，隔离正式环境。
     class Root {}
     const secret = randomBytes(48).toString('base64')
@@ -88,7 +94,7 @@ test('真实 MySQL / Redis / HTTP 登录与全端撤销', { timeout: 90000 }, as
           username: process.env.DB_USERNAME || 'root',
           password: process.env.DB_PASSWORD || '',
           database,
-          entities: [AdminUser],
+          autoLoadEntities: true,
           namingStrategy: new SnakeNamingStrategy(),
           synchronize: true,
           logging: false,
@@ -104,6 +110,8 @@ test('真实 MySQL / Redis / HTTP 登录与全端撤销', { timeout: 90000 }, as
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, transformOptions: { enableImplicitConversion: true } }))
     app.useGlobalFilters(new AllExceptionsFilter())
     app.useGlobalInterceptors(new DefaultHttpStatusInterceptor())
+    // 测试直接注册中间件，需显式先安装解析器，保持正式 Nest 模块中间件可读取请求体的顺序。
+    app.useBodyParser('json')
     const logs = []
     app.use(
       new LoggingMiddleware({ create: async (record) => logs.push(record) }).use.bind(
@@ -119,6 +127,8 @@ test('真实 MySQL / Redis / HTTP 登录与全端撤销', { timeout: 90000 }, as
     assert.equal(columns.find((column) => column.Field === 'id').Type, 'varchar(36)')
     assert.equal(columns.find((column) => column.Field === 'token').Null, 'YES')
     assert.ok(!columns.some((column) => column.Field === 'profile_update_time'))
+    // 内置账号与普通用户结构一致，仅 created_by 固定为 system，不再维护独立保护列。
+    assert.ok(!columns.some((column) => column.Field === 'is_deletable'))
     const indexes = await source.query('SHOW INDEX FROM admin_user')
     assert.ok(
       indexes.some(
@@ -142,7 +152,6 @@ test('真实 MySQL / Redis / HTTP 登录与全端撤销', { timeout: 90000 }, as
     assert.ok(!repeated.stdout.includes(password))
     const original = await users.findOneByOrFail({ username: 'admin' })
     assert.equal(original.createdBy, 'system')
-    assert.equal(original.isDeletable, 0)
     assert.equal(original.tokenVersion, 1)
     assert.equal(original.lastLoginTime, null)
     assert.equal(original.token, undefined)
@@ -189,7 +198,7 @@ test('真实 MySQL / Redis / HTTP 登录与全端撤销', { timeout: 90000 }, as
     assert.ok(stored.lastLoginTime > 0)
     const profile = await request('/v1/admin/auth/profile', { token: firstToken })
     assert.equal(profile.status, 200)
-    assert.deepEqual(Object.keys(profile.body.data).sort(), ['auth', 'avatar', 'email', 'name', 'roles', 'userId', 'userName'].sort())
+    assert.deepEqual(Object.keys(profile.body.data).sort(), ['auth', 'avatar', 'email', 'name', 'userId', 'userName'].sort())
     assert.equal((await request('/v1/admin/probe', { token: secondToken })).status, 200)
     assert.equal((await request('/v1/admin/auth/logout', { token: firstToken, method: 'POST' })).status, 200)
     assert.equal((await request('/v1/admin/auth/profile', { token: firstToken })).status, 401)
@@ -277,7 +286,7 @@ test('真实 MySQL / Redis / HTTP 登录与全端撤销', { timeout: 90000 }, as
         assert.equal(headers.get('Retry-After'), Math.ceil(milliseconds / 1000))
       }
     })
-    // 按设计，认证路径同样记录请求与响应体（超长截断），验证捕获生效。
+    // 认证路径保留脱敏后的审计正文，真实密码与成功签发的令牌不得进入日志。
     const authLogs = logs.filter((record) => /auth\//i.test(record.url))
     assert.ok(authLogs.length > 0)
     assert.ok(
@@ -286,6 +295,14 @@ test('真实 MySQL / Redis / HTTP 登录与全端撤销', { timeout: 90000 }, as
         .every((record) => typeof record.requestBody === 'string' && typeof record.responseBody === 'string'),
     )
     assert.ok(authLogs.every((record) => typeof record.responseBody === 'string'))
+    const serializedAuthLogs = JSON.stringify(authLogs)
+    for (const sensitive of [actualPassword, firstToken, secondToken, third.body.data.accessToken]) {
+      assert.ok(!serializedAuthLogs.includes(sensitive), '认证审计日志不得包含真实密码或令牌')
+    }
+    assert.ok(
+      authLogs.filter((record) => /login/i.test(record.url)).every((record) => JSON.parse(record.requestBody).password === '[REDACTED]'),
+    )
+    assert.ok(authLogs.some((record) => JSON.parse(record.responseBody).data?.accessToken === '[REDACTED]'))
     await source.destroy()
     const databaseDown = await request('/v1/admin/auth/profile', { token: third.body.data.accessToken })
     assert.equal(databaseDown.status, 503)

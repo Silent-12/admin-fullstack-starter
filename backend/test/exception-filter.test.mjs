@@ -37,7 +37,7 @@ function createHost(url) {
   return { response, host }
 }
 
-function dispatch(exception, url = '/backend/v1/admin/template-api') {
+function dispatch(exception, url = '/backend/v1/admin/business-records') {
   const { response, host } = createHost(url)
   new AllExceptionsFilter().catch(exception, host)
   return response
@@ -85,7 +85,7 @@ test('普通 Error 返回 500 与默认通用提示', () => {
 })
 
 test('4xx HttpException 保留业务消息与附加数据', () => {
-  for (const exception of [new BadRequestException('用户名或密码错误'), new NotFoundException('模板条目不存在')]) {
+  for (const exception of [new BadRequestException('用户名或密码错误'), new NotFoundException('业务记录不存在')]) {
     const response = dispatch(exception)
     assert.equal(response.statusCode, exception.getStatus())
     assert.equal(response.body.code, exception.getStatus())

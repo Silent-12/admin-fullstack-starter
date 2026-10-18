@@ -35,6 +35,10 @@ const pageSource = compileScript(
   parse(await sourceFile('views/exception/500/index.vue')).descriptor,
   { id: 'auth-recovery' }
 ).content
+const forbiddenSource = compileScript(
+  parse(await sourceFile('views/exception/403/index.vue')).descriptor,
+  { id: 'forbidden' }
+).content
 
 test('初始化失败由异常页恢复原地址，重复失败仍可重试，失效凭证转入登录', async (t) => {
   t.mock.method(console, 'error', () => {})
@@ -43,6 +47,7 @@ test('初始化失败由异常页恢复原地址，重复失败仍可重试，�
     routes: [
       { path: '/auth/login', name: 'Login', component: {} },
       { path: '/500', name: 'Exception500', component: {} },
+      { path: '/403', name: 'Exception403', component: {} },
       { path: '/details', name: 'Details', component: {} },
       { path: '/', name: 'Root', component: {} }
     ]
@@ -51,6 +56,9 @@ test('初始化失败由异常页恢复原地址，重复失败仍可重试，�
   let profileCalls = 0
   let menuCalls = 0
   let registered = false
+  let registerCalls = 0
+  let clearCalls = 0
+  let clearSessionCalls = 0
   let failureStage = 'profile'
   const user = {
     accessToken: 'valid-token',
@@ -67,6 +75,7 @@ test('初始化失败由异常页恢复原地址，重复失败仍可重试，�
       guard.resetRouterState()
     },
     clearSession: () => {
+      clearSessionCalls++
       user.resetCredentials()
       void router.replace({ name: 'Login' })
     }
@@ -76,7 +85,9 @@ test('初始化失败由异常页恢复原地址，重复失败仍可重试，�
     router,
     user,
     menu: {
-      clearApplications: () => {},
+      clearApplications: () => {
+        clearCalls++
+      },
       setApplicationList: () => {
         if (failureStage === 'after-register') throw new Error('初始化应用列表失败')
       },
@@ -92,11 +103,13 @@ test('初始化失败由异常页恢复原地址，重复失败仍可重试，�
     getRoutes: async () => {
       menuCalls++
       if (failureStage === 'menu') throw new Error('菜单服务不可用')
+      if (failureStage === 'empty') return []
       return [{ path: '/details' }]
     },
     registry: {
       isRegistered: () => registered,
       register: () => {
+        registerCalls++
         registered = true
       },
       unregister: () => {
@@ -141,6 +154,15 @@ test('初始化失败由异常页恢复原地址，重复失败仍可重试，�
     '../components/AoException.vue': stub('export default {}')
   })
   const page = () => recoveryPage.setup({}, { expose() {} })
+  const { default: forbiddenPage } = await loadModule(forbiddenSource, {
+    vue: import.meta.resolve('vue'),
+    'element-plus': stub('export const ElButton = {}'),
+    '@/store/modules/user': stub(
+      'export const useUserStore = () => globalThis.authRecoveryTest.user'
+    ),
+    '@imgs/svg/403.svg': stub("export default '403.svg'"),
+    '../components/AoException.vue': stub('export default {}')
+  })
   setupBeforeEachGuard(router)
   const target = '/details?record=42#summary'
 
@@ -170,6 +192,35 @@ test('初始化失败由异常页恢复原地址，重复失败仍可重试，�
   assert.equal(router.currentRoute.value.fullPath, target)
   assert.equal(profileCalls, callsBeforeRecovery[0] + 1)
   assert.equal(menuCalls, callsBeforeRecovery[1] + 1)
+
+  guard.resetRouterState()
+  failureStage = 'empty'
+  const registerCallsBeforeEmpty = registerCalls
+  const clearCallsBeforeEmpty = clearCalls
+  await router.replace('/500')
+  await router.replace(target)
+  assert.equal(router.currentRoute.value.name, 'Exception403')
+  assert.equal(user.accessToken, 'valid-token')
+  assert.equal(guard.getPendingLoading(), false)
+  assert.equal(registered, false, '空授权菜单不得注册业务路由')
+  assert.equal(registerCalls, registerCallsBeforeEmpty, '空菜单不调用路由注册')
+  assert.equal(clearCalls, clearCallsBeforeEmpty + 1, '空菜单清空菜单状态')
+
+  // 403 页提供重新登录入口，无菜单用户可退出而不是被困在初始化循环
+  const forbidden = forbiddenPage.setup({}, { expose() {} })
+  const clearSessionCallsBefore = clearSessionCalls
+  forbidden.relogin()
+  assert.equal(clearSessionCalls, clearSessionCallsBefore + 1)
+  assert.equal(user.accessToken, '')
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.equal(router.currentRoute.value.name, 'Login')
+
+  // 空菜单 403 不残留初始化状态，重新具备菜单后仍可正常注册
+  user.accessToken = 'valid-token'
+  failureStage = ''
+  await router.replace(target)
+  assert.equal(router.currentRoute.value.fullPath, target)
+  assert.equal(registered, true)
 
   guard.resetRouterState()
   failureStage = 'profile'

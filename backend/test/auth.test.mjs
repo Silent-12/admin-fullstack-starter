@@ -6,11 +6,15 @@ import { plainToInstance } from 'class-transformer'
 import { validate } from 'class-validator'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
-import { Logger } from '@nestjs/common'
+import { All, Controller, Get, Logger } from '@nestjs/common'
+import { MetadataScanner } from '@nestjs/core'
 import { AdminAuthService } from '../dist/modules/auth/admin/admin-auth.service.js'
 import { PasswordService } from '../dist/modules/auth/admin/password.service.js'
 import { LoginDto } from '../dist/modules/auth/admin/dto/login.dto.js'
 import { LoggingMiddleware } from '../dist/common/middleware/logging.middleware.js'
+import { MAX_BODY_LENGTH } from '../dist/common/constants/common-misc.constant.js'
+import { AdminApi } from '../dist/common/auth/admin-api.decorator.js'
+import { ApiResourceService } from '../dist/modules/api-resource/admin/api-resource.service.js'
 import { EventEmitter } from 'node:events'
 
 // 关闭 Nest 默认日志输出，避免框架日志干扰测试结果
@@ -37,12 +41,17 @@ test('DTO 拒绝隐式类型转换，用户名规范化，密码保持原样', a
     { userName: 123, password: 'test' },
     { userName: 'admin', password: 123 },
     { userName: ['admin'], password: ['test'] },
-    { userName: 'admin1', password: 'test' },
+    { userName: 'admin_1', password: 'test' },
+    { userName: '1admin', password: 'test' },
     { userName: 'admin', password: '' },
     { userName: 'admin', password: 'a'.repeat(129) },
   ]) {
     assert.ok((await validate(plainToInstance(LoginDto, body, { enableImplicitConversion: true }))).length > 0)
   }
+  // 软删除同名用户自动追加数字后缀，数字用户名必须仍可登录。
+  const suffixed = plainToInstance(LoginDto, { userName: 'hlh2', password: 'secret' }, { enableImplicitConversion: true })
+  assert.deepEqual(await validate(suffixed), [])
+  assert.equal(suffixed.userName, 'hlh2')
 })
 
 test('JWT 验证算法、到期、版本与数据库故障', async () => {
@@ -86,23 +95,178 @@ test('JWT 验证算法、到期、版本与数据库故障', async () => {
   await assert.rejects(auth.authenticate(token), (error) => error.getStatus() === 503)
 })
 
-test('访问日志记录认证路径的请求与响应体，大小写路径一致', async () => {
-  for (const url of ['/backend/v1/admin/auth/login', '/BACKEND/V1/ADMIN/AUTH/LOGIN']) {
-    const records = []
-    const middleware = new LoggingMiddleware({ create: async (value) => records.push(value) })
-    // 构造最小 Express 响应对象，手动触发 finish 模拟响应完成
-    const response = new EventEmitter()
-    response.statusCode = 200
-    response.send = () => response
-    middleware.use(
-      { method: 'POST', originalUrl: url, headers: {}, body: { password: 'secret-password' }, socket: { remoteAddress: '127.0.0.1' } },
-      response,
-      () => {},
-    )
-    response.send({ data: { accessToken: 'secret-token' } })
-    response.emit('finish')
-    // 按设计，认证路径同样记录请求与响应体，供审计排查
-    assert.equal(records[0].requestBody, JSON.stringify({ password: 'secret-password' }))
-    assert.equal(records[0].responseBody, JSON.stringify({ data: { accessToken: 'secret-token' } }))
+function captureLog(url, body, responseBody) {
+  const records = []
+  const middleware = new LoggingMiddleware({ create: async (value) => records.push(value) })
+  // 构造最小 Express 响应对象，手动触发 finish 模拟响应完成。
+  const response = new EventEmitter()
+  response.statusCode = 200
+  response.send = () => response
+  middleware.use({ method: 'POST', originalUrl: url, headers: {}, body, socket: { remoteAddress: '127.0.0.1' } }, response, () => {})
+  response.send(responseBody)
+  response.emit('finish')
+  assert.equal(records.length, 1)
+  return records[0]
+}
+
+test('登录、创建用户和重置密码的日志脱敏，大小写和全局前缀不影响保护', () => {
+  for (const url of [
+    '/backend/v1/admin/auth/login',
+    '/BACKEND/V1/ADMIN/AUTH/LOGIN',
+    '/custom-prefix/v1/admin/users',
+    `/custom-prefix/v1/admin/users/${randomUUID()}/reset-password`,
+  ]) {
+    const record = captureLog(url, { userName: 'tester', password: 'secret-password' }, { data: { accessToken: 'secret-token' } })
+    assert.deepEqual(JSON.parse(record.requestBody), { userName: 'tester', password: '[REDACTED]' })
+    assert.deepEqual(JSON.parse(record.responseBody), { data: { accessToken: '[REDACTED]' } })
+    assert.ok(!JSON.stringify(record).includes('secret-password'))
+    assert.ok(!JSON.stringify(record).includes('secret-token'))
   }
+})
+
+test('嵌套数组与 JSON 字符串中的敏感字段脱敏，原请求和响应对象保持不变', () => {
+  const requestBody = {
+    title: '正常内容',
+    nested: [
+      { PASSWORD: 'nested-password', password_hash: 'nested-hash' },
+      { 'access-token': 'nested-access', 'refresh_token': 'nested-refresh' },
+    ],
+    meta: {
+      'Authorization': 'nested-authorization',
+      'SeCrEt': 'nested-secret',
+      'ToKeN': 'nested-token',
+      'api_key': 'nested-key',
+      'salt': 'nested-salt',
+      'client-secret': 'nested-client',
+    },
+  }
+  const responseBody = { data: [{ accessToken: 'response-token', passwordHash: 'response-hash', name: '可见名称' }] }
+  const originalRequest = structuredClone(requestBody)
+  const originalResponse = structuredClone(responseBody)
+  for (const sentBody of [responseBody, JSON.stringify(responseBody)]) {
+    const record = captureLog('/backend/v1/admin/business-records', requestBody, sentBody)
+    const loggedRequest = JSON.parse(record.requestBody)
+    assert.deepEqual(loggedRequest.nested, [
+      { PASSWORD: '[REDACTED]', password_hash: '[REDACTED]' },
+      { 'access-token': '[REDACTED]', 'refresh_token': '[REDACTED]' },
+    ])
+    assert.deepEqual(loggedRequest.meta, {
+      'Authorization': '[REDACTED]',
+      'SeCrEt': '[REDACTED]',
+      'ToKeN': '[REDACTED]',
+      'api_key': '[REDACTED]',
+      'salt': '[REDACTED]',
+      'client-secret': '[REDACTED]',
+    })
+    assert.equal(loggedRequest.title, '正常内容')
+    assert.deepEqual(JSON.parse(record.responseBody).data, [{ accessToken: '[REDACTED]', passwordHash: '[REDACTED]', name: '可见名称' }])
+    assert.deepEqual(requestBody, originalRequest)
+    assert.deepEqual(responseBody, originalResponse)
+  }
+})
+
+test('日志先脱敏再截断，序列化失败不影响请求响应', () => {
+  const record = captureLog(
+    '/backend/v1/admin/business-records',
+    { password: 'truncated-password', message: 'x'.repeat(MAX_BODY_LENGTH * 2) },
+    JSON.stringify({ token: 'truncated-token', message: 'y'.repeat(MAX_BODY_LENGTH * 2) }),
+  )
+  assert.equal(record.requestBody.length, MAX_BODY_LENGTH)
+  assert.equal(record.responseBody.length, MAX_BODY_LENGTH)
+  assert.ok(record.requestBody.includes('[REDACTED]'))
+  assert.ok(record.responseBody.includes('[REDACTED]'))
+  assert.ok(!record.requestBody.includes('truncated-password'))
+  assert.ok(!record.responseBody.includes('truncated-token'))
+  const circular = {}
+  circular.self = circular
+  for (const [body, responseBody] of [
+    [circular, 1n],
+    [1n, circular],
+    [Buffer.from('binary-secret'), Buffer.from('binary-secret')],
+  ]) {
+    const failed = captureLog('/backend/v1/admin/business-records', body, responseBody)
+    assert.equal(failed.requestBody, undefined)
+    assert.equal(failed.responseBody, undefined)
+  }
+})
+
+test('凭证端点的非结构化正文不进入日志，普通业务文本仍可记录', () => {
+  for (const url of [
+    '/backend/v1/admin/auth/login',
+    '/custom-prefix/V1/ADMIN/USERS',
+    `/custom-prefix/v1/admin/users/${randomUUID()}/reset-password`,
+  ]) {
+    for (const content of ['password=unstructured-secret', JSON.stringify('unstructured-token'), '123', 'true']) {
+      const record = captureLog(url, content, content)
+      assert.equal(record.requestBody, undefined)
+      assert.equal(record.responseBody, undefined)
+    }
+  }
+  const ordinary = captureLog('/backend/v1/admin/business-records', '普通业务文本', '普通业务响应')
+  assert.equal(ordinary.requestBody, '普通业务文本')
+  assert.equal(ordinary.responseBody, '普通业务响应')
+})
+
+function declareController(path, entries) {
+  class TestController {}
+  Controller(path)(TestController)
+  for (const [name, method, route, declaration] of entries) {
+    Object.defineProperty(TestController.prototype, name, { value() {}, configurable: true })
+    const descriptor = Object.getOwnPropertyDescriptor(TestController.prototype, name)
+    method(route)(TestController.prototype, name, descriptor)
+    if (declaration) AdminApi(declaration)(TestController.prototype, name, descriptor)
+  }
+  return TestController
+}
+
+function apiResourceService(controllers, rows = []) {
+  const resources = {
+    find: async () => rows,
+    update: async ({ code }, values) => Object.assign(rows.find((row) => row.code === code), values),
+  }
+  return new ApiResourceService(
+    { getControllers: () => controllers.map((metatype) => ({ metatype, instance: new metatype() })) },
+    new MetadataScanner(),
+    resources,
+  )
+}
+
+const apiMetadata = (code, extra = {}) => ({ code, module: '业务模块', feature: '查询功能', action: '读取', ...extra })
+
+test('后台接口清单要求 AdminApi 声明并拒绝非法访问策略', () => {
+  const missing = declareController('v1/admin/fail-closed', [['read', Get, '', undefined]])
+  assert.throws(() => apiResourceService([missing]).onModuleInit(), /AdminApi/)
+  for (const access of ['permisson', 'admin']) {
+    const invalid = declareController('v1/admin/fail-closed', [['read', Get, '', apiMetadata('test.invalid', { access })]])
+    assert.throws(() => apiResourceService([invalid]).onModuleInit(), /访问策略/)
+  }
+})
+
+test('重复接口编码、多个路由别名与 ALL 方法阻止接口清单启动', () => {
+  const first = declareController('v1/admin/first', [['read', Get, '', apiMetadata('test.duplicate')]])
+  const second = declareController('v1/admin/second', [['read', Get, '', apiMetadata('test.duplicate')]])
+  assert.throws(() => apiResourceService([first, second]).onModuleInit(), /重复/)
+  for (const [controllerPath, method, route] of [
+    [['v1/admin/one', 'v1/admin/two'], Get, ''],
+    ['v1/admin/one', Get, ['first', 'second']],
+    ['v1/admin/one', All, ''],
+  ]) {
+    const controller = declareController(controllerPath, [['read', method, route, apiMetadata('test.ambiguous')]])
+    assert.throws(() => apiResourceService([controller]).onModuleInit(), /唯一方法和路由/)
+  }
+})
+
+test('登录态接口只能通过 AdminApi 声明，不可绑定也不进入接口树', async () => {
+  const controller = declareController('v1/admin/records', [
+    ['read', Get, ':id', apiMetadata('test.read')],
+    ['session', Get, 'session', apiMetadata('test.session', { access: 'authenticated' })],
+  ])
+  const service = apiResourceService([controller])
+  service.onModuleInit()
+  assert.equal(service.getDefinition(controller.prototype.read).access, 'permission')
+  assert.equal(service.getDefinition(controller.prototype.session).access, 'authenticated')
+  service.validateCodes(['test.read'])
+  assert.throws(() => service.validateCodes(['test.session']), (error) => error.getStatus() === 400)
+  const tree = await service.getTree()
+  assert.deepEqual(tree[0].children[0].children.map((item) => item.key), ['test.read'])
 })

@@ -109,11 +109,17 @@
   ]
 
   const { columns, columnChecks } = useTableColumns<Role>(() => [
-    { prop: 'code', label: '角色编码', minWidth: 150 },
+    { prop: 'code', label: '角色编码' },
     { prop: 'name', label: '角色名称' },
-    { prop: 'description', label: '描述', minWidth: 180 },
-    { prop: 'isBuiltin', label: '内置角色', formatter: (row) => (row.isBuiltin ? '是' : '否') },
-    { prop: 'enabled', label: '状态', slotName: 'enabled' }
+    { prop: 'description', label: '描述', minWidth: 260, showOverflowTooltip: true },
+    {
+      prop: 'isBuiltin',
+      label: '内置角色',
+      width: 100,
+      formatter: (row) => (row.isBuiltin ? '是' : '否'),
+      showOverflowTooltip: true
+    },
+    { prop: 'enabled', label: '状态', width: 100, slotName: 'enabled', showOverflowTooltip: true }
   ])
 
   /** 编辑与资源授权弹窗状态 */

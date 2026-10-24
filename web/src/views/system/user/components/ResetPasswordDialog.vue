@@ -82,7 +82,7 @@
   const items: FormItem[] = [
     {
       key: 'password',
-      label: '新密码（12 至 128 个字符）',
+      label: '新密码',
       type: 'input',
       span: 24,
       props: {

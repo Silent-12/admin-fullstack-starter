@@ -38,7 +38,7 @@
   import { createUser, fetchGetRoleOptions, fetchGetUser, updateUser } from '@/api/system-manage'
   import type { RoleOption } from '@/types/api/system-manage'
   import { useDialogForm } from '@/hooks/useDialogForm'
-  import { validateStrongPassword } from '@/utils/form/validator'
+  import { generateStrongPassword } from '@/utils/form/validator'
 
   const props = defineProps<{ modelValue: boolean; userId?: string }>()
   const emit = defineEmits<{ 'update:modelValue': [boolean]; success: [] }>()
@@ -136,16 +136,7 @@
    */
   const generatePassword = (): void => {
     if (props.userId || busy.value || loading.value || !ready.value) return
-    // 64 个字符均匀映射随机字节，避免取模偏差；整串重试保证包含四类字符
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-'
-    let password = ''
-    do {
-      password = Array.from(
-        crypto.getRandomValues(new Uint8Array(16)),
-        (value) => alphabet[value % alphabet.length]
-      ).join('')
-    } while (!validateStrongPassword(password))
-    form.value.password = password
+    form.value.password = generateStrongPassword()
     formRef.value?.clearValidate('password')
   }
 

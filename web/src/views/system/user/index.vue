@@ -45,6 +45,7 @@
       </template>
     </AoTable>
     <UserDialog v-model="dialogVisible" :user-id="selectedId" @success="load" />
+    <ResetPasswordDialog v-model="resetVisible" :user="resetTarget" @success="load" />
   </div>
 </template>
 
@@ -54,10 +55,11 @@
   import { useAuth } from '@/hooks/useAuth'
   import type { SearchFormItem } from '@ao/admin-components'
   import { ElButton, ElMessage, ElMessageBox, ElTag } from 'element-plus'
-  import { fetchGetUserList, deleteUser, resetUserPassword } from '@/api/system-manage'
+  import { fetchGetUserList, deleteUser } from '@/api/system-manage'
   import type { ManagedUser } from '@/types/api/system-manage'
   import { usePagedList } from '@/hooks/usePagedList'
   import UserDialog from './components/UserDialog.vue'
+  import ResetPasswordDialog from './components/ResetPasswordDialog.vue'
 
   defineOptions({ name: 'User' })
 
@@ -119,6 +121,10 @@
   const dialogVisible = ref(false)
   const selectedId = ref<string>()
 
+  /** 重置密码弹窗状态 */
+  const resetVisible = ref(false)
+  const resetTarget = ref<ManagedUser>()
+
   /**
    * @description 打开新增或编辑用户弹窗
    * @param row 行数据，缺省表示新增
@@ -151,27 +157,12 @@
   }
 
   /**
-   * @description 二次确认并重置指定用户密码
+   * @description 打开重置密码弹窗
    * @param row 目标用户行数据
    */
-  const resetPassword = async (row: ManagedUser): Promise<void> => {
+  const resetPassword = (row: ManagedUser): void => {
     if (!hasAuth('system.user.resetPassword') || busy.value) return
-    try {
-      const result = await ElMessageBox.prompt(`为用户“${row.username}”设置新密码`, '重置密码', {
-        inputType: 'password',
-        inputValidator: (value) =>
-          Boolean(value && value.length >= 12 && value.length <= 128) ||
-          '密码长度为 12 至 128 个字符',
-        confirmButtonText: '重置',
-        cancelButtonText: '取消'
-      })
-      busy.value = true
-      await resetUserPassword(row.id, result.value)
-      ElMessage.success('密码已重置')
-    } catch {
-      /* 取消与请求失败均不显示成功 */
-    } finally {
-      busy.value = false
-    }
+    resetTarget.value = row
+    resetVisible.value = true
   }
 </script>

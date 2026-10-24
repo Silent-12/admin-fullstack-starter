@@ -10,6 +10,7 @@
  * - 用户账号验证（字母开头，支持数字和下划线）
  * - 密码强度验证（普通密码、强密码）
  * - 密码强度评估（弱、中、强）
+ * - 强密码生成
  * - IPv4 地址验证
  * - 邮箱地址验证（RFC 5322 标准）
  * - URL 地址验证
@@ -177,6 +178,23 @@ export function getPasswordStrength(value: string): PasswordStrength {
   } else {
     return PasswordStrength.WEAK
   }
+}
+
+/**
+ * 生成强密码
+ * @return 返回包含大写字母、小写字母、数字与特殊字符的 16 位随机密码
+ * @description 使用安全随机源取值；64 个字符均匀映射随机字节以避免取模偏差，整串重试保证满足强密码规则
+ */
+export function generateStrongPassword(): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-'
+  let password = ''
+  do {
+    password = Array.from(
+      crypto.getRandomValues(new Uint8Array(16)),
+      (value) => alphabet[value % alphabet.length]
+    ).join('')
+  } while (!validateStrongPassword(password))
+  return password
 }
 
 /**

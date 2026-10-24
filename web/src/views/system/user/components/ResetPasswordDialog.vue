@@ -3,6 +3,7 @@
     ref="formRef"
     v-model="form"
     v-model:visible="visible"
+    :loading="busy"
     :title="`重置 ${user?.username ?? ''} 密码`"
     width="450px"
     label-position="top"

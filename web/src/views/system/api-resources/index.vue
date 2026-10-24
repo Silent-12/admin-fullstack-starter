@@ -31,6 +31,7 @@
       ref="formRef"
       v-model="form"
       v-model:visible="visible"
+      :loading="dialogBusy"
       title="编辑接口标签"
       width="560px"
       :items="items"

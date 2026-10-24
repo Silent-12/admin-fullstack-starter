@@ -68,6 +68,7 @@ test('初始化失败由异常页恢复原地址，重复失败仍可重试，�
     hasValidSession: () => Boolean(user.accessToken),
     getSessionVersion: () => version,
     setUserInfo: () => {},
+    setAuth: () => {},
     checkAndClearWorktabs: () => {},
     resetCredentials: () => {
       version++
@@ -100,11 +101,10 @@ test('初始化失败由异常页恢复原地址，重复失败仍可重试，�
       if (failureStage === '401') throw Object.assign(new Error('未授权'), { code: 401 })
       return { userId: 'user-a' }
     },
-    getRoutes: async () => {
+    authorization: async () => {
       menuCalls++
       if (failureStage === 'menu') throw new Error('菜单服务不可用')
-      if (failureStage === 'empty') return []
-      return [{ path: '/details' }]
+      return { auth: [], menu: failureStage === 'empty' ? [] : [{ path: '/details' }] }
     },
     registry: {
       isRegistered: () => registered,
@@ -129,14 +129,16 @@ test('初始化失败由异常页恢复原地址，重复失败仍可重试，�
     ),
     '@ao/admin-layout': stub('export const useWorktabStore = () => ({ validateWorktabs() {} })'),
     '@/api/auth': stub(
-      'export const fetchGetUserInfo = () => globalThis.authRecoveryTest.profile()'
+      'export const fetchGetUserInfo = () => globalThis.authRecoveryTest.profile(); export const fetchGetUserAuthorization = () => globalThis.authRecoveryTest.authorization()'
     ),
     '@/utils/navigation': stub('export const setWorktab = () => {}'),
     '@/utils/router': stub('export const setPageTitle = () => {}'),
     '@/utils/ui': stub('export const loadingService = { showLoading() {}, hideLoading() {} }'),
-    '@/router/constants': stub("export const RoutePath = { Root: '/' }"),
+    '@/router/constants': stub(
+      "export const RoutePath = { Root: '/' }; export const getRouteSource = () => 'dynamic'"
+    ),
     '@/router/services': stub(`
-      export class MenuRouteService { getRoutes() { return globalThis.authRecoveryTest.getRoutes() } }
+      export class MenuRouteService { getRoutes(menu) { return menu } }
       export class RouteRegistry { constructor() { return globalThis.authRecoveryTest.registry } }
     `),
     '@/utils/http/status': stub('export const ApiStatus = { unauthorized: 401 }'),

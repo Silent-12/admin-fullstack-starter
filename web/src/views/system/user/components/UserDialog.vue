@@ -3,6 +3,7 @@
     ref="formRef"
     v-model="form"
     v-model:visible="visible"
+    :loading="loading || busy"
     class="user-dialog"
     :title="userId ? '编辑用户' : '新增用户'"
     width="min(760px, calc(100vw - 32px))"

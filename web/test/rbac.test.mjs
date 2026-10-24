@@ -37,6 +37,7 @@ test('v-auth 按 auth 标识移除无权限按钮，权限变化后重新挂载�
       compilerOptions: { module: ts.ModuleKind.ESNext }
     })
     .outputText.replace("'@/store/modules/user'", `'${store}'`)
+    .replace("'@/router/constants'", `'${await sourceModule('router/constants.ts')}'`)
   const { setupAuthDirective } = await import(moduleUrl(code))
   let directive
   setupAuthDirective({
@@ -45,7 +46,7 @@ test('v-auth 按 auth 标识移除无权限按钮，权限变化后重新挂载�
       directive = value
     }
   })
-  const user = { info: { auth: [], roles: ['super_admin'] } }
+  const user = { auth: [], info: { roles: ['super_admin'] } }
   globalThis.rbacDirectiveUser = user
   t.after(() => delete globalThis.rbacDirectiveUser)
   const mount = (value) => {
@@ -61,7 +62,7 @@ test('v-auth 按 auth 标识移除无权限按钮，权限变化后重新挂载�
   }
   const denied = mount('system.user.create')
   assert.equal(denied.parentNode, null, '角色不能替代 auth 标识')
-  user.info.auth = ['system.user.create']
+  user.auth = ['system.user.create']
   await nextTick()
   assert.equal(denied.parentNode, null, '授权变化不自动恢复已移除按钮')
   const allowed = mount('system.user.create')
@@ -74,6 +75,7 @@ test('v-auth 按 auth 标识移除无权限按钮，权限变化后重新挂载�
   assert.equal(allowed.parentNode, null, '元素更新后仍校验绑定标识')
   assert.doesNotThrow(() => directive.updated(allowed, { value: 'system.user.delete' }))
   user.info = {}
+  user.auth = []
   assert.equal(mount('system.user.create').parentNode, null, '资料缺失时拒绝显示')
 })
 
@@ -161,7 +163,7 @@ async function sourceModule(path, overrides = {}) {
   return moduleUrl(code)
 }
 
-test('路由来源开关只切换菜单，静态模式不请求也不合并后端菜单，动态失败不回退本地菜单', async (t) => {
+test('路由来源开关只切换菜单，静态模式不合并后端菜单，动态空授权不回退本地菜单', async (t) => {
   t.after(() => {
     delete globalThis.rbacRouteSource
     delete globalThis.rbacMenuFetch
@@ -177,24 +179,20 @@ test('路由来源开关只切换菜单，静态模式不请求也不合并后�
   let backendRoutes = [
     { path: '/remote', name: 'Remote', component: '/system/user', meta: { title: '后端菜单' } }
   ]
-  let failure
   globalThis.rbacMenuFetch = async () => {
     calls++
-    if (failure) throw failure
-    return backendRoutes
+    throw new Error('菜单服务不应发起请求')
   }
   const nodes = (routes) => routes.flatMap((route) => [route, ...nodes(route.children || [])])
   globalThis.rbacRouteSource = 'static'
-  const local = await service.getRoutes()
+  const local = service.getRoutes(backendRoutes)
   assert.equal(calls, 0, '静态模式不请求后端菜单接口')
-  assert.deepEqual(await service.getRoutes(), local, '静态模式重复读取仍完全使用本地路由')
+  assert.deepEqual(service.getRoutes(backendRoutes), local, '静态模式重复读取仍完全使用本地路由')
   assert.equal(calls, 0)
-  // 后端有数据或请求失败都不能影响静态调试路由
+  // 后端空授权不能影响静态调试路由
   backendRoutes = []
-  failure = new Error('后端不可用')
-  assert.deepEqual(await service.getRoutes(), local, '静态模式忽略后端菜单与失败')
+  assert.deepEqual(service.getRoutes(backendRoutes), local, '静态模式忽略空后端菜单')
   assert.equal(calls, 0)
-  failure = undefined
   const system = local.find((route) => route.name === 'System')
   assert.equal(system.redirect, '/system/user')
   assert.equal('icon' in system.meta, false, '系统根目录不允许配置图标')
@@ -208,22 +206,23 @@ test('路由来源开关只切换菜单，静态模式不请求也不合并后�
   assert.deepEqual(
     {
       path: apiResourceRoute.path,
-      component: apiResourceRoute.component,
       meta: apiResourceRoute.meta
     },
     {
       path: '/system/api-resources',
-      component: '/system/api-resources',
       meta: { title: '接口资源', keepAlive: false }
     },
     '静态路由与后端内置资源种子保持一致'
   )
+  assert.equal(typeof apiResourceRoute.component, 'function', '静态路由使用懒加载组件')
+  assert.match(apiResourceRoute.component.toString(), /@\/views\/system\/api-resources\/index\.vue/)
   for (const route of nodes([system])) assert.notEqual(route.meta.keepAlive, true)
   globalThis.rbacRouteModules = {}
   for (const route of nodes(local)) {
     if (!route.component || route.component === '/index/index') continue
-    await readFile(new URL(`../src/views${route.component}/index.vue`, import.meta.url), 'utf8')
-    globalThis.rbacRouteModules[`../../views${route.component}/index.vue`] = async () => ({})
+    const viewPath = route.component.toString().match(/import\(['"]@\/views\/([^'"]+)['"]\)/)?.[1]
+    assert.ok(viewPath, '静态路由显式懒加载视图组件')
+    await readFile(new URL(`../src/views/${viewPath}`, import.meta.url), 'utf8')
   }
   const router = createRouter({ history: createMemoryHistory(), routes: [] })
   const registry = new RouteRegistry(router)
@@ -231,17 +230,18 @@ test('路由来源开关只切换菜单，静态模式不请求也不合并后�
   assert.equal(router.resolve('/system/role').name, 'SystemRole')
   registry.unregister()
   assert.equal(router.hasRoute('SystemRole'), false)
-  assert.equal((await service.getRoutes())[0].children[0].path, '/example/dashboard')
+  assert.equal(service.getRoutes([])[0].children[0].path, '/example/dashboard')
 
   for (const source of ['dynamic', undefined, '', 'invalid']) {
     globalThis.rbacRouteSource = source
     assert.equal(getRouteSource(), 'dynamic')
-    assert.deepEqual(await service.getRoutes(), [], '空授权菜单不回退本地菜单')
+    assert.deepEqual(service.getRoutes([]), [], '空授权菜单不回退本地菜单')
+    assert.equal(
+      service.getRoutes([{ path: '/remote', name: 'Remote', meta: {} }])[0].path,
+      '/remote'
+    )
   }
-  assert.equal(calls, 4)
-  const unauthorized = Object.assign(new Error('session expired'), { status: 401 })
-  failure = unauthorized
-  await assert.rejects(service.getRoutes(), (error) => error === unauthorized)
+  assert.equal(calls, 0, '菜单服务只规范化传入授权，不自行发起请求')
 })
 
 // 编译真实组件 setup，仅替换网络、界面依赖与生命周期注册。
@@ -670,11 +670,11 @@ test('菜单绑定保存失败保持输入，成功后才关闭并提交完整�
     }
   }
   const { state, stop } = await component('views/system/menu/components/MenuDialog.vue', context)
-  const resets = []
-  state.formRef.value = { reset: () => resets.push(state.form.value.title) }
+  const clearedTitles = []
+  state.formRef.value = { clearValidate: () => clearedTitles.push(state.form.value.title) }
   props.modelValue = true
   for (let tick = 0; tick < 5; tick++) await nextTick()
-  assert.deepEqual(resets, ['', '菜单'])
+  assert.deepEqual(clearedTitles, ['', '菜单'], '初始化和详情回填后仅清理校验，不重置模型')
   const sortItem = state.items.value.find((item) => item.key === 'sort')
   assert.equal(sortItem.props.valueOnClear, 0, '排序清空后回填 0，模型不会出现 null')
   assert.ok(state.rules.value.sort, '排序需要非负整数校验')
@@ -703,7 +703,7 @@ test('菜单绑定保存失败保持输入，成功后才关闭并提交完整�
   await nextTick()
   props.modelValue = true
   for (let tick = 0; tick < 5; tick++) await nextTick()
-  assert.deepEqual(resets, ['', '菜单', '', '菜单'])
+  assert.deepEqual(clearedTitles, ['', '菜单', '', '菜单'])
   assert.equal(state.form.value.title, '菜单')
   stop()
 })
@@ -737,10 +737,10 @@ test('接口清单标签弹窗排序清空提交 0，访问级别只保留三种
     save: async (data, code) => saves.push({ code, data })
   }
   const { state, stop } = await component('views/system/api-resources/index.vue', context, {
+    '@/hooks/useAuth': moduleUrl('export const useAuth = () => ({ hasAuth: () => true })'),
     '@ao/admin-components': moduleUrl(`
       export const AoForm = {}, AoTable = {}
       export const useTableColumns = (factory) => ({ columns: { value: factory() }, columnChecks: { value: [] } })
-      export const useAuth = () => ({ hasAuth: () => true })
     `),
     '@/api/system-manage': moduleUrl(`
       export const fetchApiResources = (query) => globalThis.rbacTest.fetchList(query)
@@ -996,6 +996,7 @@ test('内置角色在列表禁用资源授权并提示权限固定，普通角�
 
   const context = { props: {}, success: [], emit: () => {} }
   const { state, stop } = await component('views/system/role/index.vue', context, {
+    '@/hooks/useAuth': moduleUrl('export const useAuth = () => ({ hasAuth: () => true })'),
     '@ao/admin-components': moduleUrl(`
       export const AoTable = {}
       export const useTableColumns = (factory) => ({ columns: { value: factory() }, columnChecks: { value: [] } })

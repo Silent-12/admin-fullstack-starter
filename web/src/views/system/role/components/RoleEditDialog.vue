@@ -3,6 +3,7 @@
     ref="formRef"
     v-model="form"
     v-model:visible="visible"
+    :loading="loading || busy"
     :title="roleId ? '编辑角色' : '新增角色'"
     width="500px"
     :items="items"

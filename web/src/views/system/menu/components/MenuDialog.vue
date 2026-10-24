@@ -3,6 +3,7 @@
     ref="formRef"
     v-model="form"
     v-model:visible="visible"
+    :loading="loading || busy"
     :title="resourceId ? '编辑资源' : '新增资源'"
     width="820px"
     :items="items"

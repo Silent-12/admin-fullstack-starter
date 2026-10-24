@@ -76,8 +76,9 @@
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background: transparent !important;
+    background: var(--default-bg-color) !important;
     border: 0 !important;
+    border-radius: 0 !important;
   }
 
   .exception-inner {

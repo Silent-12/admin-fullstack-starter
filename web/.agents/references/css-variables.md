@@ -1,8 +1,9 @@
 # CSS 变量速查
 
-[返回主索引](../../AGENTS.md) · [样式规则](../rules/styles.md)
+> 作用域：`web/`。样式规则：[SCSS 与深色模式](../rules/styles.md)。
 
-本文件用于查找变量用途。数值为迁移时的参考快照，以下变量以安装后的 `node_modules/@ao/admin-layout/dist/index.css` 与 `node_modules/@ao/admin-components/dist/index.css` 为准（包仅发布 `dist`）。变量变更时同步维护本表。
+- 变量唯一真源：安装后的 `node_modules/@ao/admin-layout/dist/index.css` 与 `node_modules/@ao/admin-components/dist/index.css`（包仅发布 `dist`）。
+- 变量变更时必须同步维护本表。
 
 ### 样式整理语义变量
 
@@ -73,7 +74,7 @@
 | `--ao-content-header-height` | 运行时写入                 | 内容头部实测高度 |
 | `--ao-full-height`           | 布局包 `app.scss` 组合计算 | 内容区全高       |
 
-`--ao-full-height` 在布局包 `app.scss` 中由 `100vh` 减去运行时写入的头部高度组合而成；内容区上下留白由各容器自身内边距提供（如搜索栏 `10px`、表格卡片体 `10px`、`.page-content` `20px`），不设全局页面间距变量。脚本只负责把头部高度写入 `--ao-header-height` / `--ao-content-header-height`，不参与间距计算。
+`--ao-full-height` 由布局包 `app.scss` 用 `100vh` 减去运行时头部高度组合而成；内容区上下留白由各容器内边距提供（搜索栏 `10px`、表格卡片体 `10px`、`.page-content` `20px`），不设全局页面间距变量；脚本只写入 `--ao-header-height` / `--ao-content-header-height`，不参与间距计算。
 
 ### Element Plus 桥接变量（宿主 `src/assets/styles/el-ui.scss`）
 

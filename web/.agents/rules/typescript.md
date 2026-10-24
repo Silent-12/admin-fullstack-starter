@@ -1,11 +1,10 @@
 # 类型定义
 
-[返回主索引](../../AGENTS.md)。本文中的源码路径均相对 `web/` 目录。
+> 作用域：`web/`（源码路径相对 `web/`）。规则入口：[web/AGENTS.md](../../AGENTS.md)。
 
-- 所有的 TS 类型定义统一放在 `src/types/` 下，按域分目录。当前已存在目录包括：`api/`、`common/`、`config/`、`directive/`、`generated/`、`router/`、`store/`。新增类型前先复用现有目录与文件命名方式；API 类型当前按业务模块拆分在 `src/types/api/*.d.ts`，通用响应类型定义在 `src/types/common/response.ts`。
-
-- TypeScript 类型定义文件（`.ts` / `.d.ts`）的注释规则：`type`、`interface`、`class` 等类型声明前仅保留一段 JSDoc，第一行写简短说明，使用 `@description` 补充用途；字段注释统一使用字段上方的单行 `//` 注释，不在类型 JSDoc 中使用 `@param` 描述字段。类型声明前禁止额外添加与 JSDoc 重复的 `//` 标题注释。类方法和构造函数仍按函数注释规则使用 `@description`、`@param`、`@return`。类型声明 JSDoc 第一行简短说明不加句号，`@description` 行末不加句号。
-
-- `src/types/` 下新增的多单词类型文件优先使用小驼峰命名，例如 `systemManage.d.ts`、`versionControl.d.ts`；若历史文件仍使用中划线命名，应先尊重当前仓库现状，在重命名时同步调整全部引用后再统一收敛。
-
-类型注释示例见 [typedoc-style](../../../.agents/skills/typedoc-style/SKILL.md)。
+- 所有 TS 类型定义必须放在 `src/types/` 下按域分目录；现有目录：`api/`、`common/`、`config/`、`directive/`、`generated/`、`router/`、`store/`。
+- 新增类型前必须复用现有目录与文件命名方式；API 类型按业务模块拆分在 `src/types/api/*.d.ts`；通用响应类型定义在 `src/types/common/response.ts`。
+- 类型声明 JSDoc 与字段注释格式（两行 JSDoc、字段用上方 `//`、不加句号、字段间不留空行、匿名内联对象仅在父字段说明）：见 [TypeDoc 风格](../../../.agents/skills/typedoc-style/SKILL.md)。
+- 类型声明前禁止叠加与 JSDoc 重复的 `//` 标题注释。
+- 类方法与构造函数的注释按函数规则处理：见 [编码与注释](coding.md)。
+- `src/types/` 下新增多单词类型文件使用小驼峰命名（如 `systemManage.d.ts`）；历史中划线命名文件先保留现状，重命名时同步调整全部引用后再收敛。

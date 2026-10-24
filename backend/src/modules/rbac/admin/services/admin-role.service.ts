@@ -5,6 +5,7 @@ import type { EntityManager } from 'typeorm'
 import { DataSource } from 'typeorm'
 import type { PaginatedData } from '../../../../common/types/response.js'
 import type { AdminAuthorization, AdminRoleOption, AdminRoleView } from '../../../../types/rbac.js'
+import { AdminUser } from '../../../auth/admin/entities/admin-user.entity.js'
 import { AdminPermissionResource } from '../entities/admin-permission-resource.entity.js'
 import { AdminRole } from '../entities/admin-role.entity.js'
 import { AdminRoleResource } from '../entities/admin-role-resource.entity.js'
@@ -26,7 +27,7 @@ export class AdminRoleService {
 
   /**
    * 查询角色列表
-   * @description 按名称或编码搜索未删除角色并返回标准分页
+   * @description 按名称或编码搜索未删除角色并返回标准分页，附带更新时间与最后操作人显示名
    * @param query 分页与筛选参数
    * @returns 角色分页结果
    */
@@ -40,12 +41,7 @@ export class AdminRoleService {
       .skip((page - 1) * pageSize)
       .take(pageSize)
       .getManyAndCount()
-    return this.store.paginated(
-      roles.map((role) => this.roleView(role)),
-      page,
-      pageSize,
-      total,
-    )
+    return this.store.paginated(await this.roleViews(this.source.manager, roles), page, pageSize, total)
   }
 
   /**
@@ -73,12 +69,13 @@ export class AdminRoleService {
 
   /**
    * 查询角色详情
-   * @description 返回角色的公开字段
+   * @description 返回角色的公开字段、更新时间与最后操作人显示名
    * @param id 角色 UUID
    * @returns 角色详情
    */
   async getRole(id: string): Promise<AdminRoleView> {
-    return this.roleView(await this.store.requireRole(this.source.manager, id))
+    const role = await this.store.requireRole(this.source.manager, id)
+    return (await this.roleViews(this.source.manager, [role]))[0]!
   }
 
   /**
@@ -190,14 +187,27 @@ export class AdminRoleService {
     await replaceSoftDeleted(manager, AdminRoleResource, { roleId }, 'resourceId', resourceIds, audit)
   }
 
-  private roleView(role: AdminRole): AdminRoleView {
-    return {
+  /**
+   * 组装角色公开视图
+   * @description 一次性解析本页最后操作人姓名，系统初始化写入的 `system` 统一展示为「系统」；
+   * 账号已删除时仍按历史记录展示姓名，仅在查不到账号时返回 `null`
+   * @param manager 查询管理器
+   * @param roles 角色实体列表
+   * @returns 角色公开视图列表
+   */
+  private async roleViews(manager: EntityManager, roles: AdminRole[]): Promise<AdminRoleView[]> {
+    const actorIds = [...new Set(roles.map((role) => role.updatedBy))].filter((id) => id !== 'system')
+    const actors = actorIds.length ? await manager.find(AdminUser, { select: { id: true, name: true }, where: { id: In(actorIds) } }) : []
+    const actorNames = new Map(actors.map((actor) => [actor.id, actor.name]))
+    return roles.map((role) => ({
       id: role.id,
       code: role.code,
       name: role.name,
       description: role.description,
       enabled: role.enabled,
       isBuiltin: role.isBuiltin,
-    }
+      updateTime: role.updateTime,
+      updatedByName: role.updatedBy === 'system' ? '系统' : (actorNames.get(role.updatedBy) ?? null),
+    }))
   }
 }

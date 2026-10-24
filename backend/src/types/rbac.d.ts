@@ -65,7 +65,7 @@ export interface AdminUserView {
 
 /**
  * 后台角色公开资料
- * @description 角色展示和编辑流程所需字段，内置标记只读
+ * @description 角色展示和编辑流程所需字段，内置标记只读；更新人与更新时间供列表展示审计信息
  */
 export interface AdminRoleView {
   // 角色 UUID
@@ -80,6 +80,10 @@ export interface AdminRoleView {
   enabled: boolean
   // 是否内置角色
   isBuiltin: boolean
+  // 更新时间，Unix 秒
+  updateTime: number
+  // 最后操作人显示名，系统初始化写入的记录为「系统」，账号缺失时为 null
+  updatedByName: string | null
 }
 
 /**

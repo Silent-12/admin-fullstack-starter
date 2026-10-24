@@ -274,7 +274,7 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
     })
 
     await t.test('角色列表、详情返回公开资料，选项只返回启用非内置角色的最小字段', async () => {
-      const expected = ['id', 'code', 'name', 'description', 'enabled', 'isBuiltin'].sort()
+      const expected = ['id', 'code', 'name', 'description', 'enabled', 'isBuiltin', 'updateTime', 'updatedByName'].sort()
       const list = await asAdmin('/v1/admin/roles?pageSize=100')
       const detail = await asAdmin(`/v1/admin/roles/${SUPER_ROLE_ID}`)
       for (const response of [list, detail]) assert.equal(response.status, 200)
@@ -282,6 +282,10 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
         assert.deepEqual(Object.keys(role).sort(), expected)
         assert.equal(Object.hasOwn(role, 'isSuper'), false)
       }
+      // 系统初始化写入的角色以「系统」作为更新人，更新时间沿用 Unix 秒。
+      const builtinRole = list.body.data.list.find((role) => role.id === SUPER_ROLE_ID)
+      assert.equal(builtinRole.updatedByName, '系统')
+      assert.ok(builtinRole.updateTime > 0)
       const options = await asAdmin('/v1/admin/roles/options')
       assert.equal(options.status, 200)
       for (const role of options.body.data) assert.deepEqual(Object.keys(role).sort(), ['code', 'id', 'name'])
@@ -918,6 +922,9 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
       const roleList = await asAdmin(`/v1/admin/roles?keyword=${roleCode}&pageSize=100`)
       const role = roleList.body.data.list.find((item) => item.code === roleCode)
       assert.ok(role)
+      // 列表与详情返回的更新人按操作人账号解析为显示名。
+      assert.equal(role.updatedByName, admin.name)
+      assert.ok(role.updateTime > 0)
       const roleRows = source.getRepository(AdminRole)
       let stored = await roleRows.findOneByOrFail({ id: role.id })
       assert.equal(stored.createdBy, admin.id)

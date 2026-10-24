@@ -121,7 +121,19 @@
       formatter: (row) => (row.isBuiltin ? '是' : '否'),
       showOverflowTooltip: true
     },
-    { prop: 'enabled', label: '状态', width: 100, slotName: 'enabled', showOverflowTooltip: true }
+    { prop: 'enabled', label: '状态', width: 100, slotName: 'enabled', showOverflowTooltip: true },
+    {
+      prop: 'updateTime',
+      label: '更新时间',
+      width: 180,
+      formatter: (row) => new Date(row.updateTime * 1000).toLocaleString()
+    },
+    {
+      prop: 'updatedByName',
+      label: '更新人',
+      width: 120,
+      formatter: (row) => row.updatedByName ?? '-'
+    }
   ])
 
   /** 编辑弹窗与资源授权抽屉状态 */

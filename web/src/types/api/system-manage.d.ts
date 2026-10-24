@@ -17,7 +17,7 @@ export interface ManagementQuery {
 
 /**
  * 角色资料
- * @description 后台权限管理使用的角色资料
+ * @description 后台权限管理使用的角色资料，包含列表展示所需的更新时间与更新人
  */
 export interface Role {
   // 角色 UUID
@@ -32,6 +32,10 @@ export interface Role {
   enabled: boolean
   // 内置角色禁止修改或删除
   isBuiltin: boolean
+  // 更新时间 Unix 秒
+  updateTime: number
+  // 最后操作人显示名，系统初始化写入的角色为「系统」
+  updatedByName: string | null
 }
 
 /**

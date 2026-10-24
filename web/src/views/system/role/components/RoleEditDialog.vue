@@ -4,8 +4,11 @@
     v-model="form"
     v-model:visible="visible"
     :title="roleId ? '编辑角色' : '新增角色'"
-    width="520px"
+    width="500px"
     :items="items"
+    :span="24"
+    label-position="right"
+    label-width="90px"
     :rules="rules"
     :validate-on-rule-change="false"
     :disabled-submit="busy || loading || !ready"
@@ -108,16 +111,18 @@
       key: 'code',
       label: '角色编码',
       type: 'input',
+      span: 24,
       props: { maxlength: 64, disabled: Boolean(props.roleId) }
     },
-    { key: 'name', label: '角色名称', type: 'input', props: { maxlength: 64 } },
+    { key: 'name', label: '角色名称', type: 'input', span: 24, props: { maxlength: 64 } },
     {
       key: 'description',
       label: '描述',
       type: 'input',
+      span: 24,
       props: { type: 'textarea', maxlength: 255 }
     },
-    { key: 'enabled', label: '启用', type: 'switch' }
+    { key: 'enabled', label: '启用', type: 'switch', span: 24 }
   ])
 
   /** 表单校验规则 */

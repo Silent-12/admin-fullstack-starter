@@ -120,7 +120,7 @@
     {
       prop: 'createTime',
       label: '创建时间',
-      formatter: (row) => new Date(row.createTime * 1000).toLocaleString()
+      timestamp: { field: 'createTime' }
     },
     { prop: 'enabled', label: '状态', slotName: 'enabled', width: 100 }
   ])

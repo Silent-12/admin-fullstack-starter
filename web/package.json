@@ -45,7 +45,7 @@
     ]
   },
   "dependencies": {
-    "@ao/admin-components": "git+https://github.com/Silent-12/admin-components.git#v10",
+    "@ao/admin-components": "git+https://github.com/Silent-12/admin-components.git#v11",
     "@ao/admin-layout": "github:Silent-12/admin-layout#v9",
     "@element-plus/icons-vue": "^2.3.2",
     "@iconify/vue": "^5.0.0",

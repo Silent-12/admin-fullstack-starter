@@ -126,7 +126,7 @@
       prop: 'updateTime',
       label: '更新时间',
       width: 180,
-      formatter: (row) => new Date(row.updateTime * 1000).toLocaleString()
+      timestamp: { field: 'updateTime' }
     },
     {
       prop: 'updatedByName',

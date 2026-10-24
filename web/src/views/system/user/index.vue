@@ -86,12 +86,14 @@
       key: 'keyword',
       label: '关键字',
       type: 'input',
+      span: 6,
       props: { clearable: true, placeholder: '名称或编码' }
     },
     {
       key: 'enabled',
       label: '状态',
       type: 'select',
+      span: 6,
       props: {
         clearable: true,
         options: [

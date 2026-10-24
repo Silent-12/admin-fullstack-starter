@@ -36,9 +36,6 @@
 
 // 修改el-button样式
 .el-button {
-  &.el-button--default:not(.is-link):not(.is-text) {
-    border-color: var(--default-border) !important;
-  }
   &.el-button--text {
     background-color: transparent !important;
     padding: 0 !important;

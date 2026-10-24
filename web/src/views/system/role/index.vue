@@ -7,6 +7,7 @@
       :search-items="searchItems"
       :data="rows"
       :columns="columns"
+      :operation-width="160"
       :loading="loading"
       :pagination="pagination"
       @search="search"
@@ -31,7 +32,7 @@
           :title="row.isBuiltin ? '内置角色权限固定' : undefined"
           @click="grant(row)"
         >
-          资源授权
+          授权
         </ElButton>
         <ElButton
           v-auth="'system.role.update'"
@@ -126,7 +127,7 @@
       prop: 'updateTime',
       label: '更新时间',
       width: 180,
-      timestamp: { field: 'updateTime' }
+      formatter: (row) => new Date(row.updateTime * 1000).toLocaleString()
     },
     {
       prop: 'updatedByName',
@@ -136,7 +137,7 @@
     }
   ])
 
-  /** 编辑弹窗与资源授权抽屉状态 */
+  /** 编辑弹窗与授权抽屉状态 */
   const dialogVisible = ref(false)
   const permissionVisible = ref(false)
   const selectedId = ref<string>()
@@ -173,7 +174,7 @@
   }
 
   /**
-   * @description 打开指定角色的资源授权抽屉，内置角色权限固定不允许调整
+   * @description 打开指定角色的授权抽屉，内置角色权限固定不允许调整
    * @param row 目标角色行数据
    */
   const grant = (row: Role): void => {

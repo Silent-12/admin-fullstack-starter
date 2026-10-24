@@ -47,7 +47,7 @@
 - 搜索项配置以 `searchItems` 内联在业务页面中；禁止为每个页面创建 `components/XxxSearch.vue` 包装组件。
 - `#footer` 插槽承载表格底部左侧内容；分页器固定靠右；弹窗与抽屉放在表格同级。
 - 表格列 `prop` 沿用 `ElTableColumn` 原生语义，支持直接字段名与 `meta.title` 等点路径；禁止增加自定义路径解析或纠错兼容层。
-- 操作列由业务页面声明 `#operation` 插槽自动启用；禁止在 `columns` 中配置。
+- 操作列由业务页面声明 `#operation` 插槽自动启用；禁止在 `columns` 中配置；列宽由页面通过 `operation-width` 显式声明，按按钮实际占位设置，避免默认自适应把按钮挤压换行。
 - 无对应数据字段的展示列使用原生 `columnKey` 标识；简单格式化沿用 `ElTableColumn` 的 `formatter`。
 - 填写 `slotName` 即启用 `AoTable` 上的同名插槽，无需额外开关；插槽透传原生作用域，禁止额外计算 `value`。
 - 分页状态使用 `currentPage`、`pageSize`、`total`，交互沿用原生 `size-change`、`current-change` 事件；分页重置与请求由页面处理。

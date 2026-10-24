@@ -7,6 +7,7 @@
       :search-items="searchItems"
       :data="rows"
       :columns="columns"
+      :operation-width="180"
       :loading="loading"
       :pagination="pagination"
       @search="search"

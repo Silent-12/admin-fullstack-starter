@@ -30,6 +30,7 @@
       :loading="loading"
       :data="tableData"
       :columns="columns"
+      :operation-width="120"
       :pagination="pagination"
       empty-text="没有匹配的示例数据"
       @size-change="handleSizeChange"

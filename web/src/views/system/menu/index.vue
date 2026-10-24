@@ -7,6 +7,7 @@
       :search-items="searchItems"
       :data="filtered"
       :columns="columns"
+      :operation-width="200"
       :loading="loading"
       row-key="id"
       :tree-props="{ children: 'children' }"

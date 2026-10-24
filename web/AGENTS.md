@@ -42,7 +42,8 @@
 | 编写、修改、重构或审查代码 | [编码与注释](.agents/rules/coding.md)、[Ponytail](.agents/rules/ponytail.md)、[Karpathy Guidelines](../.agents/skills/karpathy-guidelines/SKILL.md) |
 | 新增或修改类型声明、类型注释 | [类型定义](.agents/rules/typescript.md)、[TypeDoc 技能](../.agents/skills/typedoc-style/SKILL.md) |
 | HTTP 请求、API 或响应结构 | [接口请求与响应](.agents/rules/api.md) |
-| 目录、组件、页面、表单、表格、搜索、路由、指令或 Hook | [目录、路由与组件](.agents/rules/module-structure.md) |
+| 目录、组件、页面、表单、表格、搜索、状态展示、路由、指令或 Hook | [目录、路由与组件](.agents/rules/module-structure.md) |
+| 状态文字颜色 | [SCSS 与深色模式](.agents/rules/styles.md#状态文字颜色) |
 | Store、持久化或本地存储 | [状态管理与持久化](.agents/rules/state-storage.md) |
 | 新增或修改任何 Vue / SCSS 文件，或整理样式 | [SCSS 与深色模式](.agents/rules/styles.md) |
 | 移除功能及关联资源 | [Feature Removal](.agents/skills/feature-removal/SKILL.md) |

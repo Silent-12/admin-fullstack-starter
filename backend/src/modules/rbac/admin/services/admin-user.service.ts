@@ -230,7 +230,7 @@ export class AdminUserService {
     const assignments = users.length ? await manager.findBy(AdminUserRole, { userId: In(users.map((user) => user.id)), isDeleted: 0 }) : []
     const roleIds = [...new Set(assignments.map((item) => item.roleId))]
     const roles = roleIds.length ? await manager.findBy(AdminRole, { id: In(roleIds), isDeleted: 0 }) : []
-    const roleMap = new Map(roles.map((role) => [role.id, role.code]))
+    const roleMap = new Map(roles.map((role) => [role.id, role.name]))
     return users.map((user) => {
       const userRoles = assignments.filter((item) => item.userId === user.id)
       return {
@@ -242,9 +242,9 @@ export class AdminUserService {
         avatar: user.avatar,
         enabled: user.enabled,
         roleIds: userRoles.map((item) => item.roleId).sort(),
-        roleCodes: userRoles
+        roleNames: userRoles
           .map((item) => roleMap.get(item.roleId))
-          .filter((code): code is string => !!code)
+          .filter((name): name is string => !!name)
           .sort(),
         isBuiltin: isBuiltinAdmin(user),
         createTime: user.createTime,

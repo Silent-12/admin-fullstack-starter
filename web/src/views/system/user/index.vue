@@ -105,18 +105,22 @@
   ]
 
   const { columns, columnChecks } = useTableColumns<ManagedUser>(() => [
-    { prop: 'username', label: '用户名', minWidth: 140 },
+    { prop: 'username', label: '用户名' },
     { prop: 'name', label: '姓名' },
     { prop: 'phone', label: '手机号' },
-    { prop: 'email', label: '邮箱', minWidth: 180 },
-    { prop: 'roleCodes', label: '角色', formatter: (row) => row.roleCodes.join('、') },
+    { prop: 'email', label: '邮箱', showOverflowTooltip: true },
+    {
+      prop: 'roleNames',
+      label: '角色',
+      showOverflowTooltip: true,
+      formatter: (row) => row.roleNames.join('、')
+    },
     {
       prop: 'createTime',
       label: '创建时间',
-      minWidth: 170,
       formatter: (row) => new Date(row.createTime * 1000).toLocaleString()
     },
-    { prop: 'enabled', label: '状态', slotName: 'enabled' }
+    { prop: 'enabled', label: '状态', slotName: 'enabled', width: 100 }
   ])
 
   /** 编辑弹窗状态 */

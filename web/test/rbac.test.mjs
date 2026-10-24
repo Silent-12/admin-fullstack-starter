@@ -839,7 +839,7 @@ test('内置账号用 isBuiltin 判定，弹窗禁用角色与启用开关并展
         avatar: null,
         enabled: true,
         roleIds: id === 'builtin' ? ['role-a', 'retired-role'] : ['retired-role'],
-        roleCodes: id === 'builtin' ? ['role_a', 'retired_role'] : ['retired_role'],
+        roleNames: id === 'builtin' ? ['角色 A', '已停用角色'] : ['已停用角色'],
         isBuiltin: id === 'builtin',
         createTime: 0,
         lastLoginTime: null

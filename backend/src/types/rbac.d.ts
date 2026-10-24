@@ -53,8 +53,8 @@ export interface AdminUserView {
   enabled: boolean
   // 当前绑定角色 UUID
   roleIds: string[]
-  // 当前绑定角色编码
-  roleCodes: string[]
+  // 当前绑定角色名称
+  roleNames: string[]
   // 是否为系统内置管理员
   isBuiltin: boolean
   // 创建时间，Unix 秒

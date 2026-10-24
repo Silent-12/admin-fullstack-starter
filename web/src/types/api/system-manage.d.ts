@@ -83,8 +83,8 @@ export interface ManagedUser {
   enabled: boolean
   // 角色主键
   roleIds: string[]
-  // 角色编码
-  roleCodes: string[]
+  // 角色名称
+  roleNames: string[]
   // 是否内置账号，内置账号由系统创建且禁止删除
   isBuiltin: boolean
   // 创建时间 Unix 秒

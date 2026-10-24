@@ -19,7 +19,9 @@
         <ElButton v-auth="'system.role.create'" :disabled="busy" @click="edit()">新增角色</ElButton>
       </template>
       <template #enabled="{ row }">
-        <ElTag :type="row.enabled ? 'success' : 'info'">{{ row.enabled ? '启用' : '禁用' }}</ElTag>
+        <span class="role-status" :class="{ 'is-enabled': row.enabled }">
+          {{ row.enabled ? '启用' : '禁用' }}
+        </span>
       </template>
       <template #operation="{ row }">
         <ElButton
@@ -60,7 +62,7 @@
   import { AoTable, useTableColumns } from '@ao/admin-components'
   import { useAuth } from '@/hooks/useAuth'
   import type { SearchFormItem } from '@ao/admin-components'
-  import { ElButton, ElMessage, ElMessageBox, ElTag } from 'element-plus'
+  import { ElButton, ElMessage, ElMessageBox } from 'element-plus'
   import { fetchGetRoleList, deleteRole } from '@/api/system-manage'
   import type { Role } from '@/types/api/system-manage'
   import { usePagedList } from '@/hooks/usePagedList'
@@ -168,3 +170,13 @@
     permissionVisible.value = true
   }
 </script>
+
+<style scoped lang="scss">
+  .role-status {
+    color: var(--status-text-neutral);
+
+    &.is-enabled {
+      color: var(--status-text-success);
+    }
+  }
+</style>

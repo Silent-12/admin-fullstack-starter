@@ -28,6 +28,13 @@
 | `--ao-error`     | `var(--el-color-error)`   | 错误色                    |
 | `--ao-info`      | `var(--el-color-info)`    | 信息色                    |
 
+### 业务状态文字变量（宿主 `src/assets/styles/index.scss`）
+
+| 变量 | 亮色值 | 暗色值 | 用途 |
+| --- | --- | --- | --- |
+| `--status-text-success` | `#40c974` | `#40c974` | 成功、启用状态文字 |
+| `--status-text-neutral` | `#8e8d92` | `#8e8d92` | 普通、中性、禁用状态文字 |
+
 ### 灰度色阶变量（亮暗反转）
 
 | 变量名          | 亮色值    | 暗色值    | 典型用途        |

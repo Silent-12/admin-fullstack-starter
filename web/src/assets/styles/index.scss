@@ -7,4 +7,11 @@
 @use 'element-plus/theme-chalk/src/index.scss' as *;
 @use './el-ui.scss';
 
+// 业务状态文字色，明暗主题统一遵循状态配色约定
+:root,
+.dark {
+  --status-text-success: #40c974;
+  --status-text-neutral: #8e8d92;
+}
+
 // 暗黑主题、路由切换动画、主题过渡动画已随 @ao/admin-layout/styles.css 提供

@@ -3,8 +3,11 @@
     ref="formRef"
     v-model="form"
     v-model:visible="visible"
+    class="user-dialog"
     :title="userId ? '编辑用户' : '新增用户'"
-    width="600px"
+    width="min(760px, calc(100vw - 32px))"
+    label-position="top"
+    :gutter="24"
     :items="items"
     :rules="rules"
     :validate-on-rule-change="false"
@@ -20,7 +23,7 @@
         :disabled="loading || !ready"
         @click="formRef?.submit()"
       >
-        保存
+        {{ userId ? '保存修改' : '创建用户' }}
       </ElButton>
     </template>
   </AoForm>
@@ -31,9 +34,11 @@
   import { AoForm } from '@ao/admin-components'
   import type { FormItem } from '@ao/admin-components'
   import { ElAlert, ElButton } from 'element-plus'
+  import { Refresh } from '@element-plus/icons-vue'
   import { createUser, fetchGetRoleOptions, fetchGetUser, updateUser } from '@/api/system-manage'
   import type { RoleOption } from '@/types/api/system-manage'
   import { useDialogForm } from '@/hooks/useDialogForm'
+  import { validateStrongPassword } from '@/utils/form/validator'
 
   const props = defineProps<{ modelValue: boolean; userId?: string }>()
   const emit = defineEmits<{ 'update:modelValue': [boolean]; success: [] }>()
@@ -91,6 +96,7 @@
         password: '',
         phone: user.phone || '',
         email: user.email || '',
+        // 弹窗不提供头像编辑入口，回填原值以免保存其他资料时清空已有头像
         avatar: user.avatar || '',
         enabled: user.enabled,
         roleIds: [...user.roleIds]
@@ -112,9 +118,9 @@
     submit: async (value) => {
       const data = {
         name: value.name.trim(),
-        phone: value.phone.trim() || null,
-        email: value.email.trim() || null,
-        avatar: value.avatar.trim() || null,
+        phone: value.phone?.trim() || null,
+        email: value.email?.trim() || null,
+        avatar: value.avatar?.trim() || null,
         enabled: value.enabled,
         roleIds: [...value.roleIds]
       }
@@ -124,6 +130,24 @@
     /** @description 保存成功后通知列表刷新 */
     success: () => emit('success')
   })
+
+  /**
+   * @description 使用安全随机源生成包含四类字符的 16 位初始密码，并清除旧校验错误
+   */
+  const generatePassword = (): void => {
+    if (props.userId || busy.value || loading.value || !ready.value) return
+    // 64 个字符均匀映射随机字节，避免取模偏差；整串重试保证包含四类字符
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-'
+    let password = ''
+    do {
+      password = Array.from(
+        crypto.getRandomValues(new Uint8Array(16)),
+        (value) => alphabet[value % alphabet.length]
+      ).join('')
+    } while (!validateStrongPassword(password))
+    form.value.password = password
+    formRef.value?.clearValidate('password')
+  }
 
   // 为已绑定但不在可分配选项中的角色补齐展示文案，避免下拉框直接显示 UUID
   const roleOptions = computed(() => {
@@ -138,30 +162,63 @@
 
   /** 表单项配置 */
   const items = computed<FormItem[]>(() => [
+    { key: 'accountTitle', label: '账号信息', type: 'title' },
     {
       key: 'username',
-      label: '用户名',
+      label: props.userId ? '用户名（创建后不可修改）' : '用户名（1 至 64 位小写字母）',
       type: 'input',
       props: {
         maxlength: 64,
         disabled: Boolean(props.userId),
-        placeholder: '仅小写字母，同名时自动追加数字后缀'
+        placeholder: '重名时自动追加数字后缀',
+        autocomplete: 'off'
       }
     },
-    { key: 'name', label: '姓名', type: 'input', props: { maxlength: 64 } },
     ...(!props.userId
       ? [
           {
             key: 'password',
-            label: '初始密码',
+            label: '初始密码（12 至 128 个字符）',
             type: 'input' as const,
-            props: { type: 'password', showPassword: true, autocomplete: 'new-password' }
+            props: {
+              type: 'text',
+              maxlength: 128,
+              placeholder: '请设置初始密码',
+              autocomplete: 'new-password'
+            },
+            slots: {
+              append: () =>
+                h(ElButton, {
+                  icon: Refresh,
+                  title: '生成随机密码',
+                  disabled: busy.value || loading.value || !ready.value,
+                  onClick: generatePassword
+                })
+            }
           }
         ]
       : []),
-    { key: 'phone', label: '手机号', type: 'input' },
-    { key: 'email', label: '邮箱', type: 'input' },
-    { key: 'avatar', label: '头像地址', type: 'input' },
+    { key: 'profileTitle', label: '基本资料', type: 'title' },
+    {
+      key: 'name',
+      label: '姓名',
+      type: 'input',
+      props: { maxlength: 64, placeholder: '请输入姓名', clearable: true }
+    },
+    {
+      key: 'phone',
+      label: '手机号',
+      type: 'input',
+      props: { placeholder: '选填，请输入手机号', clearable: true, inputmode: 'tel' }
+    },
+    {
+      key: 'email',
+      label: '邮箱',
+      type: 'input',
+      span: 24,
+      props: { placeholder: '选填，请输入邮箱', clearable: true, inputmode: 'email' }
+    },
+    { key: 'permissionTitle', label: '角色与状态', type: 'title' },
     // 内置账号的角色绑定与启用开关固定，仅允许维护基础资料
     {
       key: 'roleIds',
@@ -169,6 +226,10 @@
       type: 'select',
       props: {
         multiple: true,
+        filterable: true,
+        collapseTags: true,
+        collapseTagsTooltip: true,
+        placeholder: '请选择角色（可多选）',
         disabled: builtinUser.value,
         options: roleOptions.value
       }
@@ -188,7 +249,17 @@
           }
         ]
       : []),
-    { key: 'enabled', label: '启用', type: 'switch', props: { disabled: builtinUser.value } }
+    {
+      key: 'enabled',
+      label: '账号状态',
+      type: 'switch',
+      props: {
+        disabled: builtinUser.value,
+        inlinePrompt: true,
+        activeText: '启用',
+        inactiveText: '禁用'
+      }
+    }
   ])
 
   /** 表单校验规则 */
@@ -203,3 +274,33 @@
     email: [{ type: 'email' as const, message: '请输入有效邮箱' }]
   }))
 </script>
+
+<style lang="scss">
+  // AoForm 将 class 透传至表单主体；组件库内部规则带 data-v 属性选择器，特异性高于单个类名，
+  // 因此统一附加 section 元素选择器，避免依赖样式加载顺序
+  section.user-dialog {
+    &.form-section {
+      padding: 20px 28px 4px;
+
+      .el-form-item {
+        margin-bottom: 24px;
+      }
+    }
+
+    .form-title {
+      margin: 0 0 16px;
+      font-weight: 600;
+    }
+
+    @media (width <= 767px) {
+      &.form-section {
+        padding: 16px 20px 0;
+      }
+
+      .el-col {
+        flex-basis: 100%;
+        max-width: 100%;
+      }
+    }
+  }
+</style>

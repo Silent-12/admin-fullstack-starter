@@ -44,13 +44,13 @@ pnpm run start:dev
 
 ### 4. 初始化管理员账号
 
-需要实际登录时，先启用 MySQL 与 Redis 并配置 `JWT_SECRET`，然后在 `backend/` 中执行：
+需要实际登录时，先启用 MySQL 与 Redis，配置 `JWT_SECRET` 与内置账号初始密码 `ADMIN_INIT_PASSWORD`（12 至 128 位），然后在 `backend/` 中执行：
 
 ```bash
 pnpm run admin:init
 ```
 
-该命令先构建再运行，创建缺失的 `admin` 账号并绑定内置管理员角色、恢复内置权限种子；不自动修改表结构，也不会覆盖已有密码；创建成功后终端仅显示一次随机密码。执行前需已准备后台权限相关表（本地先启动一次应用自动建表，或先执行生产基线 SQL）。详见「后台认证」。
+该命令先构建再运行，创建缺失的 `admin` 账号并绑定内置管理员角色、恢复内置权限种子；不自动修改表结构，也不会覆盖已有密码；首次创建使用 `ADMIN_INIT_PASSWORD` 作为密码，终端不输出明文。执行前需已准备后台权限相关表（本地先启动一次应用自动建表，或先执行生产基线 SQL）。详见「后台认证」。
 
 ### 5. 构建生产版本
 
@@ -103,7 +103,7 @@ MySQL 与 Redis 均由环境变量开关控制；未启用 MySQL 时，所有依
 
 认证模块为后台用户提供登录、当前用户信息、全端登出与内置 admin 初始化，位于 `src/modules/auth/admin/`，随 MySQL 条件化导入。
 
-- `pnpm run admin:init` 初始化 `admin` 账号并绑定内置管理员角色：先构建再运行，重复/并发执行不覆盖密码，终端仅显示一次随机密码，不修改表结构；命令会写入内置角色、菜单按钮与接口授权种子，要求对应表已存在。
+- `pnpm run admin:init` 初始化 `admin` 账号并绑定内置管理员角色：先构建再运行，重复/并发执行不覆盖密码，首次创建使用 `ADMIN_INIT_PASSWORD` 作为密码且终端不输出明文，不修改表结构；命令会写入内置角色、菜单按钮与接口授权种子，要求对应表已存在。
 - 启用 MySQL 时必须同时启用 Redis，并配置非空 `JWT_SECRET`；MySQL 关闭时不加载认证模块。相关变量见 [.env.example](.env.example)。
 - 认证接口为 `v1/admin/auth/login`、`profile`、`logout`（位于全局前缀之后）；请求与响应字段、错误语义以 Knife4j 文档和根 [AGENTS.md](../AGENTS.md#跨端接口约定) 为准。
 - 回归：`pnpm run test` 运行 `test/` 下单元测试；`pnpm run test:integration` 运行 `test-integration/` 下集成测试，需要可创建测试库的 MySQL 与 Redis。

@@ -13,12 +13,16 @@ import { RBAC_ENTITIES } from './modules/rbac/admin/rbac.entities.js'
 
 /**
  * 内置账号初始化入口
- * @description 在同一事务内初始化权限种子、创建账号并绑定内置管理员角色，不启动 HTTP 服务、不自动改表、不将密码写入日志
+ * @description 在同一事务内初始化权限种子、创建账号并绑定内置管理员角色；初始密码取自 `ADMIN_INIT_PASSWORD`，不生成、不打印明文，不启动 HTTP 服务、不自动改表
  */
 async function main(): Promise<void> {
   config({ path: resolve('.env'), quiet: true })
   config({ path: resolve('.env.local'), override: true, quiet: true })
   if (process.env.MYSQL_ENABLED !== 'true') throw new AdminInitError('请先启用 MySQL 并按实体准备表结构')
+  const password = process.env.ADMIN_INIT_PASSWORD || undefined
+  if (password !== undefined && (password.length < 12 || password.length > 128)) {
+    throw new AdminInitError('ADMIN_INIT_PASSWORD 长度必须为 12 至 128 个字符')
+  }
   const database = databaseConfig()
   const source = new DataSource({
     type: 'mysql',
@@ -34,16 +38,16 @@ async function main(): Promise<void> {
   })
   try {
     await source.initialize()
-    const password = await source.transaction(async (manager) => {
+    const created = await source.transaction(async (manager) => {
       // 事务内先初始化权限种子并取得内置角色行锁，保持与 RBAC 写接口一致的“角色 → 用户”锁序。
       await ensureRbacSeed(manager)
-      const { password, user } = await initializeAdmin(manager.getRepository(AdminUser), new PasswordService())
+      const { created, user } = await initializeAdmin(manager.getRepository(AdminUser), new PasswordService(), password)
       await bindBuiltinAdmin(manager, user.id)
-      return password
+      return created
     })
     process.stdout.write(
-      password
-        ? `admin 已创建并绑定内置管理员角色。请立即安全保存密码，此密码只显示一次：\n${password}\n`
+      created
+        ? 'admin 已创建并绑定内置管理员角色，请使用 ADMIN_INIT_PASSWORD 配置的密码登录；密码不会输出到终端。\n'
         : 'admin 已存在，未修改密码，已核验内置管理员角色绑定与资源授权。\n',
     )
   } finally {

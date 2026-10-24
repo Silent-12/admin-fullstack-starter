@@ -18,7 +18,7 @@ pnpm run dev:web       # 或 pnpm dev 同时启动前后端
 
 ### 用户登录
 
-使用后端 `pnpm run admin:init` 初始化的 `admin` 账号及仅显示一次的随机密码登录，不提供默认演示密码；初始化步骤与认证接口见后端 [后台认证](../backend/README.md#后台认证)。
+使用后端 `pnpm run admin:init` 初始化的 `admin` 账号及 `ADMIN_INIT_PASSWORD` 配置的密码登录，不提供默认演示密码；初始化步骤与认证接口见后端 [后台认证](../backend/README.md#后台认证)。
 
 登录、用户信息与退出通过 [src/api/auth.ts](src/api/auth.ts) 对接后端，会话状态由 [src/store/modules/user.ts](src/store/modules/user.ts) 管理。认证回归测试：`pnpm run test:auth`；令牌、持久化与工作区约束见 [状态管理与持久化](.agents/rules/state-storage.md)。
 

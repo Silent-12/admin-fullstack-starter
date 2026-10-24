@@ -275,6 +275,7 @@ async function component(path, context, overrides = {}) {
     }),
     '@/hooks/usePagedList': await sourceModule('hooks/usePagedList.ts', { vue: vueStub }),
     '@/hooks/useLatestRequest': await sourceModule('hooks/useLatestRequest.ts', { vue: vueStub }),
+    '@/utils/form/validator': await sourceModule('utils/form/validator.ts'),
     ...overrides
   }
   const code = ts.transpileModule(source, {
@@ -909,6 +910,78 @@ test('内置账号用 isBuiltin 判定，弹窗禁用角色与启用开关并展
     '普通用户缺失角色同样补齐中文展示项'
   )
   stop()
+})
+
+test('初始密码右侧按钮生成四类字符的随机密码，清除旧错误且忙碌时不改写', async () => {
+  const props = reactive({ modelValue: false, userId: undefined })
+  const { state, stop } = await component(
+    'views/system/user/components/UserDialog.vue',
+    { props, success: [], emit() {} },
+    {
+      '@/api/system-manage': moduleUrl(`
+        export const fetchGetRoleOptions = async () => []
+        export const fetchGetUser = async () => null
+        export const createUser = async () => {}
+        export const updateUser = async () => {}
+      `)
+    }
+  )
+  let restoreCrypto
+  try {
+    state.generatePassword()
+    assert.equal(state.form.value.password, '', '资料未就绪时不生成')
+    props.modelValue = true
+    for (let tick = 0; tick < 6; tick++) await nextTick()
+    assert.equal(state.ready.value, true)
+    const passwordButton = () =>
+      state.items.value.find((item) => item.key === 'password').slots.append()
+    assert.equal(passwordButton().props.disabled, false, '就绪后按钮可用')
+    const cleared = []
+    state.formRef.value = { clearValidate: (field) => cleared.push(field) }
+    const button = passwordButton()
+    assert.equal(button.props.onClick, state.generatePassword, '右侧插槽绑定生成事件')
+    // 计数真实随机源调用，避免换成 Math.random 之类的弱随机实现后测试仍然通过
+    const cryptoRef = globalThis.crypto
+    const originalGetRandomValues = cryptoRef.getRandomValues
+    let randomCalls = 0
+    cryptoRef.getRandomValues = (target) => {
+      randomCalls += 1
+      return originalGetRandomValues.call(cryptoRef, target)
+    }
+    restoreCrypto = () => {
+      delete cryptoRef.getRandomValues
+    }
+    const generated = new Set()
+    for (let sample = 0; sample < 256; sample++) {
+      button.props.onClick()
+      const password = state.form.value.password
+      assert.equal(password.length, 16)
+      for (const pattern of [/[A-Z]/, /[a-z]/, /\d/, /[_-]/]) assert.match(password, pattern)
+      assert.match(password, /^[A-Za-z0-9_-]+$/)
+      generated.add(password)
+    }
+    assert.equal(generated.size, 256, '连续生成不复用固定密码')
+    assert.ok(randomCalls >= 256, '使用 crypto 安全随机源生成')
+    assert.deepEqual(cleared, Array(256).fill('password'))
+    const previous = state.form.value.password
+    state.busy.value = true
+    assert.equal(passwordButton().props.disabled, true)
+    state.generatePassword()
+    assert.equal(state.form.value.password, previous, '保存中不覆盖密码')
+    assert.equal(cleared.length, 256, '保存中早退不清理校验状态')
+    state.busy.value = false
+    props.userId = 'editing'
+    state.generatePassword()
+    assert.equal(state.form.value.password, previous, '编辑模式不生成初始密码')
+    assert.equal(cleared.length, 256, '编辑模式早退不清理校验状态')
+    assert.equal(
+      state.items.value.some((item) => item.key === 'password'),
+      false
+    )
+  } finally {
+    restoreCrypto?.()
+    stop()
+  }
 })
 
 test('内置角色在列表禁用资源授权并提示权限固定，普通角色仍可打开授权', async () => {

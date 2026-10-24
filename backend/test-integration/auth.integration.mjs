@@ -140,19 +140,26 @@ test('真实 MySQL / Redis / HTTP 登录与全端撤销', { timeout: 90000 }, as
       JSON.stringify(indexes),
     )
 
+    const adminInitPassword = 'AdminInitPassword123'
     const cli = () =>
       spawnSync(process.execPath, [fileURLToPath(new URL('../dist/admin-init.js', import.meta.url))], {
         cwd: tmpdir(),
-        env: { ...process.env, MYSQL_ENABLED: 'true', NODE_ENV: 'test', DB_DATABASE: database, DB_SYNCHRONIZE: 'false' },
+        env: {
+          ...process.env,
+          MYSQL_ENABLED: 'true',
+          NODE_ENV: 'test',
+          DB_DATABASE: database,
+          DB_SYNCHRONIZE: 'false',
+          ADMIN_INIT_PASSWORD: adminInitPassword,
+        },
         encoding: 'utf8',
       })
     const initialized = cli()
     assert.equal(initialized.status, 0, initialized.stderr)
-    const password = initialized.stdout.trim().split(/\r?\n/).at(-1)
-    assert.match(password, /^[A-Za-z0-9]{32}$/)
+    assert.ok(!initialized.stdout.includes(adminInitPassword), 'CLI 不输出明文密码')
     const repeated = cli()
     assert.equal(repeated.status, 0)
-    assert.ok(!repeated.stdout.includes(password))
+    assert.ok(!repeated.stdout.includes(adminInitPassword))
     const original = await users.findOneByOrFail({ username: 'admin' })
     assert.equal(original.createdBy, 'system')
     assert.equal(original.tokenVersion, 1)
@@ -163,18 +170,20 @@ test('真实 MySQL / Redis / HTTP 登录与全端撤销', { timeout: 90000 }, as
     const roleBindings = source.getRepository(AdminUserRole)
     assert.equal(await roleBindings.countBy({ userId: original.id, roleId: SUPER_ROLE_ID, isDeleted: 0 }), 1)
     assert.ok((await source.getRepository(AdminRoleResource).countBy({ roleId: SUPER_ROLE_ID, isDeleted: 0 })) > 0)
-    // 人工破坏绑定后重跑 CLI 必须恢复，且不得重新显示密码。
+    // 人工破坏绑定后重跑 CLI 必须恢复，且不得重新输出密码。
     await roleBindings.update({ userId: original.id, roleId: SUPER_ROLE_ID }, { isDeleted: 1 })
     const repaired = cli()
     assert.equal(repaired.status, 0, repaired.stderr)
-    assert.ok(!repaired.stdout.includes(password))
+    assert.ok(!repaired.stdout.includes(adminInitPassword))
     assert.equal(await roleBindings.countBy({ userId: original.id, roleId: SUPER_ROLE_ID, isDeleted: 0 }), 1)
-    // 用真实唯一约束验证并发初始化，只有一个调用能拿到明文密码。
+    // 用真实唯一约束验证并发初始化，只有一个调用能完成新建。
     await users.delete({ id: original.id })
-    const seeded = await Promise.all([initializeAdmin(users, new PasswordService()), initializeAdmin(users, new PasswordService())])
-    const winners = seeded.filter((result) => result.password)
-    assert.equal(winners.length, 1)
-    const actualPassword = winners[0].password
+    const seeded = await Promise.all([
+      initializeAdmin(users, new PasswordService(), adminInitPassword),
+      initializeAdmin(users, new PasswordService(), adminInitPassword),
+    ])
+    assert.equal(seeded.filter((result) => result.created).length, 1)
+    const actualPassword = adminInitPassword
     const user = await users.findOneByOrFail({ username: 'admin' })
     user.username = 'renamed'
     await users.save(user)

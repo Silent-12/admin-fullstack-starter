@@ -146,7 +146,8 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
     const source = app.get(DataSource)
     const users = source.getRepository(AdminUser)
     const passwords = new PasswordService()
-    const { password, user: admin } = await initializeAdmin(users, passwords)
+    const password = 'RbacInitPassword123'
+    const { user: admin } = await initializeAdmin(users, passwords, password)
     await initializeRbac(source, admin.id)
     const base = `${await app.getUrl()}/rbac-custom-prefix`
     const request = async (path, { token, body, method = body ? 'POST' : 'GET' } = {}) => {

@@ -20,10 +20,9 @@ import { EventEmitter } from 'node:events'
 // 关闭 Nest 默认日志输出，避免框架日志干扰测试结果
 Logger.overrideLogger(false)
 
-test('随机密码、独立盐、错误密码及未知用户校验', async () => {
+test('独立盐、错误密码及未知用户校验', async () => {
   const passwords = new PasswordService()
-  const password = passwords.generate()
-  assert.match(password, /^[A-Za-z0-9]{32}$/)
+  const password = 'CallerProvidedPass123'
   const [first, second] = await Promise.all([passwords.hash(password), passwords.hash(password)])
   assert.notEqual(first, second)
   assert.equal(await passwords.verify(password, first), true)

@@ -1,26 +1,15 @@
 import { Injectable } from '@nestjs/common'
-import { randomBytes, randomInt, scrypt, timingSafeEqual } from 'node:crypto'
+import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto'
 
-/** 密码字符集：大小写英文字母与数字 */
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 /** scrypt 参数：N=2^17、r=8、p=1，maxmem 限制为 256 MB */
 const OPTIONS = { N: 2 ** 17, r: 8, p: 1, maxmem: 256 * 1024 * 1024 }
 
 /**
  * 密码服务
- * @description 生成随机凭证并使用固定强度的异步 scrypt 存储，不记录明文
+ * @description 使用固定强度的异步 scrypt 存储明文密码，不记录明文；明文密码统一由调用方传入，服务本身不生成密码
  */
 @Injectable()
 export class PasswordService {
-  /**
-   * 生成随机密码
-   * @description 生成 32 位字母数字随机密码，用于内置账号初始化时的一次性展示
-   * @returns 32 位字母数字明文密码
-   */
-  generate(): string {
-    return Array.from({ length: 32 }, () => ALPHABET[randomInt(ALPHABET.length)]).join('')
-  }
-
   /**
    * 生成密码哈希
    * @description 为密码生成独立随机盐并派生 scrypt 哈希，同一密码每次生成的结果均不同

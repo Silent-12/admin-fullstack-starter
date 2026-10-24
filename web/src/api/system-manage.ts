@@ -6,6 +6,7 @@ import type {
   ManagedUser,
   ManagementQuery,
   Resource,
+  ResourceListItem,
   ResourceInput,
   Role,
   RoleInput,
@@ -191,13 +192,13 @@ export const updateRoleResources = (id: string, resourceIds: string[]) =>
 // 菜单与资源管理
 
 /**
- * 获取完整资源树
- * @description 获取菜单管理使用的完整资源树
- * @return {Promise<Resource[]>} 完整资源树
+ * 获取完整资源列表
+ * @description 获取不分页的精简资源列表，接口绑定仅返回数量，由调用方根据 parentId 构建树
+ * @return {Promise<ResourceListItem[]>} 精简资源列表
  */
-export const fetchGetMenuTree = () =>
-  request.get<Resource[]>({
-    url: '/v1/admin/menus/tree'
+export const fetchGetMenuList = () =>
+  request.get<ResourceListItem[]>({
+    url: '/v1/admin/menus'
   })
 
 /**

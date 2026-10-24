@@ -58,6 +58,45 @@ function apiResources(controllers, rows = []) {
 const api = (code, extra = {}) => ({ code, module: '业务模块', feature: '查询功能', action: '读取', ...extra })
 const authz = (resourceIds = [], apiCodes = [], isBuiltin = false) => ({ resourceIds, apiCodes, permissions: [], isBuiltin })
 
+test('菜单列表仅返回页面需要的扁平字段与绑定数量，详情保留完整编辑配置', async () => {
+  const rows = [
+    { id: 'button', parentId: 'menu', type: 'button', enabled: false, sort: 0, createTime: 123, isDeleted: 0 },
+    { id: 'menu', parentId: 'directory', type: 'menu', enabled: true, sort: 1 },
+    { id: 'directory', parentId: null, type: 'directory', enabled: true, sort: 2 },
+  ]
+  Object.assign(rows[0], { title: '操作', name: null, path: null, permission: 'orders.edit', component: null, icon: null, hidden: false, keepAlive: false })
+  const bindings = [{ resourceId: 'button', apiCode: 'orders.edit' }, { resourceId: 'button', apiCode: 'orders.read' }]
+  const service = new AdminResourceService({
+    getRepository: (entity) => ({
+      find: async (query) => {
+        assert.deepEqual(query.where, { isDeleted: 0 })
+        if (entity.name === 'AdminPermissionResource') {
+          assert.deepEqual(query.order, { sort: 'ASC', id: 'ASC' })
+          return rows
+        }
+        assert.deepEqual(query.select, { resourceId: true })
+        return bindings
+      },
+      findBy: async (query) => {
+        assert.deepEqual(query, { resourceId: 'button', isDeleted: 0 })
+        return bindings
+      },
+    }),
+  }, { requireResource: async () => rows[0] }, {})
+  const list = await service.listResources()
+  assert.deepEqual(list.map(({ id, parentId }) => ({ id, parentId })), rows.map(({ id, parentId }) => ({ id, parentId })))
+  assert.equal(list[0].enabled, false)
+  assert.equal(list[0].apiCount, 2)
+  assert.equal(list[1].apiCount, 0)
+  for (const item of list) {
+    assert.deepEqual(Object.keys(item).sort(), ['id', 'parentId', 'type', 'title', 'name', 'path', 'permission', 'enabled', 'sort', 'isBuiltin', 'apiCount'].sort())
+  }
+  const detail = await service.getResource('button')
+  assert.deepEqual(detail.apiCodes, ['orders.edit', 'orders.read'])
+  for (const field of ['component', 'icon', 'hidden', 'keepAlive']) assert.equal(detail[field], rows[0][field])
+  assert.equal(Object.hasOwn(detail, 'apiCount'), false)
+})
+
 function authorizationService({ user = { id: 'user', enabled: true }, assignments = [{ roleId: 'role' }], roles, resources, grants, bindings = [] }) {
   const manager = {
     findOneBy: async (entity) => (entity.name === 'AdminUser' ? user : null),
@@ -775,10 +814,10 @@ test('初始化种子为页面与按钮绑定交叉页面依赖接口', async ()
   const menuMenu = resources.find((item) => item.name === 'SystemMenu')
   const grantButton = resources.find((item) => item.permission === SYSTEM_BUTTON_PERMISSIONS.roleGrant)
   assert.ok(userMenu && menuMenu && grantButton)
-  // 用户弹窗、菜单弹窗与角色授权弹窗依赖的跨页面接口必须随所属资源一起种子化。
+  // 用户弹窗、菜单弹窗与角色授权抽屉依赖的跨页面接口必须随所属资源一起种子化。
   assert.ok(bindingOf(userMenu, 'system.roles.options'))
   assert.ok(bindingOf(menuMenu, 'system.apis.tree'))
-  assert.ok(bindingOf(grantButton, 'system.menus.tree'))
+  assert.ok(bindingOf(grantButton, 'system.menus.list'))
   // 种子写入审计字段并默认未删除。
   for (const resource of resources) {
     assert.equal(resource.isDeleted, 0)
@@ -908,7 +947,7 @@ test('接口目录展示配置不可覆写方法与访问策略，更新写入�
 
 test('内置种子接口编码集合非空，覆盖全部系统管理入口', () => {
   assert.ok(SEED_API_CODES.length > 0)
-  for (const code of ['system.users.list', 'system.users.create', 'system.roles.resources.assign', 'system.menus.tree', 'system.apis.update']) {
+  for (const code of ['system.users.list', 'system.users.create', 'system.roles.resources.assign', 'system.menus.list', 'system.apis.update']) {
     assert.ok(SEED_API_CODES.includes(code), `缺少种子接口编码 ${code}`)
   }
 })

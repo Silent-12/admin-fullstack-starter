@@ -1,8 +1,9 @@
 <template>
-  <ElDialog
+  <ElDrawer
     v-model="visible"
     title="资源授权"
-    width="640px"
+    size="min(640px, 100vw)"
+    direction="rtl"
     :close-on-click-modal="false"
     :close-on-press-escape="!busy"
   >
@@ -11,41 +12,41 @@
       type="info"
       :closable="false"
     />
-    <ElScrollbar height="420px" v-loading="loading">
-      <ElTree
-        ref="tree"
-        :data="resources"
-        node-key="id"
-        show-checkbox
-        check-strictly
-        default-expand-all
-        :props="{ label: 'title', children: 'children', disabled: () => busy }"
-      />
-    </ElScrollbar>
+    <ElTree
+      ref="tree"
+      v-loading="loading"
+      :data="resources"
+      node-key="id"
+      show-checkbox
+      check-strictly
+      default-expand-all
+      :props="{ label: 'title', children: 'children', disabled: () => busy }"
+    />
     <template #footer>
       <ElButton :disabled="busy" @click="visible = false">取消</ElButton>
       <ElButton type="primary" :loading="busy" :disabled="loading || !ready" @click="save">
         保存
       </ElButton>
     </template>
-  </ElDialog>
+  </ElDrawer>
 </template>
 
 <script setup lang="ts">
   import { nextTick, ref } from 'vue'
-  import { ElAlert, ElButton, ElDialog, ElScrollbar, ElTree } from 'element-plus'
-  import { fetchGetMenuTree, fetchRoleResources, updateRoleResources } from '@/api/system-manage'
-  import type { Resource } from '@/types/api/system-manage'
+  import { ElAlert, ElButton, ElDrawer, ElTree } from 'element-plus'
+  import { fetchGetMenuList, fetchRoleResources, updateRoleResources } from '@/api/system-manage'
+  import type { ResourceTreeNode } from '@/types/api/system-manage'
   import { useDialogForm } from '@/hooks/useDialogForm'
+  import { buildResourceTree } from '@/utils/resource'
 
   const props = defineProps<{ modelValue: boolean; roleId?: string }>()
   const emit = defineEmits<{ 'update:modelValue': [boolean]; success: [] }>()
 
   /** 完整资源树与树实例引用 */
-  const resources = ref<Resource[]>([])
+  const resources = ref<ResourceTreeNode[]>([])
   const tree = ref<InstanceType<typeof ElTree>>()
 
-  /** 授权弹窗状态与提交生命周期 */
+  /** 授权抽屉状态与提交生命周期 */
   const { visible, loading, ready, busy, save } = useDialogForm({
     open: () => props.modelValue,
     close: () => emit('update:modelValue', false),
@@ -55,13 +56,13 @@
      */
     createForm: () => ({ resourceIds: [] as string[] }),
     /**
-     * @description 重置弹窗时清空上一次加载的资源树
+     * @description 重置抽屉时清空上一次加载的资源树
      */
     reset: () => {
       resources.value = []
     },
     /**
-     * @description 从完整资源树及角色关系恢复勾选，关闭时使请求失效
+     * @description 从完整资源列表构建树并恢复角色勾选，关闭时使请求失效
      * @param model 当前授权模型
      * @param isCurrent 当前请求是否仍属于最新一次打开
      * @return 详情加载完成时无返回值，请求失效或不允许编辑时返回 false
@@ -69,11 +70,11 @@
     load: async (model, isCurrent) => {
       if (!props.roleId) return false
       const [nodes, grants] = await Promise.all([
-        fetchGetMenuTree(),
+        fetchGetMenuList(),
         fetchRoleResources(props.roleId)
       ])
       if (!isCurrent()) return false
-      resources.value = nodes
+      resources.value = buildResourceTree(nodes)
       model.value = { resourceIds: [...grants.resourceIds] }
       await nextTick()
       if (!isCurrent()) return false

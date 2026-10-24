@@ -60,8 +60,9 @@
   import { useAuth } from '@/hooks/useAuth'
   import type { SearchFormItem } from '@ao/admin-components'
   import { ElButton, ElMessage, ElMessageBox, ElTag } from 'element-plus'
-  import { deleteMenu, fetchGetMenuTree } from '@/api/system-manage'
-  import type { Resource } from '@/types/api/system-manage'
+  import { deleteMenu, fetchGetMenuList } from '@/api/system-manage'
+  import type { ResourceListItem, ResourceTreeNode } from '@/types/api/system-manage'
+  import { buildResourceTree } from '@/utils/resource'
   import { useLatestRequest } from '@/hooks/useLatestRequest'
   import MenuDialog from './components/MenuDialog.vue'
 
@@ -70,7 +71,7 @@
   const { hasAuth } = useAuth()
 
   /** 资源数据、检索关键字与请求状态 */
-  const resources = ref<Resource[]>([])
+  const resources = ref<ResourceTreeNode[]>([])
   const loading = ref(false)
   const busy = ref(false)
   const searchForm = ref({ keyword: '' })
@@ -89,7 +90,7 @@
     }
   ]
 
-  const { columns, columnChecks } = useTableColumns<Resource>(() => [
+  const { columns, columnChecks } = useTableColumns<ResourceListItem>(() => [
     { prop: 'title', label: '名称', minWidth: 180 },
     {
       prop: 'type',
@@ -98,7 +99,7 @@
     },
     { prop: 'path', label: '路由', minWidth: 140 },
     { prop: 'permission', label: '操作权限码', minWidth: 160 },
-    { prop: 'apiCodes', label: '绑定接口', formatter: (row) => `${row.apiCodes.length} 个` },
+    { prop: 'apiCount', label: '绑定接口', formatter: (row) => `${row.apiCount} 个` },
     { prop: 'sort', label: '排序', width: 80 },
     { prop: 'enabled', label: '状态', slotName: 'enabled' }
   ])
@@ -113,7 +114,7 @@
    * @param nodes 待过滤的资源节点
    * @return 过滤后的资源树
    */
-  const filterNodes = (nodes: Resource[]): Resource[] =>
+  const filterNodes = (nodes: ResourceTreeNode[]): ResourceTreeNode[] =>
     nodes.flatMap((node) => {
       if (!keyword.value) return [node]
       const children = filterNodes(node.children || [])
@@ -126,14 +127,14 @@
   const filtered = computed(() => filterNodes(resources.value))
 
   /**
-   * @description 加载完整的管理资源树
+   * @description 加载完整的管理资源列表并构建树
    */
   const load = async (): Promise<void> => {
     const token = request.begin()
     loading.value = true
     try {
-      const data = await fetchGetMenuTree()
-      if (request.isCurrent(token)) resources.value = data
+      const data = await fetchGetMenuList()
+      if (request.isCurrent(token)) resources.value = buildResourceTree(data)
     } catch {
       /* 请求层显示错误 */
     } finally {
@@ -161,7 +162,7 @@
    * @description 打开新增或编辑资源弹窗
    * @param row 行数据，缺省表示新增
    */
-  const edit = (row?: Resource): void => {
+  const edit = (row?: ResourceListItem): void => {
     if (!hasAuth(row ? 'system.menu.update' : 'system.menu.create')) return
     selectedId.value = row?.id
     parentId.value = undefined
@@ -172,7 +173,7 @@
    * @description 在指定父节点下新增资源
    * @param row 父资源行数据
    */
-  const addChild = (row: Resource): void => {
+  const addChild = (row: ResourceListItem): void => {
     if (!hasAuth('system.menu.create') || row.type === 'button') return
     selectedId.value = undefined
     parentId.value = row.id
@@ -183,7 +184,7 @@
    * @description 二次确认后删除资源并刷新资源树
    * @param row 待删除的资源行数据
    */
-  const remove = async (row: Resource): Promise<void> => {
+  const remove = async (row: ResourceListItem): Promise<void> => {
     if (!hasAuth('system.menu.delete') || busy.value || row.isBuiltin) return
     try {
       await ElMessageBox.confirm(`确定删除资源“${row.title}”吗？请先清理子资源`, '删除资源', {

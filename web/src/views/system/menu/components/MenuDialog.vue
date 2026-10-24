@@ -55,7 +55,7 @@
   import type { FormItem } from '@ao/admin-components'
   import { ElButton, ElMessage, ElTreeSelect } from 'element-plus'
   import { createMenu, fetchGetMenu, updateMenu } from '@/api/system-manage'
-  import type { Resource, ResourceInput } from '@/types/api/system-manage'
+  import type { ResourceInput, ResourceTreeNode } from '@/types/api/system-manage'
   import { validateBusinessRouteIdentity } from '@/router/services/RouteConfigValidator'
   import { useDialogForm } from '@/hooks/useDialogForm'
   import ApiTreeSelector from './ApiTreeSelector.vue'
@@ -64,7 +64,7 @@
     modelValue: boolean
     resourceId?: string
     parentId?: string
-    resources: Resource[]
+    resources: ResourceTreeNode[]
   }>()
   const emit = defineEmits<{ 'update:modelValue': [boolean]; success: [] }>()
 
@@ -79,7 +79,7 @@
    * @param id 目标资源 ID
    * @return 命中的资源节点，未找到时返回 undefined
    */
-  const findResource = (nodes: Resource[], id?: string): Resource | undefined => {
+  const findResource = (nodes: ResourceTreeNode[], id?: string): ResourceTreeNode | undefined => {
     for (const node of nodes) {
       if (node.id === id) return node
       const found = findResource(node.children || [], id)
@@ -221,7 +221,10 @@
    * @param blocked 祖先链是否已命中禁用节点
    * @return 带禁用状态的资源节点
    */
-  const parentNodes = (nodes: Resource[], blocked = false): (Resource & { disabled: boolean })[] =>
+  const parentNodes = (
+    nodes: ResourceTreeNode[],
+    blocked = false
+  ): (ResourceTreeNode & { disabled: boolean })[] =>
     nodes.map((node) => {
       const descendant = blocked || node.id === props.resourceId
       const disabled =

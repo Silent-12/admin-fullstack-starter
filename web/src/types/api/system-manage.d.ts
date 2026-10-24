@@ -150,16 +150,44 @@ export interface ResourceInput {
 }
 
 /**
- * 权限资源树
- * @description 后台权限管理使用的权限资源树
+ * 权限资源
+ * @description 资源详情响应，包含编辑所需的完整配置
  */
 export interface Resource extends ResourceInput {
   // 内置资源身份和位置受保护
   isBuiltin: boolean
   // 资源 UUID
   id: string
-  // 可选子资源
-  children?: Resource[]
+}
+
+/**
+ * 权限资源列表项
+ * @description 管理列表展示、搜索、操作与组树所需的精简字段
+ */
+export interface ResourceListItem extends Pick<
+  Resource,
+  | 'id'
+  | 'parentId'
+  | 'type'
+  | 'title'
+  | 'name'
+  | 'path'
+  | 'permission'
+  | 'enabled'
+  | 'sort'
+  | 'isBuiltin'
+> {
+  // 绑定接口数量，具体编码从详情接口读取
+  apiCount: number
+}
+
+/**
+ * 权限资源树节点
+ * @description 前端根据扁平资源列表构建的树节点，用于菜单管理与角色授权
+ */
+export interface ResourceTreeNode extends ResourceListItem {
+  // 前端构建的子资源
+  children: ResourceTreeNode[]
 }
 
 /**

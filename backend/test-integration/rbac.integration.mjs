@@ -181,11 +181,16 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
         sort: 0,
         ...values,
       })
-      const tree = await asAdmin('/v1/admin/menus/tree')
-      assert.equal(tree.status, 200)
-      const resource = flatten(tree.body.data).find((node) => node.title === name)
-      assert.ok(resource, `资源 ${name} 必须可在树中查询`)
-      return resource
+      const response = await asAdmin('/v1/admin/menus')
+      assert.equal(response.status, 200)
+      assert.ok(Array.isArray(response.body.data))
+      const listFields = ['id', 'parentId', 'type', 'title', 'name', 'path', 'permission', 'enabled', 'sort', 'isBuiltin', 'apiCount'].sort()
+      for (const item of response.body.data) assert.deepEqual(Object.keys(item).sort(), listFields)
+      const resource = response.body.data.find((node) => node.title === name)
+      assert.ok(resource, `资源 ${name} 必须可在列表中查询`)
+      const detail = await asAdmin(`/v1/admin/menus/${resource.id}`)
+      assert.equal(detail.status, 200)
+      return detail.body.data
     }
     const createRole = async (code) => {
       await writeAdmin('/v1/admin/roles', 'POST', { code, name: code, enabled: true })
@@ -340,11 +345,12 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
     })
 
     await t.test('系统管理按钮与接口可由角色显式授权，撤销后立即失效', async () => {
-      const tree = await asAdmin('/v1/admin/menus/tree')
-      const nodes = flatten(tree.body.data)
+      const response = await asAdmin('/v1/admin/menus')
+      const nodes = response.body.data
       const userCreateButton = nodes.find((node) => node.permission === SYSTEM_BUTTON_PERMISSIONS.userCreate)
       assert.ok(userCreateButton, '初始化种子必须包含用户新增按钮资源')
-      assert.deepEqual(userCreateButton.apiCodes, ['system.users.create'])
+      assert.equal(userCreateButton.apiCount, 1)
+      assert.deepEqual((await asAdmin(`/v1/admin/menus/${userCreateButton.id}`)).body.data.apiCodes, ['system.users.create'])
       await setResources(writeRole.id, [writeButton.id, userCreateButton.id])
       const authorization = (await asOrdinary('/v1/admin/auth/authorization')).body.data
       assert.ok(authorization.auth.includes(SYSTEM_BUTTON_PERMISSIONS.userCreate))
@@ -384,14 +390,15 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
     })
 
     await t.test('页面资源随附交叉页面依赖接口，最小授权即可打开对应弹窗', async () => {
-      const nodes = flatten((await asAdmin('/v1/admin/menus/tree')).body.data)
+      const nodes = (await asAdmin('/v1/admin/menus')).body.data
       const userMenu = nodes.find((node) => node.name === 'SystemUser')
       const menuMenu = nodes.find((node) => node.name === 'SystemMenu')
       const grantButton = nodes.find((node) => node.permission === SYSTEM_BUTTON_PERMISSIONS.roleGrant)
       assert.ok(userMenu && menuMenu && grantButton)
-      assert.ok(userMenu.apiCodes.includes('system.roles.options'))
-      assert.ok(menuMenu.apiCodes.includes('system.apis.tree'))
-      assert.ok(grantButton.apiCodes.includes('system.menus.tree'))
+      const details = await Promise.all([userMenu, menuMenu, grantButton].map((item) => asAdmin(`/v1/admin/menus/${item.id}`)))
+      assert.ok(details[0].body.data.apiCodes.includes('system.roles.options'))
+      assert.ok(details[1].body.data.apiCodes.includes('system.apis.tree'))
+      assert.ok(details[2].body.data.apiCodes.includes('system.menus.list'))
 
       const pageRole = await createRole('page_scoped_role')
       // 仅授用户管理页面即可打开用户弹窗（角色选项）。
@@ -399,17 +406,17 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
       await setRoles(ordinary.id, [pageRole.id])
       assert.equal((await asOrdinary('/v1/admin/users?pageSize=1')).status, 200)
       assert.equal((await asOrdinary('/v1/admin/roles/options')).status, 200)
-      errorResponse(await asOrdinary('/v1/admin/menus/tree'), 403)
+      errorResponse(await asOrdinary('/v1/admin/menus'), 403)
 
       // 仅授菜单管理页面即可打开菜单弹窗（接口树）。
       await setResources(pageRole.id, [menuMenu.id])
-      assert.equal((await asOrdinary('/v1/admin/menus/tree')).status, 200)
+      assert.equal((await asOrdinary('/v1/admin/menus')).status, 200)
       assert.equal((await asOrdinary('/v1/admin/api-resources/tree')).status, 200)
       errorResponse(await asOrdinary('/v1/admin/users?pageSize=1'), 403)
 
-      // 仅授角色授权按钮即可加载资源树与已有授权。
+      // 仅授角色授权按钮即可加载资源列表与已有授权。
       await setResources(pageRole.id, [grantButton.id])
-      assert.equal((await asOrdinary('/v1/admin/menus/tree')).status, 200)
+      assert.equal((await asOrdinary('/v1/admin/menus')).status, 200)
       assert.equal((await asOrdinary(`/v1/admin/roles/${readRole.id}/resources`)).status, 200)
       errorResponse(await asOrdinary('/v1/admin/users?pageSize=1'), 403)
 
@@ -418,7 +425,7 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
     })
 
     await t.test('委派菜单管理不能篡改内置资源绑定或绑定未授权接口', async () => {
-      const nodes = flatten((await asAdmin('/v1/admin/menus/tree')).body.data)
+      const nodes = (await asAdmin('/v1/admin/menus')).body.data
       const userMenu = nodes.find((node) => node.name === 'SystemUser')
       const menuMenu = nodes.find((node) => node.name === 'SystemMenu')
       const menuUpdate = nodes.find((node) => node.permission === SYSTEM_BUTTON_PERMISSIONS.menuUpdate)
@@ -464,7 +471,7 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
     })
 
     await t.test('委派用户管理只能分配自身授权范围内的角色', async () => {
-      const nodes = flatten((await asAdmin('/v1/admin/menus/tree')).body.data)
+      const nodes = (await asAdmin('/v1/admin/menus')).body.data
       const userMenu = nodes.find((node) => node.name === 'SystemUser')
       const menuMenu = nodes.find((node) => node.name === 'SystemMenu')
       const userUpdate = nodes.find((node) => node.permission === SYSTEM_BUTTON_PERMISSIONS.userUpdate)
@@ -600,10 +607,11 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
     await t.test('未知 API 不可绑定，失败写操作保持原绑定', async () => {
       for (const apiCodes of [['tests.read', 'unknown.api']]) {
         errorResponse(await asAdmin(`/v1/admin/menus/${readMenu.id}`, { method: 'PATCH', body: { title: '不应保存', apiCodes } }), 400)
-        const tree = await asAdmin('/v1/admin/menus/tree')
-        const unchanged = flatten(tree.body.data).find((item) => item.id === readMenu.id)
+        const response = await asAdmin('/v1/admin/menus')
+        const unchanged = response.body.data.find((item) => item.id === readMenu.id)
         assert.equal(unchanged.title, 'test_read')
-        assert.deepEqual(unchanged.apiCodes, ['tests.read'])
+        assert.equal(unchanged.apiCount, 1)
+        assert.deepEqual((await asAdmin(`/v1/admin/menus/${readMenu.id}`)).body.data.apiCodes, ['tests.read'])
       }
       // 直接写入已软删除资源的绑定不会扩大授权。
       const removed = await createResource('removed_binding_probe', { parentId: directory.id })
@@ -649,8 +657,8 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
         asAdmin(`/v1/admin/menus/${second.id}`, { method: 'PATCH', body: { parentId: first.id, component: null } }),
       ])
       assert.deepEqual(moves.map((result) => result.status).sort(), [200, 400])
-      const tree = await asAdmin('/v1/admin/menus/tree')
-      const moved = flatten(tree.body.data).filter((item) => [first.id, second.id].includes(item.id))
+      const response = await asAdmin('/v1/admin/menus')
+      const moved = response.body.data.filter((item) => [first.id, second.id].includes(item.id))
       assert.equal(moved.length, 2)
       assert.equal(moved.filter((item) => item.parentId === null).length, 1)
     })
@@ -868,8 +876,8 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
     })
 
     await t.test('内置管理员角色授权固定，初始化恢复被破坏的资源授权与种子接口绑定', async () => {
-      const tree = await asAdmin('/v1/admin/menus/tree')
-      const nodes = flatten(tree.body.data)
+      const response = await asAdmin('/v1/admin/menus')
+      const nodes = response.body.data
       const userMenu = nodes.find((node) => node.name === 'SystemUser')
       assert.ok(userMenu)
       // 内置角色是系统兜底权限，角色授权接口必须拒绝编辑。

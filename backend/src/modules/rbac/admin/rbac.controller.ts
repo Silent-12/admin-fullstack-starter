@@ -296,17 +296,17 @@ export class MenusController {
   constructor(private readonly rbac: RbacService) {}
 
   /**
-   * 查询权限资源树
-   * @description 返回经过字段筛选的业务结果
-   * @returns 统一响应，数据为查询结果
+   * 查询权限资源列表
+   * @description 仅返回列表所需字段与接口绑定数量，前端根据 `parentId` 构建树
+   * @returns 统一响应，数据为不分页的资源列表
    */
-  @Get('tree')
+  @Get()
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
-  @ApiOperation({ summary: '查询权限资源树' })
-  @AdminApi({ code: 'system.menus.tree', module: '系统管理', feature: '菜单管理', action: '查询权限资源树' })
-  async tree(): Promise<ApiResponseDto<Awaited<ReturnType<RbacService['resourceTree']>>>> {
-    return ApiResponseDto.success(await this.rbac.resourceTree())
+  @ApiOperation({ summary: '查询权限资源列表' })
+  @AdminApi({ code: 'system.menus.list', module: '系统管理', feature: '菜单管理', action: '查询权限资源列表' })
+  async list(): Promise<ApiResponseDto<Awaited<ReturnType<RbacService['listResources']>>>> {
+    return ApiResponseDto.success(await this.rbac.listResources())
   }
 
   /**

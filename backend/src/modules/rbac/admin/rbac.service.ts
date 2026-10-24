@@ -3,6 +3,7 @@ import type { PaginatedData } from '../../../common/types/response.js'
 import type {
   AdminAuthorization,
   AdminMenuRoute,
+  AdminResourceListItem,
   AdminResourceView,
   AdminRoleOption,
   AdminRoleView,
@@ -203,12 +204,12 @@ export class RbacService {
   }
 
   /**
-   * 查询权限资源树
-   * @description 管理页面返回全部未删除资源和接口绑定
-   * @returns 层级资源列表
+   * 查询权限资源列表
+   * @description 返回管理列表所需字段与接口绑定数量，由前端构建树
+   * @returns 扁平资源列表
    */
-  async resourceTree(): Promise<AdminResourceView[]> {
-    return this.resources.resourceTree()
+  async listResources(): Promise<AdminResourceListItem[]> {
+    return this.resources.listResources()
   }
 
   /**

@@ -294,6 +294,166 @@ async function component(path, context, overrides = {}) {
   return { state, stop: () => scope.stop() }
 }
 
+test('资源列表在前端构建树，支持子节点先于父级、保留顺序且不修改接口数据', async () => {
+  const { buildResourceTree } = await import(await sourceModule('utils/resource.ts'))
+  const list = [
+    { id: 'button', parentId: 'menu', enabled: false },
+    { id: 'second', parentId: 'directory' },
+    { id: 'menu', parentId: 'directory' },
+    { id: 'directory', parentId: null },
+    { id: 'orphan', parentId: 'missing' }
+  ]
+  const original = structuredClone(list)
+  const tree = buildResourceTree(list)
+  assert.deepEqual(
+    tree.map((node) => node.id),
+    ['directory', 'orphan']
+  )
+  assert.deepEqual(
+    tree[0].children.map((node) => node.id),
+    ['second', 'menu']
+  )
+  assert.equal(tree[0].children[1].children[0].id, 'button')
+  assert.equal(tree[0].children[1].children[0].enabled, false)
+  assert.deepEqual(list, original)
+  assert.deepEqual(buildResourceTree([]), [])
+})
+
+test('菜单管理通过精简列表展示绑定数量，按路由名称搜索并保留祖先及编辑入口', async () => {
+  const list = [
+    {
+      id: 'directory',
+      parentId: null,
+      type: 'directory',
+      title: '系统',
+      name: 'System',
+      path: '/system',
+      permission: null,
+      enabled: true,
+      sort: 0,
+      isBuiltin: true,
+      apiCount: 0
+    },
+    {
+      id: 'menu',
+      parentId: 'directory',
+      type: 'menu',
+      title: '用户',
+      name: 'SystemUser',
+      path: 'user',
+      permission: null,
+      enabled: false,
+      sort: 1,
+      isBuiltin: false,
+      apiCount: 3
+    }
+  ]
+  const { state, stop } = await component(
+    'views/system/menu/index.vue',
+    { props: {}, success: [] },
+    {
+      '@/hooks/useAuth': moduleUrl('export const useAuth = () => ({ hasAuth: () => true })'),
+      '@/utils/resource': await sourceModule('utils/resource.ts'),
+      '@/api/system-manage': moduleUrl(`
+      export const fetchGetMenuList = async () => (${JSON.stringify(list)})
+      export const deleteMenu = async () => {}
+    `),
+      '@ao/admin-components': moduleUrl(`
+      export const AoTable = {}
+      export const useTableColumns = (factory) => ({ columns: { value: factory() }, columnChecks: { value: [] } })
+    `),
+      'element-plus': moduleUrl(
+        'export const ElButton = {}, ElMessage = {}, ElMessageBox = {}, ElTag = {}'
+      ),
+      './components/MenuDialog.vue': moduleUrl('export default {}')
+    }
+  )
+  await state.load()
+  const row = state.resources.value[0].children[0]
+  const countColumn = state.columns.value.find((column) => column.prop === 'apiCount')
+  assert.equal(countColumn.formatter(row), '3 个')
+  state.searchForm.value.keyword = 'systemuser'
+  state.search()
+  assert.equal(state.filtered.value[0].id, 'directory')
+  assert.equal(state.filtered.value[0].children[0].id, 'menu')
+  state.edit(row)
+  assert.equal(state.selectedId.value, 'menu')
+  assert.equal(state.dialogVisible.value, true)
+  stop()
+})
+
+test('角色授权抽屉从扁平列表恢复独立勾选，保存选中资源并隔离关闭后的响应', async () => {
+  const source = await readFile(
+    new URL('../src/views/system/role/components/RolePermissionDialog.vue', import.meta.url),
+    'utf8'
+  )
+  const template = parse(source).descriptor.template.content
+  assert.match(template, /<ElDrawer[\s\S]*?direction="rtl"/)
+  assert.match(template, /check-strictly/)
+  const props = reactive({ modelValue: false, roleId: 'role' })
+  let pending
+  const saves = []
+  const context = {
+    props,
+    success: [],
+    emit: (event, value) => {
+      if (event === 'update:modelValue') props.modelValue = value
+    },
+    resources: () => pending.promise,
+    save: async (id, ids) => saves.push({ id, ids })
+  }
+  const { state, stop } = await component(
+    'views/system/role/components/RolePermissionDialog.vue',
+    context,
+    {
+      'element-plus': moduleUrl(`
+      export const ElAlert = {}, ElButton = {}, ElDrawer = {}, ElTree = {}
+    `),
+      '@/utils/resource': await sourceModule('utils/resource.ts'),
+      '@/api/system-manage': moduleUrl(`
+      export const fetchGetMenuList = () => globalThis.rbacTest.resources()
+      export const fetchRoleResources = async () => ({ resourceIds: ['button'] })
+      export const updateRoleResources = (id, ids) => globalThis.rbacTest.save(id, ids)
+    `)
+    }
+  )
+  let checked = []
+  state.tree.value = {
+    setCheckedKeys: (ids) => {
+      checked = ids
+    },
+    getCheckedKeys: () => checked
+  }
+  pending = deferred()
+  props.modelValue = true
+  for (let tick = 0; tick < 3; tick++) await nextTick()
+  assert.equal(state.loading.value, true)
+  await state.save()
+  assert.equal(saves.length, 0, '资源加载完成前禁止保存')
+  pending.resolve([
+    { id: 'button', parentId: 'menu' },
+    { id: 'menu', parentId: null }
+  ])
+  for (let tick = 0; tick < 8; tick++) await nextTick()
+  assert.equal(state.resources.value[0].children[0].id, 'button')
+  assert.deepEqual(checked, ['button'], '仅恢复显式授权，不自动勾选父级')
+  assert.equal(state.ready.value, true)
+  await state.save()
+  assert.deepEqual(saves, [{ id: 'role', ids: ['button'] }])
+  assert.equal(props.modelValue, false)
+  await nextTick()
+  pending = deferred()
+  props.modelValue = true
+  for (let tick = 0; tick < 3; tick++) await nextTick()
+  props.modelValue = false
+  await nextTick()
+  pending.resolve([{ id: 'stale', parentId: null }])
+  for (let tick = 0; tick < 6; tick++) await nextTick()
+  assert.deepEqual(state.resources.value, [])
+  assert.equal(state.ready.value, false)
+  stop()
+})
+
 test('请求代次只接受最后一次响应，显式失效与卸载后丢弃旧响应', async () => {
   const vueStub = moduleUrl(
     `export * from '${import.meta.resolve('vue')}'; export const onBeforeUnmount = callback => { globalThis.rbacLatestUnmount = callback }`
@@ -1022,7 +1182,7 @@ test('内置角色在列表禁用资源授权并提示权限固定，普通角�
     isBuiltin: true
   }
   state.grant(role)
-  assert.equal(state.permissionVisible.value, false, '内置角色不打开资源授权弹窗')
+  assert.equal(state.permissionVisible.value, false, '内置角色不打开资源授权抽屉')
   state.grant({ ...role, id: 'role-2', isBuiltin: false })
   assert.equal(state.permissionVisible.value, true)
   assert.equal(state.selectedId.value, 'role-2')

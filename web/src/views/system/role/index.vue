@@ -124,7 +124,7 @@
     { prop: 'enabled', label: '状态', width: 100, slotName: 'enabled', showOverflowTooltip: true }
   ])
 
-  /** 编辑与资源授权弹窗状态 */
+  /** 编辑弹窗与资源授权抽屉状态 */
   const dialogVisible = ref(false)
   const permissionVisible = ref(false)
   const selectedId = ref<string>()
@@ -161,7 +161,7 @@
   }
 
   /**
-   * @description 打开指定角色的资源授权弹窗，内置角色权限固定不允许调整
+   * @description 打开指定角色的资源授权抽屉，内置角色权限固定不允许调整
    * @param row 目标角色行数据
    */
   const grant = (row: Role): void => {

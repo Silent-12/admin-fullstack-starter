@@ -124,7 +124,7 @@ const RESOURCE_SEEDS: ResourceSeed[] = [
     permission: null,
     sort: 30,
     // 菜单管理弹窗需要可绑定接口树来选择接口编码。
-    apiCodes: ['system.menus.tree', 'system.menus.detail', 'system.apis.tree'],
+    apiCodes: ['system.menus.list', 'system.menus.detail', 'system.apis.tree'],
   },
   {
     id: API_MENU_ID,
@@ -232,8 +232,8 @@ const RESOURCE_SEEDS: ResourceSeed[] = [
     component: null,
     permission: SYSTEM_BUTTON_PERMISSIONS.roleGrant,
     sort: 40,
-    // 角色授权弹窗需要读取资源树，因此授权按钮同时授予菜单树查询接口。
-    apiCodes: ['system.roles.resources.read', 'system.roles.resources.assign', 'system.menus.tree'],
+    // 角色授权抽屉需要读取资源列表，因此授权按钮同时授予菜单资源列表查询接口。
+    apiCodes: ['system.roles.resources.read', 'system.roles.resources.assign', 'system.menus.list'],
   },
   {
     id: MENU_CREATE_ID,

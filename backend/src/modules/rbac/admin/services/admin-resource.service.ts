@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { DataSource } from 'typeorm'
 import type { EntityManager } from 'typeorm'
 import { ADMIN_ROUTE_POLICY } from '../../../../common/constants/admin-route.constant.js'
-import type { AdminAuthorization, AdminResourceView } from '../../../../types/rbac.js'
+import type { AdminAuthorization, AdminResourceListItem, AdminResourceView } from '../../../../types/rbac.js'
 import { ApiResourceService } from '../../../api-resource/admin/api-resource.service.js'
 import { AdminPermissionResource } from '../entities/admin-permission-resource.entity.js'
 import { AdminResourceApi } from '../entities/admin-resource-api.entity.js'
@@ -26,23 +26,32 @@ export class AdminResourceService {
   ) {}
 
   /**
-   * 查询权限资源树
-   * @description 管理页面返回全部未删除资源和接口绑定，包含停用节点
-   * @returns 层级资源列表
+   * 查询权限资源列表
+   * @description 只返回列表展示、检索、操作与组树需要的字段，接口绑定仅返回数量，包含停用节点
+   * @returns 按排序值与 UUID 排列的扁平资源列表
    */
-  async resourceTree(): Promise<AdminResourceView[]> {
-    const resources = await this.source
-      .getRepository(AdminPermissionResource)
-      .find({ where: { isDeleted: 0 }, order: { sort: 'ASC', id: 'ASC' } })
-    const bindings = await this.source.getRepository(AdminResourceApi).find({ where: { isDeleted: 0 } })
-    const views = resources.map((resource) => this.resourceView(resource, bindings))
-    const byId = new Map(views.map((view) => [view.id, view]))
-    const roots: typeof views = []
-    for (const view of views) {
-      if (!view.parentId) roots.push(view)
-      else byId.get(view.parentId)?.children.push(view)
-    }
-    return roots
+  async listResources(): Promise<AdminResourceListItem[]> {
+    const resources = await this.source.getRepository(AdminPermissionResource).find({
+      select: { id: true, parentId: true, type: true, title: true, name: true, path: true, permission: true, enabled: true, sort: true },
+      where: { isDeleted: 0 },
+      order: { sort: 'ASC', id: 'ASC' },
+    })
+    const bindings = await this.source.getRepository(AdminResourceApi).find({ select: { resourceId: true }, where: { isDeleted: 0 } })
+    const apiCounts = new Map<string, number>()
+    for (const { resourceId } of bindings) apiCounts.set(resourceId, (apiCounts.get(resourceId) ?? 0) + 1)
+    return resources.map((resource) => ({
+      id: resource.id,
+      parentId: resource.parentId,
+      type: resource.type,
+      title: resource.title,
+      name: resource.name,
+      path: resource.path,
+      permission: resource.permission,
+      enabled: resource.enabled,
+      sort: resource.sort,
+      isBuiltin: BUILTIN_RESOURCE_IDS.includes(resource.id),
+      apiCount: apiCounts.get(resource.id) ?? 0,
+    }))
   }
 
   /**
@@ -291,7 +300,6 @@ export class AdminResourceService {
         .filter((binding) => binding.resourceId === resource.id)
         .map((binding) => binding.apiCode)
         .sort(),
-      children: [],
     }
   }
 }

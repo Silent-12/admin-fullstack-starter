@@ -96,8 +96,8 @@ export interface AdminRoleOption {
 }
 
 /**
- * 资源管理响应
- * @description 显式列举可对外返回的字段，子节点使用同一结构
+ * 资源详情响应
+ * @description 编辑资源所需的完整配置，通过 parentId 表达资源层级
  */
 export interface AdminResourceView {
   // 资源 UUID
@@ -130,6 +130,16 @@ export interface AdminResourceView {
   isBuiltin: boolean
   // 绑定的接口编码
   apiCodes: string[]
-  // 子资源
-  children: AdminResourceView[]
+}
+
+/**
+ * 资源列表项
+ * @description 仅包含管理列表展示、搜索、操作与前端组树所需字段
+ */
+export interface AdminResourceListItem extends Pick<
+  AdminResourceView,
+  'id' | 'parentId' | 'type' | 'title' | 'name' | 'path' | 'permission' | 'enabled' | 'sort' | 'isBuiltin'
+> {
+  // 未删除的接口绑定数量
+  apiCount: number
 }

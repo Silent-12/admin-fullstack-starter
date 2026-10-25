@@ -44,11 +44,9 @@ export interface ApiDefinition {
 
 /**
  * 接口清单展示项
- * @description 在实际接口定义上合并持久化的搜索与排序配置
+ * @description 在实际接口定义上合并持久化的展示分组与排序配置
  */
 export interface ApiResourceItem extends ApiDefinition {
-  // 搜索别名
-  aliases: string[]
   // 展示顺序
   sort: number
 }

@@ -1023,11 +1023,11 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
       assert.equal(catalog.status, 200)
       const entry = catalog.body.data.list.find((record) => record.code === 'tests.read')
       assert.ok(entry)
+      assert.deepEqual(Object.keys(entry).sort(), ['access', 'action', 'code', 'feature', 'method', 'module', 'path', 'sort'])
       await writeAdmin(`/v1/admin/api-resources/${entry.code}`, 'PATCH', {
         module: '集成自定义模块',
         feature: '自定义功能',
         action: '自定义读取',
-        aliases: [],
         sort: 13,
       })
       const renamed = await asAdmin('/v1/admin/api-resources/tree')

@@ -23,10 +23,6 @@ export class AdminApiResource extends AuditEntity {
   @Column({ type: 'varchar', length: 64, comment: '操作名称' })
   action!: string
 
-  /** 搜索别名 */
-  @Column({ type: 'simple-json', comment: '搜索别名' })
-  aliases!: string[]
-
   /** 展示顺序 */
   @Column({ type: 'int', default: 0, comment: '展示顺序' })
   sort!: number

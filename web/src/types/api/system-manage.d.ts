@@ -213,8 +213,6 @@ export interface ApiResource {
   path: string
   // 访问级别
   access: 'public' | 'authenticated' | 'permission'
-  // 搜索别名
-  aliases: string[]
   // 排序
   sort: number
 }
@@ -279,7 +277,7 @@ export type ApiResourceList = PaginatedResponse<ApiResource>
  * ApiLabelsInput
  * @description 后台管理响应与写入类型
  */
-export type ApiLabelsInput = Pick<ApiResource, 'module' | 'feature' | 'action' | 'aliases' | 'sort'>
+export type ApiLabelsInput = Pick<ApiResource, 'module' | 'feature' | 'action' | 'sort'>
 
 /**
  * 用户资料更新

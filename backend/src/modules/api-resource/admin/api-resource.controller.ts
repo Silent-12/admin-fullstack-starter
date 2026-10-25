@@ -45,7 +45,7 @@ export class ApiResourceController {
 
   /**
    * 修改接口展示配置
-   * @description 调整分组名称、搜索别名和排序，不接受路径或权限策略修改
+   * @description 调整分组名称和排序，不接受路径或权限策略修改
    * @param code 接口编码
    * @param dto 展示配置
    * @param request 当前已认证请求

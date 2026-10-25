@@ -101,6 +101,7 @@ test('RBAC 相关表统一具备审计字段、布尔列使用 tinyint unsigned 
   // 内置管理员不再维护独立保护列，统一由 created_by='system' 推导。
   assert.equal(metadataOf('admin_user').findColumnWithPropertyName('isDeletable'), undefined)
   assert.match(String(metadataOf('admin_user').findColumnWithPropertyName('createdBy').default), /system/)
+  assert.equal(metadataOf('admin_api_resource').findColumnWithPropertyName('aliases'), undefined)
   // 唯一索引仍由数据库兜底，软删除删除时由业务层释放唯一值。
   const uniqueIndexes = {
     admin_user: ['username'],

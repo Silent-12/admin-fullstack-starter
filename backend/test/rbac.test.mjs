@@ -8,6 +8,7 @@ import { validate } from 'class-validator'
 import { randomUUID } from 'node:crypto'
 import { AdminApi } from '../dist/common/auth/admin-api.decorator.js'
 import { ApiResourceService } from '../dist/modules/api-resource/admin/api-resource.service.js'
+import { UpdateApiResourceDto } from '../dist/modules/api-resource/admin/dto/api-resource.dto.js'
 import { AdminAuthorizationService } from '../dist/modules/rbac/admin/services/admin-authorization.service.js'
 import { AdminResourceService } from '../dist/modules/rbac/admin/services/admin-resource.service.js'
 import { AdminRoleService } from '../dist/modules/rbac/admin/services/admin-role.service.js'
@@ -917,15 +918,18 @@ test('接口目录展示配置不可覆写方法与访问策略，更新写入�
       path: '/unsafe',
       access: 'public',
     },
-    { code: 'removed.code', module: '已下线', feature: '已下线', action: '历史接口', aliases: [], sort: 0 },
+    { code: 'removed.code', module: '已下线', feature: '已下线', action: '历史接口', sort: 0 },
   ]
   const service = apiResources([controller], rows)
   service.onModuleInit()
-  const list = await service.findAll({ page: 1, pageSize: 10, keyword: '详情别名' })
+  const removedAlias = await service.findAll({ page: 1, pageSize: 10, keyword: '详情别名' })
+  assert.equal(removedAlias.pagination.total, 0)
+  const list = await service.findAll({ page: 1, pageSize: 10, keyword: '查询详情' })
   assert.equal(list.pagination.total, 1)
   assert.equal(list.list[0].method, 'GET')
   assert.equal(list.list[0].path, '/v1/admin/records/:id')
   assert.equal(list.list[0].access, 'permission')
+  assert.deepEqual(Object.keys(list.list[0]).sort(), ['access', 'action', 'code', 'feature', 'method', 'module', 'path', 'sort'])
   assert.equal(Object.hasOwn(list.list[0], 'managementOnly'), false)
   // 扁平目录沿用展示排序，并反映持久化的模块、功能与操作标签。
   const bindable = await service.listBindable()
@@ -942,8 +946,13 @@ test('接口目录展示配置不可覆写方法与访问策略，更新写入�
     path: '/v1/admin/records/:id',
   })
   const actorId = randomUUID()
-  await service.update('test.read', { module: '新模块', feature: '新功能', action: '新操作', aliases: [' 标记 ', '标记', ''], sort: 8 }, actorId)
-  assert.deepEqual(rows[0].aliases, ['标记'])
+  const dto = plainToInstance(UpdateApiResourceDto, { module: '新模块', feature: '新功能', action: '新操作', sort: 8 })
+  assert.deepEqual(await validate(dto, { whitelist: true }), [])
+  await service.update('test.read', dto, actorId)
+  assert.deepEqual(
+    { module: rows[0].module, feature: rows[0].feature, action: rows[0].action, sort: rows[0].sort },
+    { module: '新模块', feature: '新功能', action: '新操作', sort: 8 },
+  )
   assert.equal(rows[0].updatedBy, actorId)
   assert.equal(typeof rows[0].updateTime, 'number')
   service.validateCodes(['test.read'])

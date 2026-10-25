@@ -81,7 +81,6 @@ export class ApiResourceService implements OnModuleInit, OnApplicationBootstrap 
       module,
       feature,
       action,
-      aliases: [],
       sort: 0,
       createTime: now,
       updateTime: now,
@@ -126,7 +125,7 @@ export class ApiResourceService implements OnModuleInit, OnApplicationBootstrap 
 
   /**
    * 查询接口清单
-   * @description 仅展示当前运行版本实际存在的接口，按分组、操作及搜索别名筛选
+   * @description 仅展示当前运行版本实际存在的接口，按模块、功能、动作、接口编码、方法和路径筛选
    * @param query 公共分页与关键词
    * @returns 接口分页列表
    */
@@ -150,7 +149,7 @@ export class ApiResourceService implements OnModuleInit, OnApplicationBootstrap 
 
   /**
    * 修改接口展示配置
-   * @description 仅接受当前接口的分组、别名与排序，同步记录最后操作人与更新时间，不改变任何安全定义
+   * @description 仅接受当前接口的分组与排序，同步记录最后操作人与更新时间，不改变任何安全定义
    * @param code 接口编码
    * @param dto 完整展示配置
    * @param actorId 当前操作人 UUID
@@ -167,7 +166,6 @@ export class ApiResourceService implements OnModuleInit, OnApplicationBootstrap 
         module,
         feature,
         action,
-        aliases: [...new Set(dto.aliases.map((alias) => alias.trim()).filter(Boolean))],
         sort: dto.sort,
         updatedBy: actorId,
         updateTime: Math.floor(Date.now() / 1000),
@@ -189,7 +187,6 @@ export class ApiResourceService implements OnModuleInit, OnApplicationBootstrap 
           module: label?.module ?? definition.module,
           feature: label?.feature ?? definition.feature,
           action: label?.action ?? definition.action,
-          aliases: label?.aliases ?? [],
           sort: label?.sort ?? 0,
         }
       })
@@ -206,9 +203,7 @@ export class ApiResourceService implements OnModuleInit, OnApplicationBootstrap 
     const value = keyword?.trim().toLocaleLowerCase() ?? ''
     return (
       !value ||
-      [item.module, item.feature, item.action, item.code, item.method, item.path, ...item.aliases].some((field) =>
-        field.toLocaleLowerCase().includes(value),
-      )
+      [item.module, item.feature, item.action, item.code, item.method, item.path].some((field) => field.toLocaleLowerCase().includes(value))
     )
   }
 }

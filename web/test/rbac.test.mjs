@@ -983,32 +983,8 @@ test('接口检索组件位于菜单模块内，旧路径不再存在', async ()
   )
 })
 
-test('接口清单标签弹窗排序清空提交 0，访问级别只保留三种策略', async () => {
+test('接口清单标签弹窗回填当前接口，排序清空提交 0', async () => {
   const saves = []
-  const requests = []
-  const context = {
-    props: {},
-    success: [],
-    fetchList: (query) => {
-      requests.push(query)
-      return Promise.resolve({
-        list: [],
-        pagination: { page: 1, pageSize: 10, total: 0, totalPages: 0 }
-      })
-    },
-    save: async (data, code) => saves.push({ code, data })
-  }
-  const { state, stop } = await component('views/system/api-resources/index.vue', context, {
-    '@/hooks/useAuth': moduleUrl('export const useAuth = () => ({ hasAuth: () => true })'),
-    '@ao/admin-components': moduleUrl(`
-      export const AoForm = {}, AoTable = {}
-      export const useTableColumns = (factory) => ({ columns: { value: factory() }, columnChecks: { value: [] } })
-    `),
-    '@/api/system-manage': moduleUrl(`
-      export const fetchApiResources = (query) => globalThis.rbacTest.fetchList(query)
-      export const updateApiLabels = (code, data) => globalThis.rbacTest.save(data, code)
-    `)
-  })
   const row = {
     code: 'system.apis.list',
     module: '系统管理',
@@ -1017,27 +993,45 @@ test('接口清单标签弹窗排序清空提交 0，访问级别只保留三种
     method: 'GET',
     path: '/v1/admin/api-resources',
     access: 'permission',
-    aliases: ['接口'],
     sort: 5
   }
-  state.edit(row)
+  const props = reactive({ modelValue: false, resource: row })
+  const context = {
+    props,
+    success: [],
+    emit: (event, value) => {
+      if (event === 'update:modelValue') props.modelValue = value
+    },
+    save: async (data, code) => saves.push({ code, data })
+  }
+  const { state, stop } = await component(
+    'views/system/api-resources/components/ApiLabelsDialog.vue',
+    context,
+    {
+      '@/hooks/useAuth': moduleUrl('export const useAuth = () => ({ hasAuth: () => true })'),
+      '@vueuse/core': moduleUrl('export const useMediaQuery = () => ({ value: false })'),
+      '@/api/system-manage': moduleUrl(`
+      export const updateApiLabels = (code, data) => globalThis.rbacTest.save(data, code)
+    `)
+    }
+  )
+  props.modelValue = true
   for (let tick = 0; tick < 5; tick++) await nextTick()
   assert.equal(state.visible.value, true)
   assert.deepEqual(state.form.value, {
     module: '系统管理',
     feature: '接口清单',
     action: '列表',
-    aliases: ['接口'],
     sort: 5
   })
-  const sortItem = state.items.find((item) => item.key === 'sort')
+  const sortItem = state.items.value.find((item) => item.key === 'sort')
   assert.equal(sortItem.props.valueOnClear, 0, '排序清空后回填 0，模型不会出现 null')
   assert.ok(state.rules.sort, '排序需要非负整数校验')
   state.form.value.sort = null
   await state.save()
   assert.equal(saves[0].code, 'system.apis.list')
   assert.equal(saves[0].data.sort, 0, '清空后的排序按 0 提交')
-  assert.deepEqual(saves[0].data.aliases, ['接口'])
+  assert.deepEqual(Object.keys(saves[0].data).sort(), ['action', 'feature', 'module', 'sort'])
   assert.equal(saves[0].data.module, '系统管理')
   stop()
 })

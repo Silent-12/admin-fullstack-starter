@@ -55,7 +55,7 @@
 | 菜单资源列表 | `GET v1/admin/menus` 的 `data` 返回不分页的完整扁平数组，包含停用资源；字段仅为 `id`、`parentId`、`type`、`title`、`name`、`path`、`permission`、`enabled`、`sort`、`isBuiltin`、`apiCount`；前端根据 `parentId` 构建树，编辑配置与具体接口编码从详情接口读取 |
 | 可绑定接口目录 | `GET v1/admin/api-resources/tree` 的 `data` 返回不分页的完整扁平数组，仅包含需要接口授权的接口；字段仅为 `code`、`module`、`feature`、`action`、`method`、`path`；前端按模块与功能自行组装树形 |
 | 唯一性约束 | 非空权限码与路由路径分别由数据库唯一索引兜底；未配置权限及按钮路径使用 `null`；重复配置返回 HTTP 409，修改失败保留原资源及授权关系 |
-| 接口清单 | 接口编码、方法、路径与访问策略以实际路由声明为准；接口清单只允许维护展示分组、别名和排序 |
+| 接口清单 | 接口编码、方法、路径与访问策略以实际路由声明为准；接口清单只允许维护展示分组和排序；列表项字段为 `code`、`module`、`feature`、`action`、`method`、`path`、`access`、`sort`，更新字段为 `module`、`feature`、`action`、`sort`；关键词按模块、功能、动作、接口编码、方法和路径筛选 |
 | 权限失败 | 未登录或会话失效返回 HTTP 401；已登录但接口未授权返回 HTTP 403，前端保留当前登录态 |
 
 - 不得单端擅自改变上述契约；涉及契约的变更必须同步更新本表及受影响的前后端调用、类型与验证。

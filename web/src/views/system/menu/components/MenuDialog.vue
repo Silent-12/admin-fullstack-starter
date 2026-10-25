@@ -8,6 +8,9 @@
     :close-on-click-modal="!busy"
     :close-on-press-escape="!busy"
   >
+    <p v-if="builtin" class="tip">
+      当前为内置资源，禁用字段受系统保护，不可修改；名称、排序等展示信息仍可调整。
+    </p>
     <AoForm
       ref="formRef"
       v-model="form"
@@ -421,6 +424,13 @@
   .menu-dialog {
     .el-drawer__body {
       padding: 8px 24px 16px;
+    }
+
+    .tip {
+      margin: 0 0 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--ao-gray-700);
     }
 
     section.form-section {

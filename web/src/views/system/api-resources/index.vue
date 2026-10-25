@@ -17,9 +17,6 @@
       @size-change="sizeChange"
       @current-change="pageChange"
     >
-      <template #header-left>
-        <span>接口由后端控制器自动登记，仅可维护展示标签和排序</span>
-      </template>
       <template #access="{ row }">
         <span class="access" :class="{ 'is-authorized': row.access === 'permission' }">
           {{ accessLabels[row.access as keyof typeof accessLabels] }}

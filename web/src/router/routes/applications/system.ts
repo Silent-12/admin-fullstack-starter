@@ -13,25 +13,25 @@ export const systemRoutes: AppRouteRecord = {
       path: 'user',
       name: 'SystemUser',
       component: () => import('@/views/system/user/index.vue'),
-      meta: { title: '用户管理', keepAlive: false }
+      meta: { title: '用户管理', keepAlive: false, icon: 'ri-user-line' }
     },
     {
       path: 'role',
       name: 'SystemRole',
       component: () => import('@/views/system/role/index.vue'),
-      meta: { title: '角色管理', keepAlive: false }
+      meta: { title: '角色管理', keepAlive: false, icon: 'ri-lock-unlock-line' }
     },
     {
       path: 'menu',
       name: 'SystemMenu',
       component: () => import('@/views/system/menu/index.vue'),
-      meta: { title: '菜单管理', keepAlive: false }
+      meta: { title: '菜单管理', keepAlive: false, icon: 'ri-menu-line' }
     },
     {
       path: 'api-resources',
       name: 'SystemApiResources',
       component: () => import('@/views/system/api-resources/index.vue'),
-      meta: { title: '接口资源', keepAlive: false }
+      meta: { title: '接口资源', keepAlive: false, icon: 'ri-webhook-line' }
     }
   ]
 }

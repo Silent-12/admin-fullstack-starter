@@ -63,7 +63,7 @@
   import { ElButton, ElMessage, ElMessageBox, ElTag } from 'element-plus'
   import { deleteMenu, fetchGetMenuList } from '@/api/system-manage'
   import type { ResourceListItem, ResourceTreeNode } from '@/types/api/system-manage'
-  import { buildResourceTree } from '@/utils/resource'
+  import { buildResourceTree, resourceTypeLabel } from '@/utils/resource'
   import { useLatestRequest } from '@/hooks/useLatestRequest'
   import MenuDialog from './components/MenuDialog.vue'
 
@@ -93,11 +93,7 @@
 
   const { columns, columnChecks } = useTableColumns<ResourceListItem>(() => [
     { prop: 'title', label: '名称', minWidth: 180 },
-    {
-      prop: 'type',
-      label: '类型',
-      formatter: (row) => ({ directory: '目录', menu: '菜单', button: '按钮' })[row.type]
-    },
+    { prop: 'type', label: '类型', formatter: (row) => resourceTypeLabel(row.type) },
     { prop: 'path', label: '路由', minWidth: 140 },
     { prop: 'permission', label: '操作权限码', minWidth: 160 },
     { prop: 'apiCount', label: '绑定接口', formatter: (row) => `${row.apiCount} 个` },

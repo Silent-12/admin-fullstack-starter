@@ -17,7 +17,7 @@
       </template>
       <p class="card-tip">
         覆盖全部表单项类型与自定义渲染方式（render / slots / 分组标题项 /
-        隐藏项等），点击右上角按钮在弹窗中查看；「弹窗表单模式」演示 AoForm 内置 ElDialog 与 span
+        隐藏项等），点击右上角按钮在弹窗中查看；「弹窗表单模式」演示 AoForm 内置 AoDialog 与 span
         行基准自动换行。
       </p>
     </ElCard>
@@ -109,14 +109,12 @@
       </template>
     </AoTable>
 
-    <!-- ============ AoForm 内联模式：:dialog="false" 时为普通表单，由页面自行用 ElDialog 承载 ============ -->
+    <!-- ============ AoForm 内联模式：:dialog="false" 时为普通表单，由 AoDialog 承载 ============ -->
     <!-- span=12 表示每行基准 12 格：表单项 span=6 时每行 2 个、span=12 时独占一行，任意组合都不会产生栅格余数 -->
-    <ElDialog
-      v-model="formDialogVisible"
+    <AoDialog
+      v-model:visible="formDialogVisible"
       title="AoForm 表单写法展示"
-      width="800px"
-      align-center
-      class="ao-form-dialog"
+      width="min(800px, calc(100vw - 32px))"
     >
       <!-- rules 经由 $attrs 透传给内部 ElForm；v-model 就地修改表单对象 -->
       <AoForm
@@ -148,9 +146,9 @@
           </ElSpace>
         </div>
       </template>
-    </ElDialog>
+    </AoDialog>
 
-    <!-- ============ AoForm 弹窗表单模式（默认）：内置 ElDialog，底部固定为 取消 / 确定，默认右对齐 ============ -->
+    <!-- ============ AoForm 弹窗表单模式（默认）：内置 AoDialog，底部固定为 取消 / 确定，默认右对齐 ============ -->
     <!-- cancel-text / confirm-text 覆盖底部按钮文案；需要替换按钮时用 #footer 插槽整体接管 -->
     <!-- span=12 表示每行基准 12 格：三个 span=4 的表单项刚好占满一行，第四个宽度不够自动换行 -->
     <AoForm
@@ -173,7 +171,6 @@
   import {
     ElButton,
     ElCard,
-    ElDialog,
     ElInput,
     ElMessage,
     ElProgress,
@@ -183,7 +180,7 @@
     ElTag
   } from 'element-plus'
   import type { FormRules } from 'element-plus'
-  import { AoForm } from '@ao/admin-components'
+  import { AoDialog, AoForm } from '@ao/admin-components'
   import type { FormItem } from '@ao/admin-components'
   import { AoTable } from '@ao/admin-components'
   import { AoButtonTable } from '@ao/admin-components'

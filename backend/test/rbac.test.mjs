@@ -889,11 +889,14 @@ test('接口绑定只接受需要接口授权的接口，会话、公开与已�
       (error) => error.getStatus() === 400,
     )
   }
-  const tree = await service.getTree()
+  const bindable = await service.listBindable()
   assert.deepEqual(
-    tree[0].children[0].children.map((item) => item.key),
+    bindable.map((item) => item.code),
     ['test.manage', 'test.read'],
   )
+  for (const item of bindable) {
+    assert.deepEqual(Object.keys(item).sort(), ['code', 'module', 'feature', 'action', 'method', 'path'].sort())
+  }
 })
 
 test('接口目录展示配置不可覆写方法与访问策略，更新写入操作人审计字段', async () => {
@@ -924,15 +927,20 @@ test('接口目录展示配置不可覆写方法与访问策略，更新写入�
   assert.equal(list.list[0].path, '/v1/admin/records/:id')
   assert.equal(list.list[0].access, 'permission')
   assert.equal(Object.hasOwn(list.list[0], 'managementOnly'), false)
-  for (const keyword of ['自定义模块', '自定义功能', '查询详情', '详情别名', 'test.read']) {
-    const tree = await service.getTree(keyword)
-    assert.equal(tree[0].kind, 'module')
-    assert.equal(tree[0].label, '自定义模块')
-    assert.equal(tree[0].selectable, false)
-    assert.equal(tree[0].children[0].kind, 'feature')
-    assert.equal(tree[0].children[0].children[0].key, 'test.read')
-  }
-  assert.deepEqual(await service.getTree('完全不存在'), [])
+  // 扁平目录沿用展示排序，并反映持久化的模块、功能与操作标签。
+  const bindable = await service.listBindable()
+  assert.deepEqual(
+    bindable.map((item) => item.code),
+    ['test.manage', 'test.read'],
+  )
+  assert.deepEqual(bindable[1], {
+    code: 'test.read',
+    module: '自定义模块',
+    feature: '自定义功能',
+    action: '查询详情',
+    method: 'GET',
+    path: '/v1/admin/records/:id',
+  })
   const actorId = randomUUID()
   await service.update('test.read', { module: '新模块', feature: '新功能', action: '新操作', aliases: [' 标记 ', '标记', ''], sort: 8 }, actorId)
   assert.deepEqual(rows[0].aliases, ['标记'])

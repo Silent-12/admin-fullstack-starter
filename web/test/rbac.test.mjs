@@ -27,7 +27,7 @@ const deferred = () => {
   })
   return { promise, resolve, reject }
 }
-const leaf = (key) => ({ key, label: key, kind: 'api', selectable: true })
+const leaf = (key) => ({ key, label: key, kind: 'api' })
 
 test('v-auth 按 auth 标识移除无权限按钮，权限变化后重新挂载更新显示', async (t) => {
   const source = await readFile(new URL('../src/directives/auth.ts', import.meta.url), 'utf8')
@@ -256,14 +256,14 @@ async function component(path, context, overrides = {}) {
     `export * from '${vueUrl}'; export const onMounted = () => {}; export const onBeforeUnmount = callback => { globalThis.rbacTest.dispose = callback }`
   )
   const elementStub = moduleUrl(
-    'export const ElAlert = {}, ElButton = {}, ElInput = {}, ElScrollbar = {}, ElTree = {}, ElTreeSelect = {}, ElSpace = {}, ElTag = {}; export const ElMessage = { success: message => globalThis.rbacTest.success.push(message), warning: message => (globalThis.rbacTest.warnings ||= []).push(message) }'
+    'export const ElAlert = {}, ElButton = {}, ElCheckbox = {}, ElDrawer = {}, ElInput = {}, ElScrollbar = {}, ElTree = {}, ElTreeSelect = {}, ElSpace = {}, ElTag = {}; export const ElMessage = { success: message => globalThis.rbacTest.success.push(message), warning: message => (globalThis.rbacTest.warnings ||= []).push(message) }'
   )
   const stubs = {
     vue: vueStub,
     'element-plus': elementStub,
-    '@ao/admin-components': moduleUrl('export const AoForm = {}'),
+    '@ao/admin-components': moduleUrl('export const AoForm = {}, AoDialog = {}'),
     '@/api/system-manage': moduleUrl(
-      'export const fetchApiTree = keyword => globalThis.rbacTest.fetch(keyword); export const fetchGetMenu = id => globalThis.rbacTest.detail(id); export const createMenu = data => globalThis.rbacTest.save(data); export const updateMenu = (id, data) => globalThis.rbacTest.save(data, id)'
+      'export const fetchBindableApiList = () => globalThis.rbacTest.fetch(); export const fetchGetMenu = id => globalThis.rbacTest.detail(id); export const createMenu = data => globalThis.rbacTest.save(data); export const updateMenu = (id, data) => globalThis.rbacTest.save(data, id)'
     ),
     './ApiTreeSelector.vue': moduleUrl('export default {}'),
     '@/router/services/RouteConfigValidator': await sourceModule(
@@ -407,7 +407,7 @@ test('角色授权抽屉从扁平列表恢复独立勾选，保存选中资源�
     context,
     {
       'element-plus': moduleUrl(`
-      export const ElAlert = {}, ElButton = {}, ElDrawer = {}, ElTree = {}
+      export const ElAlert = {}, ElButton = {}, ElDrawer = {}, ElInput = {}, ElTree = {}
     `),
       '@/utils/resource': await sourceModule('utils/resource.ts'),
       '@/api/system-manage': moduleUrl(`
@@ -476,16 +476,24 @@ test('请求代次只接受最后一次响应，显式失效与卸载后丢弃�
   delete globalThis.rbacLatestUnmount
 })
 
-test('接口检索保留不可见选中项，禁选分支并隔离旧请求及卸载返回', async () => {
+test('扁平接口目录支持本地检索与批量选择，保留不可见绑定并隔离旧请求', async () => {
   const requests = []
   const events = []
   const props = reactive({ modelValue: ['outside', 'visible'] })
+  const catalog = ['outside', 'visible', 'new'].map((code) => ({
+    code,
+    module: '模块',
+    feature: '功能',
+    action: code,
+    method: 'GET',
+    path: `/v1/admin/${code}`
+  }))
   const context = {
     props,
     success: [],
-    fetch: (keyword) => {
+    fetch: () => {
       const pending = deferred()
-      requests.push({ ...pending, keyword })
+      requests.push(pending)
       return pending.promise
     },
     emit: (event, value) => {
@@ -499,45 +507,139 @@ test('接口检索保留不可见选中项，禁选分支并隔离旧请求及�
   )
   const checked = []
   state.tree.value = { setCheckedKeys: (keys) => checked.push([...keys]) }
-  state.check(leaf('visible'), { checkedKeys: [] })
-  assert.deepEqual(props.modelValue, ['outside'])
-  state.check({ key: 'module', kind: 'module', selectable: false }, { checkedKeys: ['module'] })
-  assert.deepEqual(props.modelValue, ['outside'])
-  state.check(leaf('new'), { checkedKeys: ['new'] })
-  assert.deepEqual(props.modelValue, ['outside', 'new'])
-  state.keyword.value = 'old'
   const old = state.load()
-  state.keyword.value = 'latest'
   const latest = state.load()
-  requests[1].resolve([
-    { key: 'branch', label: '模块', kind: 'module', selectable: false, children: [leaf('new')] }
-  ])
+  requests[1].resolve(catalog)
   await latest
   assert.equal(state.loading.value, false)
-  assert.equal(state.displayNodes.value[0].disabled, true)
-  assert.equal(state.displayNodes.value[0].children[0].disabled, false)
-  assert.deepEqual(checked.at(-1), ['outside', 'new'])
-  requests[0].reject(new Error('旧搜索失败'))
+  const module = state.displayNodes.value[0]
+  assert.equal(module.label, '模块')
+  assert.equal(module.disabled, true)
+  assert.equal(module.children[0].label, '功能')
+  assert.equal(module.children[0].disabled, true)
+  assert.equal(module.children[0].children[0].disabled, false)
+  assert.deepEqual(checked.at(-1), ['outside', 'visible'])
+  state.keyword.value = 'visible'
+  assert.deepEqual(
+    state.filteredItems.value.map((item) => item.code),
+    ['visible']
+  )
+  state.check(leaf('visible'), { checkedKeys: [] })
+  assert.deepEqual(props.modelValue, ['outside'])
+  state.check(module, { checkedKeys: [module.key] })
+  assert.deepEqual(props.modelValue, ['outside'])
+  state.keyword.value = 'new'
+  state.check(leaf('new'), { checkedKeys: ['new'] })
+  assert.deepEqual(props.modelValue, ['outside', 'new'])
+  state.keyword.value = 'visible'
+  state.checkAll()
+  assert.deepEqual(props.modelValue, ['outside', 'new', 'visible'])
+  state.check(leaf('visible'), { checkedKeys: [] })
+  state.keyword.value = ''
+  state.onlySelected.value = true
+  assert.deepEqual(
+    state.filteredItems.value.map((item) => item.code),
+    ['outside', 'new']
+  )
+  state.onlySelected.value = false
+  assert.equal(requests.length, 2, '筛选与勾选在本地完成，不重复请求目录')
+  requests[0].reject(new Error('旧请求失败'))
   await old
   assert.equal(state.failed.value, false)
-  assert.equal(state.nodes.value[0].key, 'branch')
+  assert.deepEqual(state.items.value, catalog)
+  await nextTick()
   assert.deepEqual(events.at(-1), ['ready', true])
-  state.keyword.value = ''
   const full = state.load()
-  requests[2].resolve([leaf('new')])
+  requests[2].resolve([catalog[2]])
   await full
   assert.deepEqual(state.invalidCodes.value, ['outside'])
   assert.deepEqual(events.at(-1), ['ready', false])
-  state.remove('outside')
+  state.removeInvalid()
   await nextTick()
   assert.deepEqual(props.modelValue, ['new'])
   assert.deepEqual(events.at(-1), ['ready', true])
   const pending = state.load()
   context.dispose()
-  requests[3].resolve([leaf('late')])
+  requests[3].resolve([catalog[0]])
   await pending
-  assert.equal(state.nodes.value[0].key, 'new')
+  assert.equal(state.items.value[0].code, 'new')
   assert.deepEqual(events.at(-1), ['ready', false])
+  stop()
+})
+
+test('接口目录未加载、加载中、失败与禁用时保留绑定，成功后只移除真实失效项', async () => {
+  const requests = []
+  const events = []
+  const props = reactive({ modelValue: ['valid'], disabled: false })
+  const valid = {
+    code: 'valid',
+    module: '模块',
+    feature: '功能',
+    action: '有效接口',
+    method: 'GET',
+    path: '/v1/admin/valid'
+  }
+  const { state, stop } = await component('views/system/menu/components/ApiTreeSelector.vue', {
+    props,
+    success: [],
+    fetch: () => {
+      const pending = deferred()
+      requests.push(pending)
+      return pending.promise
+    },
+    emit: (event, value) => {
+      events.push([event, value])
+      if (event === 'update:modelValue') props.modelValue = value
+    }
+  })
+  props.modelValue = ['valid', 'retired']
+  await nextTick()
+  assert.deepEqual(state.invalidCodes.value, [], '尚未加载目录时不判定失效')
+  assert.deepEqual(events.at(-1), ['ready', false])
+  state.removeInvalid()
+  assert.deepEqual(props.modelValue, ['valid', 'retired'])
+  const first = state.load()
+  assert.deepEqual(state.invalidCodes.value, [])
+  state.removeInvalid()
+  assert.deepEqual(props.modelValue, ['valid', 'retired'], '请求未完成时不能移除已有绑定')
+  requests[0].resolve([valid])
+  await first
+  assert.deepEqual(state.invalidCodes.value, ['retired'])
+  props.disabled = true
+  state.removeInvalid()
+  assert.deepEqual(props.modelValue, ['valid', 'retired'], '禁用时不能通过失效项操作修改绑定')
+  props.disabled = false
+  state.detailVisible.value = true
+  state.removeInvalid()
+  await nextTick()
+  assert.deepEqual(props.modelValue, ['valid'])
+  assert.equal(state.detailVisible.value, false)
+  assert.deepEqual(events.at(-1), ['ready', true])
+
+  props.modelValue = ['valid', 'retired']
+  await nextTick()
+  const failed = state.load()
+  assert.deepEqual(state.invalidCodes.value, [], '重载期间旧目录不能作为失效判断依据')
+  state.removeInvalid()
+  requests[1].reject(new Error('目录请求失败'))
+  await failed
+  state.removeInvalid()
+  assert.equal(state.failed.value, true)
+  assert.deepEqual(state.invalidCodes.value, [])
+  assert.deepEqual(props.modelValue, ['valid', 'retired'])
+  assert.deepEqual(events.at(-1), ['ready', false])
+
+  const empty = state.load()
+  requests[2].resolve([])
+  await empty
+  assert.deepEqual(state.invalidCodes.value, ['valid', 'retired'], '成功返回空目录时绑定确已失效')
+  state.removeInvalid()
+  await nextTick()
+  assert.deepEqual(props.modelValue, [])
+  assert.deepEqual(events.at(-1), ['ready', true])
+  props.modelValue = ['valid']
+  state.clearAll()
+  assert.deepEqual(props.modelValue, [])
   stop()
 })
 

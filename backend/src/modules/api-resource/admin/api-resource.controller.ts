@@ -4,13 +4,13 @@ import { AdminApi } from '../../../common/auth/admin-api.decorator.js'
 import { ApiResponseDto } from '../../../common/dto/api-response.dto.js'
 import type { PaginatedData } from '../../../common/types/response.js'
 import type { AdminAuthRequest } from '../../../types/admin-auth.js'
-import type { ApiResourceItem, ApiTreeNode } from '../../../types/api-resource.js'
+import type { ApiBindableItem, ApiResourceItem } from '../../../types/api-resource.js'
 import { ApiResourceService } from './api-resource.service.js'
-import { ApiResourceQueryDto, ApiTreeQueryDto, UpdateApiResourceDto } from './dto/api-resource.dto.js'
+import { ApiResourceQueryDto, UpdateApiResourceDto } from './dto/api-resource.dto.js'
 
 /**
  * 后台接口清单
- * @description 维护接口展示配置并查询可绑定接口树，实际安全策略由路由声明维护
+ * @description 维护接口展示配置并查询可绑定接口目录，实际安全策略由路由声明维护
  */
 @ApiTags('接口清单')
 @ApiBearerAuth()
@@ -32,16 +32,15 @@ export class ApiResourceController {
   }
 
   /**
-   * 查询可绑定接口树
-   * @description 仅返回可由角色资源获得授权的接口，保留匹配节点的分组上下文
-   * @param query 可选关键词
-   * @returns 接口选择树
+   * 查询可绑定接口目录
+   * @description 仅返回需要接口授权的接口，按展示顺序输出扁平数组，树形结构由前端组装
+   * @returns 可绑定接口扁平列表
    */
   @Get('tree')
-  @AdminApi({ code: 'system.apis.tree', module: '系统管理', feature: '接口清单', action: '接口树' })
-  @ApiOperation({ summary: '查询可绑定接口树' })
-  async tree(@Query() query: ApiTreeQueryDto): Promise<ApiResponseDto<ApiTreeNode[]>> {
-    return ApiResponseDto.success(await this.apiResources.getTree(query.keyword))
+  @AdminApi({ code: 'system.apis.tree', module: '系统管理', feature: '接口清单', action: '接口目录' })
+  @ApiOperation({ summary: '查询可绑定接口目录' })
+  async bindable(): Promise<ApiResponseDto<ApiBindableItem[]>> {
+    return ApiResponseDto.success(await this.apiResources.listBindable())
   }
 
   /**

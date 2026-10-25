@@ -4,18 +4,6 @@ import { ArrayMaxSize, ArrayUnique, IsArray, IsInt, IsOptional, IsString, Max, M
 import { PaginationQueryDto } from '../../../../common/dto/pagination-query.dto.js'
 
 /**
- * 接口树查询参数
- * @description 按模块、功能、操作、编码和别名检索当前可绑定接口
- */
-export class ApiTreeQueryDto {
-  @ApiPropertyOptional({ description: '模块、功能或接口关键词', maxLength: 100 })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  keyword?: string
-}
-
-/**
  * 接口清单查询参数
  * @description 复用公共分页并按关键词筛选当前运行版本的接口
  */

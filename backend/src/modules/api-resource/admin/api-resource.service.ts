@@ -9,7 +9,7 @@ import { isAdminControllerPath } from '../../../common/auth/admin-route.util.js'
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '../../../common/constants/pagination.constant.js'
 import { PaginationMetaDto } from '../../../common/dto/pagination-meta.dto.js'
 import type { PaginatedData } from '../../../common/types/response.js'
-import type { AdminApiMetadata, ApiDefinition, ApiResourceItem, ApiTreeNode } from '../../../types/api-resource.js'
+import type { AdminApiMetadata, ApiBindableItem, ApiDefinition, ApiResourceItem } from '../../../types/api-resource.js'
 import type { ApiResourceQueryDto, UpdateApiResourceDto } from './dto/api-resource.dto.js'
 import { AdminApiResource } from './entities/admin-api-resource.entity.js'
 
@@ -138,32 +138,14 @@ export class ApiResourceService implements OnModuleInit, OnApplicationBootstrap 
   }
 
   /**
-   * 查询可绑定接口树
-   * @description 关键词命中功能或模块时保留其接口，命中单接口时补齐祖先分组；只返回需要接口授权的接口
-   * @param keyword 可选搜索关键词
-   * @returns 模块、功能与接口三级树
+   * 查询可绑定接口目录
+   * @description 仅返回需要接口授权的接口，按展示排序输出扁平列表，树形结构由前端按模块与功能组装
+   * @returns 可绑定接口扁平列表
    */
-  async getTree(keyword?: string): Promise<ApiTreeNode[]> {
-    const items = (await this.items()).filter((item) => item.access === 'permission' && this.matches(item, keyword))
-    const modules = new Map<string, ApiTreeNode>()
-    const features = new Map<string, ApiTreeNode>()
-    for (const item of items) {
-      const moduleKey = `module:${encodeURIComponent(item.module)}`
-      const featureKey = `${moduleKey}:feature:${encodeURIComponent(item.feature)}`
-      let module = modules.get(moduleKey)
-      if (!module) {
-        module = { key: moduleKey, label: item.module, kind: 'module', selectable: false, children: [] }
-        modules.set(moduleKey, module)
-      }
-      let feature = features.get(featureKey)
-      if (!feature) {
-        feature = { key: featureKey, label: item.feature, kind: 'feature', selectable: false, children: [] }
-        features.set(featureKey, feature)
-        module.children!.push(feature)
-      }
-      feature.children!.push({ key: item.code, label: item.action, kind: 'api', selectable: true, method: item.method, path: item.path })
-    }
-    return [...modules.values()]
+  async listBindable(): Promise<ApiBindableItem[]> {
+    return (await this.items())
+      .filter((item) => item.access === 'permission')
+      .map(({ code, module, feature, action, method, path }) => ({ code, module, feature, action, method, path }))
   }
 
   /**

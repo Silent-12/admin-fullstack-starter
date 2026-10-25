@@ -54,22 +54,20 @@ export interface ApiResourceItem extends ApiDefinition {
 }
 
 /**
- * 接口选择树节点
- * @description 仅接口叶子可绑定，分组用于展示和检索
+ * 可绑定接口项
+ * @description 供角色资源选择可授权接口，仅包含识别接口与展示分组所需字段
  */
-export interface ApiTreeNode {
-  // 分组标识或接口编码
-  key: string
-  // 展示名称
-  label: string
-  // 节点类型
-  kind: 'module' | 'feature' | 'api'
-  // 是否为可绑定接口
-  selectable: boolean
-  // 子节点，仅分组存在
-  children?: ApiTreeNode[]
-  // HTTP 方法，仅接口存在
-  method?: string
-  // 路由模板，仅接口存在
-  path?: string
+export interface ApiBindableItem {
+  // 稳定接口编码
+  code: string
+  // 模块名称
+  module: string
+  // 功能名称
+  feature: string
+  // 操作名称
+  action: string
+  // HTTP 方法
+  method: string
+  // 不含可配置全局前缀的路由模板
+  path: string
 }

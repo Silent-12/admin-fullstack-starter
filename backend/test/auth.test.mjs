@@ -229,7 +229,7 @@ test('重复接口编码、多个路由别名与 ALL 方法阻止接口清单启
   }
 })
 
-test('登录态接口只能通过 AdminApi 声明，不可绑定也不进入接口树', async () => {
+test('登录态接口只能通过 AdminApi 声明，不可绑定也不进入可绑定接口目录', async () => {
   const controller = declareController('v1/admin/records', [
     ['read', Get, ':id', apiMetadata('test.read')],
     ['session', Get, 'session', apiMetadata('test.session', { access: 'authenticated' })],
@@ -240,6 +240,10 @@ test('登录态接口只能通过 AdminApi 声明，不可绑定也不进入接�
   assert.equal(service.getDefinition(controller.prototype.session).access, 'authenticated')
   service.validateCodes(['test.read'])
   assert.throws(() => service.validateCodes(['test.session']), (error) => error.getStatus() === 400)
-  const tree = await service.getTree()
-  assert.deepEqual(tree[0].children[0].children.map((item) => item.key), ['test.read'])
+  const bindable = await service.listBindable()
+  assert.deepEqual(
+    bindable.map((item) => item.code),
+    ['test.read'],
+  )
+  assert.deepEqual(Object.keys(bindable[0]).sort(), ['code', 'module', 'feature', 'action', 'method', 'path'].sort())
 })

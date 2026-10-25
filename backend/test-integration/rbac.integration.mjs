@@ -412,7 +412,7 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
       assert.equal((await asOrdinary('/v1/admin/roles/options')).status, 200)
       errorResponse(await asOrdinary('/v1/admin/menus'), 403)
 
-      // 仅授菜单管理页面即可打开菜单弹窗（接口树）。
+      // 仅授菜单管理页面即可打开菜单弹窗（可绑定接口目录）。
       await setResources(pageRole.id, [menuMenu.id])
       assert.equal((await asOrdinary('/v1/admin/menus')).status, 200)
       assert.equal((await asOrdinary('/v1/admin/api-resources/tree')).status, 200)
@@ -1012,15 +1012,16 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
       assert.equal((await asAdmin('/v1/admin/roles')).status, 200)
     })
 
-    await t.test('API 目录按模块和功能保留匹配祖先，自定义标签不修改稳定代码', async () => {
-      const tree = await asAdmin('/v1/admin/api-resources/tree?keyword=tests.read')
-      assert.equal(tree.status, 200)
-      const leaves = flatten(tree.body.data).filter((node) => node.kind === 'api')
-      assert.ok(leaves.some((node) => node.key === 'tests.read'))
-      assert.ok(tree.body.data.some((node) => node.kind === 'module' && node.children?.some((child) => child.kind === 'feature')))
+    await t.test('可绑定接口目录返回扁平数组，自定义标签不修改稳定代码', async () => {
+      const bindable = await asAdmin('/v1/admin/api-resources/tree')
+      assert.equal(bindable.status, 200)
+      assert.ok(Array.isArray(bindable.body.data))
+      const item = bindable.body.data.find((record) => record.code === 'tests.read')
+      assert.ok(item)
+      assert.deepEqual(Object.keys(item).sort(), ['code', 'module', 'feature', 'action', 'method', 'path'].sort())
       const catalog = await asAdmin('/v1/admin/api-resources?keyword=tests.read&pageSize=100')
       assert.equal(catalog.status, 200)
-      const entry = catalog.body.data.list.find((item) => item.code === 'tests.read')
+      const entry = catalog.body.data.list.find((record) => record.code === 'tests.read')
       assert.ok(entry)
       await writeAdmin(`/v1/admin/api-resources/${entry.code}`, 'PATCH', {
         module: '集成自定义模块',
@@ -1029,11 +1030,17 @@ test('RBAC 真实数据库与 HTTP：统一资源授权、审计软删除与内�
         aliases: [],
         sort: 13,
       })
-      const renamed = await asAdmin('/v1/admin/api-resources/tree?keyword=自定义读取')
-      const renamedLeaves = flatten(renamed.body.data).filter((node) => node.kind === 'api')
-      assert.equal(renamedLeaves.length, 1)
-      assert.equal(renamedLeaves[0].key, 'tests.read')
-      assert.ok(renamedLeaves[0].label.includes('自定义读取'))
+      const renamed = await asAdmin('/v1/admin/api-resources/tree')
+      assert.equal(renamed.status, 200)
+      // 展示标签变化后仍按稳定编码定位同一接口，方法、路径与编码不受影响。
+      assert.deepEqual(renamed.body.data.find((record) => record.code === 'tests.read'), {
+        code: 'tests.read',
+        module: '集成自定义模块',
+        feature: '自定义功能',
+        action: '自定义读取',
+        method: item.method,
+        path: item.path,
+      })
       assert.equal((await asOrdinary(probe)).status, 200)
     })
 

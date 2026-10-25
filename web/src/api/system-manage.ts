@@ -1,8 +1,8 @@
 import request from '@/utils/http'
 import type {
+  ApiBindableItem,
   ApiLabelsInput,
   ApiResourceList,
-  ApiTreeNode,
   ManagedUser,
   ManagementQuery,
   Resource,
@@ -264,15 +264,13 @@ export const fetchApiResources = (params: ManagementQuery) =>
   })
 
 /**
- * 检索可绑定接口树
- * @description 根据关键词检索可绑定的接口树
- * @param {string} [keyword] 接口检索关键词
- * @return {Promise<ApiTreeNode[]>} 可绑定接口树
+ * 获取可绑定接口目录
+ * @description 获取不分页的可绑定接口扁平列表，由调用方按模块与功能组装树形
+ * @return {Promise<ApiBindableItem[]>} 可绑定接口扁平列表
  */
-export const fetchApiTree = (keyword?: string) =>
-  request.get<ApiTreeNode[]>({
-    url: '/v1/admin/api-resources/tree',
-    params: { keyword }
+export const fetchBindableApiList = () =>
+  request.get<ApiBindableItem[]>({
+    url: '/v1/admin/api-resources/tree'
   })
 
 /**

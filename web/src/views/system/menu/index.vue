@@ -11,15 +11,21 @@
       :loading="loading"
       row-key="id"
       :tree-props="{ children: 'children' }"
+      :expand-row-keys="expandedKeys"
+      :row-class-name="rowClassName"
+      @row-click="toggleRow"
+      @expand-change="syncExpanded"
       @search="search"
       @reset="reset"
       @refresh="load"
     >
       <template #header-left>
-        <ElButton v-auth="'system.menu.create'" :disabled="busy" @click="edit()">新增资源</ElButton>
+        <ElButton v-auth="'system.menu.create'" :disabled="busy" @click="edit()">新增</ElButton>
       </template>
       <template #enabled="{ row }">
-        <ElTag :type="row.enabled ? 'success' : 'info'">{{ row.enabled ? '启用' : '禁用' }}</ElTag>
+        <span class="menu-status" :class="{ 'is-enabled': row.enabled }">
+          {{ row.enabled ? '启用' : '禁用' }}
+        </span>
       </template>
       <template #operation="{ row }">
         <ElButton
@@ -27,11 +33,11 @@
           v-auth="'system.menu.create'"
           link
           :disabled="busy"
-          @click="addChild(row)"
+          @click.stop="addChild(row)"
         >
-          新增子资源
+          新增子级
         </ElButton>
-        <ElButton v-auth="'system.menu.update'" link :disabled="busy" @click="edit(row)">
+        <ElButton v-auth="'system.menu.update'" link :disabled="busy" @click.stop="edit(row)">
           编辑
         </ElButton>
         <ElButton
@@ -39,7 +45,7 @@
           link
           type="danger"
           :disabled="busy || row.isBuiltin"
-          @click="remove(row)"
+          @click.stop="remove(row)"
         >
           删除
         </ElButton>
@@ -60,7 +66,7 @@
   import { AoTable, useTableColumns } from '@ao/admin-components'
   import { useAuth } from '@/hooks/useAuth'
   import type { SearchFormItem } from '@ao/admin-components'
-  import { ElButton, ElMessage, ElMessageBox, ElTag } from 'element-plus'
+  import { ElButton, ElMessage, ElMessageBox } from 'element-plus'
   import { deleteMenu, fetchGetMenuList } from '@/api/system-manage'
   import type { ResourceListItem, ResourceTreeNode } from '@/types/api/system-manage'
   import { buildResourceTree, resourceTypeLabel } from '@/utils/resource'
@@ -91,14 +97,14 @@
     }
   ]
 
-  const { columns, columnChecks } = useTableColumns<ResourceListItem>(() => [
+  const { columns, columnChecks } = useTableColumns<ResourceTreeNode>(() => [
     { prop: 'title', label: '名称', minWidth: 180 },
     { prop: 'type', label: '类型', formatter: (row) => resourceTypeLabel(row.type) },
     { prop: 'path', label: '路由', minWidth: 140 },
     { prop: 'permission', label: '操作权限码', minWidth: 160 },
     { prop: 'apiCount', label: '绑定接口', formatter: (row) => `${row.apiCount} 个` },
     { prop: 'sort', label: '排序', width: 80 },
-    { prop: 'enabled', label: '状态', slotName: 'enabled' }
+    { prop: 'enabled', label: '状态', slotName: 'enabled', width: 100 }
   ])
 
   /** 弹窗上下文 */
@@ -122,6 +128,46 @@
     })
 
   const filtered = computed(() => filterNodes(resources.value))
+
+  /** 已展开的行，点击行与展开箭头共用同一份展开状态 */
+  const expandedKeys = ref<string[]>([])
+
+  /**
+   * @description 判断资源是否存在下级
+   * @param row 资源行数据
+   * @return 存在下级资源时为 true
+   */
+  const hasChildren = (row: ResourceTreeNode): boolean => Boolean(row.children?.length)
+
+  /**
+   * @description 点击当前行展开或收起下级资源
+   * @param row 被点击的资源行数据
+   */
+  const toggleRow = (row: ResourceTreeNode): void => {
+    if (!hasChildren(row)) return
+    expandedKeys.value = expandedKeys.value.includes(row.id)
+      ? expandedKeys.value.filter((key) => key !== row.id)
+      : [...expandedKeys.value, row.id]
+  }
+
+  /**
+   * @description 同步展开箭头触发的展开状态，展开行始终以本组件状态为准
+   * @param row 资源行数据
+   * @param expanded 是否展开
+   */
+  const syncExpanded = (row: ResourceTreeNode, expanded: boolean): void => {
+    expandedKeys.value = expanded
+      ? [...new Set([...expandedKeys.value, row.id])]
+      : expandedKeys.value.filter((key) => key !== row.id)
+  }
+
+  /**
+   * @description 标记存在下级的行，提示该行可点击展开
+   * @param param 表格行数据
+   * @return 行样式类名
+   */
+  const rowClassName = ({ row }: { row: ResourceTreeNode }): string =>
+    hasChildren(row) ? 'is-expandable' : ''
 
   /**
    * @description 加载完整的管理资源列表并构建树
@@ -167,7 +213,7 @@
   }
 
   /**
-   * @description 在指定父节点下新增资源
+   * @description 在指定父节点下新增子级
    * @param row 父资源行数据
    */
   const addChild = (row: ResourceListItem): void => {
@@ -202,3 +248,18 @@
 
   onMounted(load)
 </script>
+
+<style scoped lang="scss">
+  .menu-status {
+    color: var(--status-text-neutral);
+
+    &.is-enabled {
+      color: var(--status-text-success);
+    }
+  }
+
+  // 存在下级的行支持点击展开，指针样式提示可交互
+  :deep(.el-table__row.is-expandable) {
+    cursor: pointer;
+  }
+</style>

@@ -220,23 +220,40 @@ export interface ApiResource {
 }
 
 /**
- * 可绑定接口树
- * @description 后台权限管理使用的可绑定接口树
+ * 可绑定接口目录项
+ * @description 后端平铺返回的可绑定接口，由前端按模块与功能组装树形
  */
-export interface ApiTreeNode {
-  // 分支键或接口编码
+export interface ApiBindableItem {
+  // 稳定接口编码
+  code: string
+  // 模块名称
+  module: string
+  // 功能名称
+  feature: string
+  // 操作名称
+  action: string
+  // HTTP 方法
+  method: string
+  // 注册路径
+  path: string
+}
+
+/**
+ * 可绑定接口树节点
+ * @description 前端组装的选择树节点，仅接口叶子可绑定
+ */
+export interface ApiBindableTreeNode {
+  // 模块、功能分组键或接口编码
   key: string
   // 节点名称
   label: string
   // 节点类型
   kind: 'module' | 'feature' | 'api'
-  // 是否允许绑定
-  selectable: boolean
-  // 可选子节点
-  children?: ApiTreeNode[]
-  // 可选 HTTP 方法
+  // 子节点，仅分组存在
+  children?: ApiBindableTreeNode[]
+  // HTTP 方法，仅接口存在
   method?: string
-  // 可选注册路径
+  // 注册路径，仅接口存在
   path?: string
 }
 

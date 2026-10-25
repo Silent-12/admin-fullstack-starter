@@ -32,6 +32,7 @@
 - 函数与组件注释：见 [编码与注释](.agents/rules/coding.md)。
 - 目录、路由、组件、表格与表单：见 [目录、路由与组件](.agents/rules/module-structure.md)。
 - 布局与公共组件必须优先复用 `@ao/admin-layout`、`@ao/admin-components`；只允许从包入口导入，禁止深引内部路径；业务数据由本项目持有，通过插件安装配置注入。
+- 表单统一使用 `AoForm`，表格统一使用 `AoTable`，弹窗统一使用 `AoDialog`；禁止在业务页面直接使用 `el-form`、`el-table`、`el-dialog`，详见 [统一组件](.agents/rules/module-structure.md#统一组件)。
 - 公共逻辑必须优先复用组件、Composable 与路由服务，禁止重复实现。
 
 ## 按任务加载

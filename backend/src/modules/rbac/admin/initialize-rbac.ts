@@ -123,7 +123,7 @@ const RESOURCE_SEEDS: ResourceSeed[] = [
     component: '/system/menu',
     permission: null,
     sort: 30,
-    // 菜单管理弹窗需要可绑定接口树来选择接口编码。
+    // 菜单管理弹窗需要可绑定接口目录来选择接口编码。
     apiCodes: ['system.menus.list', 'system.menus.detail', 'system.apis.tree'],
   },
   {

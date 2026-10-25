@@ -10,6 +10,15 @@
 - 仅服务单一业务的组件放在 `src/views/<业务模块>/components/`，由业务页面显式引入；禁止注册为通用组件。
 - 业务页面放在 `src/views/` 下按业务模块分子目录；页面内弹窗、抽屉等子模块放在对应模块的 `components/` 子目录。
 
+## 统一组件
+
+- 后台业务页面的表单统一使用 `@ao/admin-components` 导出的 `AoForm`；表格统一使用 `AoTable`；弹窗统一使用 `AoDialog`。禁止在业务页面直接使用 `el-form`、`el-table`、`el-dialog`，禁止为同一职责再写一层包装组件。
+- 例外仅限认证页（`src/views/auth/`）：登录等页面是独立品牌化布局，无字段标签且使用原生表单提交，可保留原生 `ElForm`；该类页面不得出现业务数据表格或业务弹窗。
+- 弹窗的头部、底部内边距与 1px 分隔线由 `AoDialog` 统一提供；需要自定义底部按钮时使用 `#footer` 插槽，需要只读内容时把内容放进默认插槽，禁止用 `ElDialog` + 自行拼装 footer 的方式实现。
+- `AoDialog` 的 `confirm` 只上报事件，不自动关闭，是否关闭由业务决定；`cancel` 上报后由组件关闭，关闭动画结束用 `closed` 做收尾。
+- 抽屉没有公共封装，继续使用 `ElDrawer`；头部、底部间距与分隔线参照 `AoDialog` 的处理方式保持视觉一致。
+- 公共组件包缺少所需能力时，先在 `@ao/admin-components` 补齐并按整数版本发版，再在业务页面使用；禁止在宿主复制或覆盖包内样式绕过封装。
+
 ## 状态展示
 
 - 项目中避免使用 Element Plus `ElTag` / `el-tag` 组件；状态信息优先使用带语义颜色的普通文本展示，避免标签背景与边框增加视觉负担。
@@ -40,7 +49,7 @@
 - 无间距且主体为表格的页面，在路由页面根容器添加 `page-flush-table`，并在直接子级 `AoTable` 添加 `page-main-table`；`AoTable` 须为根容器首个元素子级且页面内容头部为空。
 - 全屏路由页不参与该边框衔接；页面不得自行覆盖布局包消除的边框。
 - 有页面间距、独立卡片或弹窗内表格禁止添加 `page-flush-table` / `page-main-table`。
-- 业务表格统一使用 `@ao/admin-components` 导出的 `AoTable`；禁止在业务页面直接使用 `el-table`。
+- 业务表格统一使用 `AoTable`，组件口径见 [统一组件](#统一组件)；禁止在业务页面直接使用 `el-table`。
 - 页面容器使用 `ao-full-height`；表格卡片与表格头部由 `AoTable` 内部按需渲染；页面传入 `:search-items`、`:search-rules`、`v-model:search-form`、`v-model:column-checks` 并编写 `#header-left` / `#header-right` 插槽。
 - 搜索栏默认启用：有搜索项时默认显示，头部搜索按钮切换显隐；需自定义初始显隐或接管状态时额外绑定 `v-model:show-search-bar`。
 - 业务搜索区域统一使用 `AoSearchBar`，由 `AoTable` 通过 `search-items` 集成；禁止页面单独引入。
@@ -54,6 +63,7 @@
 
 ## 表单
 
+- 业务表单统一使用 `AoForm`，组件口径见 [统一组件](#统一组件)；禁止直接使用 `el-form`。
 - 使用 `AoForm` 时，只要表单涉及接口请求（详情、选项加载或提交保存），必须显式绑定 `:loading`；复用 `useDialogForm` 的 `loading` 与 `busy`，同时存在加载和保存请求时绑定 `:loading="loading || busy"`，仅有保存请求时绑定提交状态，禁止重复维护加载状态。
 - 加载效果必须跟随真实接口生命周期：请求开始前开启，成功后完成数据回填再关闭；多个初始化请求全部完成后才结束等待，禁止使用固定延时关闭。失败时也须在 `finally` 中结束等待并保留错误提示与未就绪时的保存限制；关闭、重新打开或切换记录时沿用请求代次校验，旧请求不得关闭当前请求的 loading 或覆盖表单。
 - 表单必填字段必须在视图层 `rules` 校验之外，于提交前在业务层显式判空。
